@@ -30,6 +30,7 @@ window.Bot = {
     const sk = ['a1', 'c1', 'e1', 'a1', 'a2', 'a3', 'c1', 'a1', 'c2', 'a2', 'a5', 'a4', 'e2', 'e3', 'c3', 'c4', 'a6', 'e5', 'e4', 'e6', 'c5', 'c6'];
     for (const id of sk) if (Skills.canBuy(id) && G.nanites >= Skills.cost(id) + 4) Skills.buy(id);
     const has = k => G.towers.some(t => t.key === k);
+    for (const t of G.towers) if (Towers.needsSpec(t)) Towers.setSpec(t, Math.random() < .5 ? 0 : 1);
     let guard = 0;
     while (guard++ < 80) {
       let key = null;
@@ -50,6 +51,7 @@ window.Bot = {
         const c = Towers.upCost(t) / (1 + t.d.tier * .5);
         if (c < bc) { bc = c; bt = t; }
       }
+      if (bt && Towers.needsSpec(bt)) { Towers.setSpec(bt, Math.random() < .5 ? 0 : 1); continue; }
       if (bt && G.money >= Towers.upCost(bt)) { Towers.upgrade(bt); continue; }
       break;
     }
