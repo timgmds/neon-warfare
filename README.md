@@ -19,18 +19,23 @@ La partie est sauvegardée automatiquement entre deux vagues (dans le `localStor
 | | |
 |---|---|
 | **24 tourelles** | 8 de base, 2 de soutien (Ventilo, Ordi) et **14 fusions** sur 3 paliers (T2 → T3 → Apocalypse T4) |
+| **Spécialisations** | au niveau 5 (niveau 3 pour le soutien), chaque tourelle choisit **1 voie sur 2** (ex. Vulcain : Gatling ou Perforant) qui change son comportement |
 | **Fusion des canons** | plans achetés au Labo avec des nanites, puis **fusion sur le terrain** de deux tourelles adjacentes (80 % de leur valeur récupérée, niveau moyen conservé) |
 | **Arbre de compétences** | 18 compétences en 3 branches (Arsenal, Ingénierie, Logistique), dont 2 qui débloquent des capacités |
 | **Capacités** | Frappe Orbitale (ciblée), Cryo-Bombe, Surcharge |
 | **Héritage** | progression permanente : fragments gagnés à chaque partie → bonus de départ |
-| **Ennemis** | 10 types (blindés, boucliers, furtifs, volants, soigneurs, brouilleurs IEM, téléporteurs, porteurs…), 3 boss, élites |
+| **Ennemis** | 10 types (blindés, boucliers, furtifs, volants, soigneurs, brouilleurs IEM, téléporteurs, porteurs…), élites et **6 boss** à mécanique : Colosse, Hydre, Overlord, Scission (se divise), Sentinelle (boucliers de zone), Sauteur (bondit en avant) |
+| **Cartes** | procédurales (portrait/paysage), dont la moitié avec **deux chemins** qui se rejoignent |
+| **Pièges** | **mines** et **barricades** à poser directement sur le chemin |
 | **Vagues** | infinies, thématiques (Essaim, Raid aérien, Colonne blindée…), boss toutes les 5 vagues, aperçu de la vague suivante |
 | **Défi du jour** | même carte et mêmes 2 mutateurs pour tout le monde ce jour-là, record journalier |
 | **Missions** | 3 objectifs courts toujours actifs (abattre des volants, combo, vagues sans fuite…), remplacés dès qu'ils sont accomplis |
 | **Protocoles** | toutes les 2 vagues, 1 carte à choisir parmi 3 : bonus, améliorations cumulables ou pactes risque/récompense |
 | **Commandant** | niveau permanent et grades (de Recrue à Légende) ; les niveaux débloquent 7 **doctrines** de départ |
 | **Chaleur** | surcadence (cadence ×2) qui fait chauffer ; les Ventilos permettent de la tenir |
-| **Divers** | 19 succès, 5 thèmes visuels, musique générative, cartes procédurales (portrait/paysage), démo IA en fond de menu |
+| **Analyse de combat** | graphique en direct de la partie : quelle tourelle inflige le plus de dégâts, tire le plus, élimine le plus, est la plus rentable (par type ou par tourelle), plus les dégâts par vague |
+| **Codex** | fiches des 42 ennemis et tourelles, débloquées en les rencontrant |
+| **Divers** | 20 succès, 5 thèmes visuels, musique générative (Ambiance ou Synthwave, désactivable), démo IA en fond de menu |
 
 ## Commandes
 
@@ -43,7 +48,7 @@ La partie est sauvegardée automatiquement entre deux vagues (dans le `localStor
 | `T` / `O` | Changer le ciblage / surcadence |
 | `R` | Recycler le débris sélectionné |
 | `F` / `P` | Vitesse (1×, 2×, 3×) / pause |
-| `K` / `L` / `H` | Arbre de compétences / Labo de fusion / Manuel |
+| `K` / `L` / `G` / `H` | Arbre de compétences / Labo de fusion / Analyse de combat / Manuel |
 | `Échap`, clic droit | Annuler |
 | `F3` | Compteur de performances |
 
@@ -69,7 +74,7 @@ Tout est dans `neon-warfare.html`, organisé en modules :
 
 `Store` (sauvegarde) · `Sfx` / `Music` (Web Audio) · données (`TOWERS`, `RECIPES`, `ENEMIES`,
 `SKILLS`, `PERKS`, `MUTATORS`…) · `Spr` (sprites) · `MapGen` / `Path` · `FX` · `Combat` ·
-`Enemies` · `Towers` · `Shots` · `Waves` · `Abil` · `Skills` · `Fusion` · `Missions` · `Cmd` · `Cards` · `Game` · `Demo` ·
+`Enemies` · `Towers` · `Shots` · `Traps` · `Waves` · `Abil` · `Skills` · `Fusion` · `Missions` · `Cmd` · `Cards` · `Codex` · `Stats` · `Game` · `Demo` ·
 `Render` · `Input` · `UI` · boucle principale.
 
 Pour ajouter une tourelle : une entrée dans `TOWERS` (+ une recette dans `RECIPES` si c'est une fusion).
@@ -89,6 +94,8 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v8.2** : cartes à deux chemins, spécialisations de tourelles, 3 nouveaux boss, pièges (mines, barricades),
+  Codex, analyse de combat (graphiques), nouvelle musique d'ambiance, correctif du prix d'amélioration.
 - **v8.1** : missions, protocoles (cartes), niveau de Commandant et doctrines, combo qui s'emballe,
   ralenti sur les boss, écran de fin « encore une ».
 - **v8.0 — Fusion Protocol** : refonte complète de la v7.1 « Scavenger Patch » (voir l'historique git).
