@@ -46,6 +46,8 @@ body.no-crt #crt{display:none}
 .btn.danger:hover:not(:disabled),.btn.danger.on{background:var(--dang);color:#fff;border-color:var(--dang);box-shadow:0 0 14px var(--dang)}
 .btn.gold{border-color:var(--gold);color:var(--gold)}
 .btn.gold:hover:not(:disabled){background:var(--gold);color:#000;border-color:var(--gold);box-shadow:0 0 14px var(--gold)}
+.btn.sec{border-color:var(--sec);color:var(--sec)}
+.btn.sec:hover:not(:disabled){background:var(--sec);color:#000;border-color:var(--sec);box-shadow:0 0 14px var(--sec)}
 .btn.nano{border-color:var(--nano);color:var(--nano)}
 .btn.nano:hover:not(:disabled){background:var(--nano);color:#000;border-color:var(--nano);box-shadow:0 0 14px var(--nano)}
 .btn .k{opacity:.55;font-size:9px;margin-left:6px;font-family:var(--mono)}
@@ -218,6 +220,7 @@ body.no-crt #crt{display:none}
 @keyframes glitch{0%,91%,100%{transform:none}92%{text-shadow:-4px 0 #ff2bd6,4px 0 #00f3ff;transform:skewX(-7deg)}94%{text-shadow:4px 0 #ff2bd6,-4px 0 #00f3ff;transform:skewX(5deg)}96%{transform:none}}
 .mbtns{display:flex;flex-direction:column;gap:9px;width:min(330px,80vw);margin-top:26px}
 .mbtns .btn{padding:13px;font-size:13px;letter-spacing:.28em}
+#menu-btns .btn:not(:hover){background:rgba(4,7,14,.86)}
 .mbtns .btn small{display:block;font-size:9px;letter-spacing:.15em;opacity:.7;margin-top:3px;font-weight:600}
 .mfoot{margin-top:20px;font-size:11px;color:var(--dim);letter-spacing:1px;line-height:1.7}
 .mfoot b{color:var(--txt)}
@@ -501,8 +504,8 @@ const Store = {
   data: null,
   defaults() {
     return {
-      settings: { sfx: .6, music: .35, quality: 'auto', theme: 'theme-cyber', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false },
-      meta: { frags: 0, perks: {} }, ach: {}, records: {}, stats: { recycled: 0, games: 0, kills: 0 }, save: null, tuto: false
+      settings: { sfx: .6, music: .35, quality: 'auto', theme: 'theme-cyber', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true },
+      meta: { frags: 0, perks: {} }, ach: {}, records: {}, daily: {}, stats: { recycled: 0, games: 0, kills: 0 }, save: null, tuto: false
     };
   },
   load() {
@@ -551,7 +554,7 @@ const Sfx = {
     freeze: 300, pulse: 120, vortex: 300, coin: 45, ui: 30, build: 60, upgrade: 60, sell: 60, error: 140, leak: 160, wave: 400,
     boss: 800, ach: 600, fuse: 300, nuke: 300, alarm: 1200 },
   play(name, vol = 1, pitch = 1) {
-    if (!this.ctx || Store.s.sfx <= 0 || this.ctx.state !== 'running') return;
+    if (!this.ctx || Store.s.sfx <= 0 || this.ctx.state !== 'running' || Demo.busy) return;
     const now = performance.now(), g = this.gap[name] || 40;
     if (this.last[name] && now - this.last[name] < g) return;
     if (this.voices > 26) return;
@@ -802,6 +805,32 @@ const DIFFS = {
   cauchemar: { name: 'CAUCHEMAR', hp: 1.8, lives: 30, money: 240, bounty: .9, frag: 2.5, color: '#ff2a6d', desc: 'Ennemis surpuissants, noyau fragile. Pour les légendes.' }
 };
 
+/* Mutateurs du Défi du jour (2 tirés au sort chaque jour, identiques pour tout le monde) */
+const MUTATORS = {
+  rush:      { n: 'Ruée', i: '»', d: 'Ennemis 25% plus rapides.', spd: 1.25 },
+  armor:     { n: 'Blindage lourd', i: '⛨', d: 'Tous les ennemis gagnent du blindage.', armorAdd: 2, armor: 1.5 },
+  horde:     { n: 'Horde', i: '⁂', d: '+40% d\'ennemis, mais 25% moins résistants.', count: 1.4, hp: .75 },
+  austerity: { n: 'Austérité', i: '¢', d: 'Crédits de départ -40%, primes +20%.', money: .6, bounty: 1.2 },
+  nanotech:  { n: 'Nanotech', i: '◈', d: 'Nanites de fin de vague x2, primes -20%.', nano: 2, bounty: .8 },
+  elite:     { n: 'Élite', i: '★', d: 'Élites 3x plus fréquents, dès la vague 4.', elite: 3 },
+  titans:    { n: 'Titans', i: '☠', d: 'Boss +60% de PV, mais +5 nanites par boss.', bossHp: 1.6, bossNano: 5 },
+  fragile:   { n: 'Noyau fragile', i: '♥', d: 'Intégrité -50%, fragments x1,5.', lives: .5, frag: 1.5 }
+};
+function makeMut(keys) {
+  const m = { spd: 1, armor: 1, armorAdd: 0, count: 1, hp: 1, money: 1, bounty: 1, nano: 1, elite: 1, bossHp: 1, bossNano: 0, lives: 1, frag: 1 };
+  for (const k of keys) {
+    const u = MUTATORS[k]; if (!u) continue;
+    for (const p in m) if (u[p] !== undefined) m[p] = p === 'armorAdd' || p === 'bossNano' ? m[p] + u[p] : m[p] * u[p];
+  }
+  return m;
+}
+function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function todayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function dailyInfo(date = todayStr()) {
+  const seed = hashStr('neon-daily-' + date), r = mulberry32(seed), keys = Object.keys(MUTATORS), a = keys.splice(Math.floor(r() * keys.length), 1)[0];
+  return { date, seed: seed & 0x7fffffff, mutKeys: [a, keys[Math.floor(r() * keys.length)]] };
+}
+
 /* Arbre de compétences : 3 branches, 4 rangées, 3 colonnes */
 const BRANCHES = [
   { name: 'ARSENAL', color: '#ff3d5a', desc: 'Puissance de feu' },
@@ -858,7 +887,8 @@ const ACH = {
   scholar:  { n: 'Érudit', d: 'Atteindre 15 rangs de compétences dans une partie.', i: '⟁' },
   recycler: { n: 'Ferrailleur', d: 'Recycler 10 débris (cumulé).', i: '⟳' },
   hard15:   { n: 'Masochiste', d: 'Atteindre la vague 15 en Hardcore ou Cauchemar.', i: '☢' },
-  overdrive:{ n: 'Pleine Puissance', d: 'Utiliser les 3 capacités dans une même partie.', i: '✺' }
+  overdrive:{ n: 'Pleine Puissance', d: 'Utiliser les 3 capacités dans une même partie.', i: '✺' },
+  daily:    { n: 'Défi Relevé', d: 'Atteindre la vague 15 lors d\'un Défi du jour.', i: '☼' }
 };
 
 const ABILS = {
@@ -1078,6 +1108,24 @@ function drawTowerHead(x, d) {
   x.restore();
 }
 
+// détails animés (pales du ventilo, LED, arcs) : dessinés à chaque image en jeu, figés dans les icônes
+function drawHeadExtras(c, d, t, off, live) {
+  if (d.head === 'fan') {
+    c.save(); c.rotate(t * .001 * (off ? 1 : 14));
+    c.fillStyle = 'rgba(220,240,255,.85)';
+    for (let i = 0; i < 3; i++) { c.rotate(TAU / 3); c.beginPath(); c.ellipse(0, -5.5, 2.4, 5.5, 0, 0, TAU); c.fill(); }
+    c.fillStyle = '#9fb0cc'; circ(c, 0, 0, 2.2); c.fill();
+    c.restore();
+  } else if (d.head === 'cpu' || d.head === 'nexus') {
+    const L = [[-4.5, -4.5], [1.5, -4.5], [-4.5, 1.5], [1.5, 1.5]];
+    c.fillStyle = d.color;
+    for (let i = 0; i < 4; i++) if (((t / (170 + i * 70)) | 0) & 1) c.fillRect(L[i][0], L[i][1], 3, 3);
+  } else if (d.head === 'coil' && live && !off && Math.random() < .25) {
+    c.strokeStyle = d.color; c.lineWidth = 1; c.beginPath();
+    c.moveTo(0, -14); c.lineTo(rnd(-9, 9), rnd(-24, -12)); c.lineTo(rnd(-12, 12), rnd(-27, -16)); c.stroke();
+  }
+}
+
 function drawEnemyShape(x, d, elite) {
   const r = d.r * (elite ? 1.25 : 1), c = d.color;
   x.save();
@@ -1192,7 +1240,7 @@ const Spr = {
     cv.width = Math.round(css * dpr); cv.height = Math.round(css * dpr);
     const x = cv.getContext('2d'), s = css * dpr / 64;
     x.setTransform(s, 0, 0, s, 32 * s, 32 * s);
-    drawTowerBase(x, TOWERS[key]); x.rotate(rot); drawTowerHead(x, TOWERS[key]);
+    drawTowerBase(x, TOWERS[key]); x.rotate(rot); drawTowerHead(x, TOWERS[key]); drawHeadExtras(x, TOWERS[key], 520, false, false);
   },
   enemyIcon(cv, type, css) {
     const dpr = Math.min(2, window.devicePixelRatio || 1), d = EDEF(type);
@@ -1458,11 +1506,11 @@ const Combat = {
 /* ============================== ENNEMIS ============================== */
 const Enemies = {
   spawn(type, o = {}) {
-    const d = EDEF(type), elite = !!o.elite, hm = (o.hpMul || 1) * (elite ? 3 : 1);
+    const d = EDEF(type), elite = !!o.elite, mu = G.mut, hm = (o.hpMul || 1) * (elite ? 3 : 1) * (d.boss ? mu.bossHp : 1);
     const e = {
       id: G.nextId++, type, d, alive: true, boss: !!d.boss, air: !!d.air, stealth: !!d.stealth, elite,
       hp: d.hp * hm, maxHp: d.hp * hm, shield: (d.shield || 0) * hm, maxShield: (d.shield || 0) * hm,
-      armor: (d.armor || 0) * Math.sqrt(o.hpMul || 1), spd: d.spd, r: d.r * (elite ? 1.25 : 1),
+      armor: ((d.armor || 0) + mu.armorAdd) * mu.armor * Math.sqrt(o.hpMul || 1), spd: d.spd * mu.spd, r: d.r * (elite ? 1.25 : 1),
       dist: o.dist || 0, seg: 0, x: 0, y: 0, px: 0, py: 0, ang: 0,
       slowT: 0, slowF: 1, burnT: 0, burnDps: 0, burnSrc: null, freezeT: 0, revealT: 0, markT: 0, markV: 0, hitT: 0, shCd: 0,
       wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: Math.random() * TAU,
@@ -1552,7 +1600,7 @@ const Enemies = {
     if (G.combo > G.stats.maxCombo) G.stats.maxCombo = G.combo;
     if (G.combo === 100) Ach.unlock('combo');
     const cm = 1 + Math.min(1, Math.floor(G.combo / 10) * .1);
-    const bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * (1 + .02 * (G.waveNum - 1))));
+    const bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * G.mut.bounty * (1 + .02 * (G.waveNum - 1))));
     G.money += bounty; G.stats.gold += bounty;
     if (UI.dmgNums || e.boss) FX.float(e.x, e.y - 8, '+' + bounty, '#ffd23f', e.boss ? 18 : 10);
     if (e.d.spawn) {
@@ -1563,8 +1611,9 @@ const Enemies = {
     }
     const dm = G.mod.drop;
     if (e.boss) {
-      G.nanites += 3; G.stats.bosses++;
-      FX.float(e.x, e.y - 28, '+3 ◈', '#00ffaa', 18);
+      const bn = 3 + G.mut.bossNano;
+      G.nanites += bn; G.stats.bosses++;
+      FX.float(e.x, e.y - 28, `+${bn} ◈`, '#00ffaa', 18);
       Ach.unlock('boss');
       Render.shake(16); Render.flash(.35, e.d.color); Sfx.play('boom');
       for (let i = 0; i < 4; i++) FX.ring(e.x, e.y, i & 1 ? '#ffffff' : e.d.color, 50 + i * 30, 26 + i * 6, 3);
@@ -2055,27 +2104,29 @@ const Strikes = {
 /* ============================== VAGUES ============================== */
 const Waves = {
   hpMul(n) { const k = n - 1; return (1 + .2 * k + .016 * k * k) * Math.pow(1.032, k) * G.diff.hp; },
+  // hasard reproductible : une carte donnée produit toujours les mêmes vagues (aperçu fiable, Défi du jour équitable)
+  rng(n, salt = 0) { return mulberry32((G.seed ^ Math.imul(n + 1, 2654435761) ^ salt) >>> 0); },
   plan(n) {
-    const boss = n % 5 === 0;
+    const R = this.rng(n), boss = n % 5 === 0;
     let th = WTHEMES[0];
     if (boss) th = { id: 'boss', name: 'Alerte Boss', countMul: .65 };
-    else if (n > 3) { const pool = WTHEMES.filter(t => (t.from || 1) <= n); th = pool[weightedIndex(pool.map(t => t.w))]; }
-    const budget = (8 + n * 3.2 + n * n * .06) * (th.countMul || 1);
+    else if (n > 3) { const pool = WTHEMES.filter(t => (t.from || 1) <= n); th = pool[weightedIndex(pool.map(t => t.w), R)]; }
+    const budget = (8 + n * 3.2 + n * n * .06) * (th.countMul || 1) * G.mut.count;
     const avail = Object.keys(ENEMIES).filter(k => ENEMIES[k].from <= n);
     const wts = avail.map(k => (k === 'drone' ? 2.2 : 1) * ((th.mod && th.mod[k]) || 1) * (ENEMIES[k].from === n ? .6 : 1));
     const list = []; let spent = 0;
-    while (spent < budget && list.length < 400) { const k = avail[weightedIndex(wts)]; list.push(k); spent += ENEMIES[k].w; }
+    while (spent < budget && list.length < 400) { const k = avail[weightedIndex(wts, R)]; list.push(k); spent += ENEMIES[k].w; }
     // regroupe les ennemis en paquets du même type : vagues plus lisibles
     const counts = {}; for (const k of list) counts[k] = (counts[k] || 0) + 1;
     const left = Object.assign({}, counts), order = [];
     let keys = Object.keys(left);
     while (keys.length) {
-      const k = pick(keys), take = Math.min(left[k], rndi(3, 7));
+      const k = keys[Math.floor(R() * keys.length)], take = Math.min(left[k], 3 + Math.floor(R() * 5));
       for (let i = 0; i < take; i++) order.push(k);
       left[k] -= take; if (!left[k]) delete left[k];
       keys = Object.keys(left);
     }
-    return { n, name: th.name, theme: th.id, list: order, counts, bosses: boss ? this.bossesFor(n) : [], hpMul: this.hpMul(n) * (th.hpMul || 1), gapMul: th.gapMul || 1 };
+    return { n, name: th.name, theme: th.id, list: order, counts, bosses: boss ? this.bossesFor(n) : [], hpMul: this.hpMul(n) * (th.hpMul || 1) * G.mut.hp, gapMul: th.gapMul || 1 };
   },
   bossesFor(n) {
     const order = ['colosse', 'hydre', 'overlord'], k = n / 5 - 1, c = n >= 40 ? 3 : n >= 25 ? 2 : 1, out = [];
@@ -2090,15 +2141,15 @@ const Waves = {
     G.waveNum = n;
     const w = { n, left: 0, leaks: 0, hpMul: P.hpMul };
     G.waves[n] = w;
-    const base = G.tick + 40, gap = Math.max(11, 30 - n * .35) * P.gapMul;
-    const eliteP = n >= 8 ? Math.min(.15, .03 + n * .002) : 0;
+    const base = G.tick + 40, gap = Math.max(11, 30 - n * .35) * P.gapMul, R = this.rng(n, 0x5eed);
+    const eliteP = n >= (G.mut.elite > 1 ? 4 : 8) ? Math.min(.15, .03 + n * .002) * G.mut.elite : 0;
     let t = base;
     for (let i = 0; i < P.list.length; i++) {
       const type = P.list[i];
-      G.spawnQ.push({ at: Math.round(t), type, elite: Math.random() < eliteP, wave: n, hpMul: P.hpMul });
+      G.spawnQ.push({ at: Math.round(t), type, elite: R() < eliteP, wave: n, hpMul: P.hpMul });
       w.left++;
       const same = i + 1 < P.list.length && P.list[i + 1] === type;
-      t += gap * (ENEMIES[type].spd > 2 ? .55 : 1) * (same ? 1 : 2.2) * rnd(.85, 1.15);
+      t += gap * (ENEMIES[type].spd > 2 ? .55 : 1) * (same ? 1 : 2.2) * (.85 + R() * .3);
     }
     P.bosses.forEach((b, i) => { G.spawnQ.push({ at: Math.round(base + (t - base) * .4 + i * 150), type: b, wave: n, hpMul: P.hpMul }); w.left++; });
     G.spawnQ.sort((a, b) => a.at - b.at);
@@ -2119,7 +2170,7 @@ const Waves = {
     G.preview = this.plan(n + 1);
     UI.onPreview();
     if (UI.sel) UI.renderPanel();
-    Music.intensity = 1;
+    if (!G.demo) Music.intensity = 1;
   },
   update() {
     const Q = G.spawnQ;
@@ -2132,7 +2183,7 @@ const Waves = {
   },
   cleared(w) {
     delete G.waves[w.n];
-    const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus), nano = 1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0);
+    const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus), nano = Math.round((1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0)) * G.mut.nano);
     G.money += bonus; G.stats.gold += bonus; G.nanites += nano;
     let extra = '';
     if (G.mod.interest > 0) {
@@ -2152,6 +2203,7 @@ const Waves = {
     if (w.n >= 50) Ach.unlock('wave50');
     if (w.n >= 10 && G.stats.leaks === 0) Ach.unlock('noleak');
     if (w.n >= 15 && (G.diffKey === 'hardcore' || G.diffKey === 'cauchemar')) Ach.unlock('hard15');
+    if (w.n >= 15 && G.daily) Ach.unlock('daily');
     if (Object.keys(G.waves).length === 0 && G.spawnQ.length === 0) {
       G.phase = 'prep'; G.autoT = 480; Music.intensity = 0;
       SaveSys.save();
@@ -2348,7 +2400,7 @@ const Fusion = {
 
 const Ach = {
   unlock(id) {
-    if (!ACH[id] || Store.data.ach[id]) return;
+    if (!ACH[id] || Store.data.ach[id] || (G && G.demo)) return;
     Store.data.ach[id] = Date.now(); Store.data.meta.frags += 3; Store.save();
     UI.toast('Succès : ' + ACH[id].n, ACH[id].d + ' <span class="frags">+3 ✦</span>', '#ffd23f', 4.5);
     Sfx.play('ach');
@@ -2358,10 +2410,10 @@ const Ach = {
 /* ============================== SAUVEGARDE ============================== */
 const SaveSys = {
   save() {
-    if (!G || G.over) return;
+    if (!G || G.over || G.demo) return;
     const M = G.map;
     Store.data.save = {
-      v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
+      v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys, money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       nanites: G.nanites, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
       map: { C: M.C, R: M.R, cells: Array.from(M.cells).join(''), path: M.path },
       towers: G.towers.map(t => [t.key, t.tx, t.ty, t.level, t.invested, t.kills, Math.round(t.dealt), t.strat, t.oc ? 1 : 0]),
@@ -2381,18 +2433,22 @@ const Game = {
       strikes: [], vortices: [], spawnQ: [], waves: {}, money: 0, lives: 0, maxLives: 0, nanites: 0, recycle: 0, waveNum: 0,
       phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
+      daily: null, mutKeys: [], mut: makeMut([]), demo: false,
       stats: { kills: 0, gold: 0, maxCombo: 0, leaks: 0, bosses: 0, built: 0, fusions: 0, clean: 0 }
     };
     Path.build(map);
     return G;
   },
-  newGame(diffKey) {
+  newGame(diffKey, opts = {}) {
+    Demo.stop();
     const pk = Store.data.meta.perks, diff = DIFFS[diffKey];
-    const seed = (Math.random() * 2147483647) | 0;
+    const daily = opts.daily ? dailyInfo() : null;
+    const seed = daily ? daily.seed : (Math.random() * 2147483647) | 0;
     const portrait = View.w < View.h * .9;
     this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
-    G.money = diff.money + 40 * (pk.h_money || 0);
-    G.maxLives = G.lives = diff.lives + 15 * (pk.h_lives || 0);
+    if (daily) { G.daily = daily.date; G.mutKeys = daily.mutKeys; G.mut = makeMut(daily.mutKeys); }
+    G.money = Math.round((diff.money + 40 * (pk.h_money || 0)) * G.mut.money);
+    G.maxLives = G.lives = Math.max(5, Math.round((diff.lives + 15 * (pk.h_lives || 0)) * G.mut.lives));
     G.nanites = 3 + 2 * (pk.h_nano || 0);
     G.recycle = 2 + (pk.h_recycle || 0);
     for (let i = 0; i < (pk.h_bp || 0); i++) {
@@ -2408,8 +2464,10 @@ const Game = {
     const s = Store.data.save;
     if (!s) return false;
     try {
+      Demo.stop();
       const map = { C: s.map.C, R: s.map.R, cells: Uint8Array.from(s.map.cells, ch => +ch), path: s.map.path };
       this.makeState(s.diffKey, map, s.seed);
+      if (s.daily) { G.daily = s.daily; G.mutKeys = s.mutKeys || []; G.mut = makeMut(G.mutKeys); }
       Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, recycle: s.recycle,
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {} });
       Object.assign(G.abil, s.abil || {});
@@ -2436,7 +2494,10 @@ const Game = {
     Perf.slow = 0;
     UI.enterGame();
     if (fresh) SaveSys.save();
-    UI.banner(fresh ? 'PROTOCOLE ENGAGÉ' : 'SYSTÈMES RESTAURÉS', `${G.diff.name} · VAGUE ${G.waveNum + 1}`, G.diff.color);
+    if (G.daily) {
+      UI.banner(fresh ? 'DÉFI DU JOUR' : 'SYSTÈMES RESTAURÉS', G.mutKeys.map(k => MUTATORS[k].n.toUpperCase()).join(' + '), '#ffd23f');
+      if (fresh) UI.toast('Défi du jour · ' + G.daily, G.mutKeys.map(k => `<b>${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>'), '#ffd23f', 8);
+    } else UI.banner(fresh ? 'PROTOCOLE ENGAGÉ' : 'SYSTÈMES RESTAURÉS', `${G.diff.name} · VAGUE ${G.waveNum + 1}`, G.diff.color);
   },
   update() {
     G.tick++;
@@ -2452,10 +2513,18 @@ const Game = {
   gameOver() {
     if (!G || G.over) return;
     G.over = true; G.lives = 0;
-    const frags = Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2) * G.diff.frag));
+    if (G.demo) { Demo.pending = true; return; }
+    const frags = Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1)));
     Store.data.meta.frags += frags;
-    const rec = Store.data.records[G.diffKey] || 0, best = G.waveNum > rec;
-    if (best) Store.data.records[G.diffKey] = G.waveNum;
+    let best;
+    if (G.daily) {
+      const D = Store.data.daily || (Store.data.daily = {});
+      best = G.waveNum > (D[G.daily] || 0);
+      if (best) D[G.daily] = G.waveNum;
+    } else {
+      best = G.waveNum > (Store.data.records[G.diffKey] || 0);
+      if (best) Store.data.records[G.diffKey] = G.waveNum;
+    }
     Store.data.stats.kills += G.stats.kills;
     Store.data.save = null;
     Store.save();
@@ -2474,6 +2543,116 @@ const Game = {
     FX.clear(); Shots.pool.clear();
     Render.dirtyMap = true;
     UI.exitGame();
+  }
+};
+
+/* ============================== DÉMO : UNE IA JOUE DERRIÈRE LE MENU ==============================
+   Vraie partie simulée en direct. Pendant ses ticks (Demo.busy), sons, notifications,
+   succès et sauvegardes sont neutralisés. */
+const Demo = {
+  busy: false, pending: false, time: 0, nextUnlock: 10, cand: [],
+  start() {
+    G = null;
+    if (!Store.s.demo) { Render.dirtyMap = true; Render.resize(); return; }
+    const seed = (Math.random() * 2147483647) | 0;
+    Game.makeState('standard', MapGen.generate(seed, View.w < View.h * .9), seed);
+    G.demo = true; G.money = 1900; G.maxLives = G.lives = 60; G.waveNum = 5;
+    const t2 = RECIPES.filter(r => TOWERS[r.r].tier === 2 && TOWERS[r.r].kind !== 'support').map(r => r.r);
+    for (let i = 0; i < 3; i++) G.unlocked.add(t2.splice(Math.floor(Math.random() * t2.length), 1)[0]);
+    G.skills = { a1: 2, a2: 1, e1: 2, c1: 1, c3: 1, a6: 1, e6: 1 };
+    Skills.apply();
+    G.preview = Waves.plan(G.waveNum + 1);
+    FX.clear(); Shots.pool.clear();
+    Game.acc = 0; this.pending = false; this.time = 0; this.nextUnlock = 10;
+    this.scan();
+    Render.dirtyMap = true; Render.resize();
+  },
+  stop() { if (G && G.demo) { G = null; FX.clear(); Shots.pool.clear(); Render.dirtyMap = true; } },
+  scan() {
+    const M = G.map, pts = [];
+    for (let d = 0; d < M.total; d += 24) { Path.posAt(d, _pt); pts.push(_pt.x, _pt.y); }
+    this.cand = [];
+    for (let y = 0; y < M.R; y++) for (let x = 0; x < M.C; x++) {
+      if (M.cells[y * M.C + x] !== 0) continue;
+      const cx = (x + .5) * TILE, cy = (y + .5) * TILE, c = [0, 0, 0];
+      for (let i = 0; i < pts.length; i += 2) {
+        const dd = d2(pts[i], pts[i + 1], cx, cy);
+        if (dd <= 120 * 120) c[0]++; if (dd <= 180 * 180) c[1]++; if (dd <= 300 * 300) c[2]++;
+      }
+      this.cand.push({ x, y, c });
+    }
+  },
+  tile(key) {
+    const r = TOWERS[key].range, k = r >= 250 ? 2 : r >= 150 ? 1 : 0;
+    const ok = this.cand.filter(c => Towers.canPlace(c.x, c.y)).sort((a, b) => b.c[k] - a.c[k]);
+    return ok.length ? ok[Math.floor(Math.random() * Math.min(3, ok.length))] : null;
+  },
+  think() {
+    const P = G.preview, has = k => G.towers.some(t => t.key === k);
+    if (G.waveNum >= this.nextUnlock) {
+      this.nextUnlock += 6;
+      const c = RECIPES.filter(r => Fusion.canResearch(r) && TOWERS[r.r].tier <= 3 && TOWERS[r.r].kind !== 'support');
+      if (c.length) G.unlocked.add(pick(c).r);
+    }
+    const base = ['blaster', 'sniper', 'vulcan', 'cryo', 'titan', 'aero', 'inferno', 'blaster'];
+    for (let guard = 0; guard < 40; guard++) {
+      const want = 6 + G.waveNum * .85;
+      let key = null;
+      if ((P.counts.spectre || 0) && !has('radar') && !has('stasis')) key = 'radar';
+      else if ((P.counts.flyer || 0) > 2 && !has('aero') && !has('swarm')) key = 'aero';
+      else if (G.towers.length < want) {
+        const fus = [...G.unlocked].filter(k => TOWERS[k].kind !== 'support');
+        key = fus.length && Math.random() < .55 ? pick(fus) : pick(base);
+      }
+      if (key) {
+        if (G.money >= Towers.costOf(key)) {
+          const tl = this.tile(key);
+          if (tl) { const t = Towers.build(key, tl.x, tl.y); if (t && t.d.heat && Math.random() < .2) t.oc = true; continue; }
+        } else if (G.towers.length < want * .6) break;
+      }
+      if (G.money > 500 && Math.random() < .12) {
+        const strong = G.towers.filter(t => t.d.tier >= 2 && t.d.kind !== 'support');
+        if (strong.length) {
+          const s = pick(strong), [dx, dy] = pick(NB4);
+          if (Towers.canPlace(s.tx + dx, s.ty + dy)) { Towers.build(Math.random() < .5 ? 'computer' : 'fan', s.tx + dx, s.ty + dy); continue; }
+        }
+      }
+      let up = null;
+      for (const t of G.towers) if (t.d.kind !== 'support' && t.level < 10 && (!up || Towers.upCost(t) < Towers.upCost(up))) up = t;
+      if (up && G.money >= Towers.upCost(up)) { Towers.upgrade(up); continue; }
+      break;
+    }
+  },
+  abilities() {
+    if (G.abil.orbital <= 0 && G.enemies.length > 6) {
+      let best = null, bn = 0;
+      for (const e of G.enemies) {
+        if (!e.alive) continue;
+        let n = 0; for (const o of G.enemies) if (o.alive && d2(o.x, o.y, e.x, e.y) < 10000) n++;
+        if (n > bn) { bn = n; best = e; }
+      }
+      if (best && bn >= 5) Abil.use('orbital', best.x, best.y);
+    }
+    if (G.boss && G.abil.emp <= 0) Abil.use('emp');
+    if (G.enemies.length > 18 && G.abil.overdrive <= 0) Abil.use('overdrive');
+  },
+  tick() {
+    this.time++;
+    if (G.phase === 'prep') { this.think(); Waves.launch(); }
+    else if (G.tick % 150 === 0) this.think();
+    if (G.tick % 60 === 0) this.abilities();
+    Game.update();
+  },
+  frame(dt) {
+    Game.acc += dt * 1.4;
+    let steps = 0;
+    this.busy = true;
+    try {
+      while (Game.acc >= TICK_MS && steps < 8 && !this.pending) { this.tick(); Game.acc -= TICK_MS; steps++; }
+    } finally { this.busy = false; }
+    if (steps >= 8) Game.acc = 0;
+    Render.alpha = clamp(Game.acc / TICK_MS, 0, 1);
+    if (this.pending || this.time > 60 * 60 * 6 || (G.waveNum >= 28 && G.phase === 'prep')) this.start();
   }
 };
 
@@ -2530,8 +2709,12 @@ const Render = {
     this.dirtyBg = this.dirtyMap = true;
     this.initAmbient();
   },
-  shake(a) { if (Store.s.shake) this.shakeA = Math.max(this.shakeA, a); },
-  flash(a, col) { if (!Store.s.shake) a *= .35; if (a > this.flashA) { this.flashA = a; this.flashC = col || '#fff'; } },
+  shake(a) { if (Store.s.shake && !(G && G.demo)) this.shakeA = Math.max(this.shakeA, a); },
+  flash(a, col) {
+    if (!Store.s.shake) a *= .35;
+    if (G && G.demo) a *= .25;
+    if (a > this.flashA) { this.flashA = a; this.flashC = col || '#fff'; }
+  },
   frame(now) {
     this.time = now;
     if (this.dirtyBg) this.drawBg();
@@ -2836,7 +3019,7 @@ const Render = {
     }
   },
   drawTowers(c, t) {
-    const od = G.overdriveT > 0, k = t * .001;
+    const od = G.overdriveT > 0;
     for (const tw of G.towers) {
       const x = tw.cx, y = tw.cy, d = tw.d, off = tw.stun > 0 || tw.over;
       if (d.kind === 'radar' && !off) {
@@ -2853,19 +3036,7 @@ const Render = {
       if (tw.recoil > .2) c.translate(0, tw.recoil);
       if (off) c.globalAlpha = .45;
       c.drawImage(Spr.head(tw.key), -32, -32, 64, 64);
-      if (d.head === 'fan') {
-        c.rotate(k * (off ? 1 : 14));
-        c.fillStyle = 'rgba(220,240,255,.85)';
-        for (let i = 0; i < 3; i++) { c.rotate(TAU / 3); c.beginPath(); c.ellipse(0, -5.5, 2.4, 5.5, 0, 0, TAU); c.fill(); }
-        c.fillStyle = '#9fb0cc'; circ(c, 0, 0, 2.2); c.fill();
-      } else if (d.head === 'cpu' || d.head === 'nexus') {
-        const L = [[-4.5, -4.5], [1.5, -4.5], [-4.5, 1.5], [1.5, 1.5]];
-        c.fillStyle = d.color;
-        for (let i = 0; i < 4; i++) if (((t / (170 + i * 70)) | 0) & 1) c.fillRect(L[i][0], L[i][1], 3, 3);
-      } else if (d.head === 'coil' && this.hq && !off && Math.random() < .25) {
-        c.strokeStyle = d.color; c.lineWidth = 1; c.beginPath();
-        c.moveTo(0, -14); c.lineTo(rnd(-9, 9), rnd(-24, -12)); c.lineTo(rnd(-12, 12), rnd(-27, -16)); c.stroke();
-      }
+      drawHeadExtras(c, d, t, off, this.hq);
       c.restore();
       if (tw.heat > 1) {
         const p = tw.heat / 100;
@@ -3270,6 +3441,7 @@ const UI = {
 
   /* ---------- bannière & notifications ---------- */
   banner(t, s, col) {
+    if (Demo.busy) return;
     const B = $('banner'); B.innerHTML = '';
     const d = document.createElement('div'); d.className = 'bn';
     if (col) d.style.setProperty('--bc', col);
@@ -3278,6 +3450,7 @@ const UI = {
     clearTimeout(this._bt); this._bt = setTimeout(() => d.remove(), 2700);
   },
   toast(title, text, col = '#ffd23f', life = 4) {
+    if (Demo.busy) return;
     const box = $('toasts');
     while (box.children.length >= 4) box.firstChild.remove();
     const d = document.createElement('div'); d.className = 'toast';
@@ -3394,6 +3567,7 @@ const UI = {
     this.last.wbtn = null;
   },
   onPreview() {
+    if (G.demo) return;
     const P = G.preview;
     $('wp-name').textContent = `${P.n} · ${P.name}`;
     const box = $('wp-chips'); box.innerHTML = '';
@@ -3493,7 +3667,7 @@ const UI = {
       (locked ? `<div class="d" style="color:var(--dang);margin-top:4px">Verrouillée — compétence « ${SKILLS[a.skill].n} » requise (Arbre).</div>` : '');
   },
   refreshAbils(force) {
-    if (!G) return;
+    if (!G || G.demo) return;
     for (const k of Abil.keys) {
       const A = this.abEls[k]; if (!A) continue;
       const cd = G.abil[k], un = Abil.unlocked(k);
@@ -3669,7 +3843,7 @@ const UI = {
     this.stack = this.stack.filter(x => x !== id);
     this.hideTip();
     if (G && (id === 'ov-tree' || id === 'ov-lab')) { this.refreshHUD(); this.refreshBadges(); }
-    if (!G && id === 'ov-meta' && Game.state === 'menu') this.showMenu();
+    if (id === 'ov-meta' && Game.state === 'menu') this.showMenu();
   },
   closeAll() { for (const id of this.stack) $(id).classList.remove('show'); this.stack = []; },
   top() { return this.stack[this.stack.length - 1]; },
@@ -3687,19 +3861,25 @@ const UI = {
   },
   showMenu() {
     this.closeAll();
-    const s = Store.data.save, list = [];
-    if (s && DIFFS[s.diffKey]) list.push([`CONTINUER<small>${DIFFS[s.diffKey].name} · VAGUE ${s.waveNum + 1}</small>`, 'prim', () => {
+    const s = Store.data.save, list = [], di = dailyInfo(), dBest = (Store.data.daily || {})[di.date];
+    if (s && DIFFS[s.diffKey]) list.push([`CONTINUER<small>${s.daily ? 'DÉFI DU JOUR' : DIFFS[s.diffKey].name} · VAGUE ${s.waveNum + 1}</small>`, 'prim', () => {
       if (!Game.load()) { this.toast('Sauvegarde illisible', 'Impossible de restaurer la partie.', '#ff2a6d'); this.showMenu(); }
     }]);
     list.push(['NOUVELLE PARTIE', s ? '' : 'prim', () => this.openNew()]);
+    list.push([`DÉFI DU JOUR<small>${di.mutKeys.map(k => MUTATORS[k].n).join(' + ')}${dBest ? ' · record : vague ' + dBest : ''}</small>`, 'sec', () => {
+      const go = () => { this.closeAll(); Game.newGame('standard', { daily: true }); };
+      if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par le Défi du jour.', go); else go();
+    }]);
     list.push([`HÉRITAGE<small>${Store.data.meta.frags} fragments</small>`, 'gold', () => this.openMeta()]);
     list.push([`SUCCÈS<small>${Object.keys(Store.data.ach).filter(k => ACH[k]).length} / ${Object.keys(ACH).length}</small>`, '', () => this.openAch()]);
     list.push(['OPTIONS', '', () => this.openOptions()]);
     list.push(['MANUEL', '', () => this.openHelp()]);
     this.btns($('menu-btns'), list);
     const rec = Object.keys(DIFFS).filter(k => Store.data.records[k]).map(k => `${DIFFS[k].name} <b>${Store.data.records[k]}</b>`).join(' · ');
-    $('menu-foot').innerHTML = `${rec ? 'Records — ' + rec + '<br>' : ''}Un seul fichier · 100% hors-ligne · v${VERSION}`;
+    $('menu-foot').innerHTML = `${rec ? 'Records — ' + rec + '<br>' : ''}Un seul fichier · 100% hors-ligne · v${VERSION}` +
+      (Store.s.demo ? '<br><span style="opacity:.6">En arrière-plan : une IA défend une carte en direct</span>' : '');
     this.open('ov-menu');
+    if (!G && Store.s.demo) Demo.start();
   },
   openNew() {
     const g = $('diff-grid'); g.innerHTML = '';
@@ -3719,7 +3899,8 @@ const UI = {
   openPause() {
     if (!G || G.over) return;
     this.setPlacing(null, true); this.setTargeting(null);
-    $('pause-info').innerHTML = `${G.diff.name} · Vague <b>${G.waveNum}</b> · Graine <b>${G.seed}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles`;
+    $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · Graine <b>${G.seed}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
+      (G.daily ? '<br>' + G.mutKeys.map(k => `<b style="color:var(--gold)">${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>') : '');
     this.btns($('pause-btns'), [
       ['REPRENDRE', 'prim', () => this.close('ov-pause')],
       ['OPTIONS', '', () => this.openOptions()],
@@ -3741,6 +3922,7 @@ const UI = {
       <div class="opt"><span>Secousses & flashs</span><button class="btn" id="o-sh">${tg(s.shake)}</button></div>
       <div class="opt"><span>Chiffres de dégâts</span><button class="btn" id="o-dn">${tg(s.dmgNums)}</button></div>
       <div class="opt"><span>Compteur FPS<small>Touche F3</small></span><button class="btn" id="o-fps">${tg(s.fps)}</button></div>
+      <div class="opt"><span>Démo IA du menu<small>Une partie jouée par l'IA en fond du menu principal</small></span><button class="btn" id="o-demo">${tg(s.demo)}</button></div>
       <div class="opt" style="border:0"><span>Réinitialiser la progression<small>Héritage, succès, records et sauvegarde</small></span><button class="btn danger" id="o-reset">EFFACER</button></div>`;
     $('o-sfx').oninput = e => { s.sfx = e.target.value / 100; Sfx.applyVolumes(); };
     $('o-sfx').onchange = () => { Store.save(); Sfx.play('coin'); };
@@ -3752,10 +3934,15 @@ const UI = {
     $('o-sh').onclick = () => { s.shake = !s.shake; Store.save(); this.openOptions(); };
     $('o-dn').onclick = () => { s.dmgNums = !s.dmgNums; this.dmgNums = s.dmgNums; Store.save(); this.openOptions(); };
     $('o-fps').onclick = () => { this.toggleFps(); this.openOptions(); };
+    $('o-demo').onclick = () => {
+      s.demo = !s.demo; Store.save();
+      if (Game.state === 'menu') { if (s.demo) Demo.start(); else { Demo.stop(); Render.resize(); } }
+      this.openOptions();
+    };
     $('o-reset').onclick = () => this.confirm('TOUT EFFACER ?', 'Héritage, succès, records et sauvegarde seront définitivement supprimés.', () => {
       const keep = Store.s; Store.data = Store.defaults(); Store.data.settings = keep; Store.data.tuto = true; Store.save();
       this.toast('Progression effacée', 'Nouveau départ, Commandant.', '#ff2a6d');
-      if (!G) this.showMenu();
+      if (Game.state === 'menu') this.showMenu();
     });
     this.open('ov-opts');
   },
@@ -3874,9 +4061,9 @@ const UI = {
 
   /* ---------- fin de partie, héritage, succès, manuel ---------- */
   gameOver(frags, best) {
-    const s = G.stats, mins = Math.max(1, Math.round(G.tick / 3600)), dk = G.diffKey;
+    const s = G.stats, mins = Math.max(1, Math.round(G.tick / 3600)), dk = G.diffKey, daily = !!G.daily;
     $('over-body').innerHTML = `<h2 style="color:var(--dang)">ÉCHEC SYSTÈME</h2>
-      <div class="sub">${G.diff.name} · le noyau a cédé à la vague <b>${G.waveNum}</b>${best ? ' — <b style="color:var(--gold)">NOUVEAU RECORD !</b>' : ''}</div>
+      <div class="sub">${daily ? 'Défi du jour ' + G.daily : G.diff.name} · le noyau a cédé à la vague <b>${G.waveNum}</b>${best && G.waveNum > 1 ? ' — <b style="color:var(--gold)">NOUVEAU RECORD !</b>' : ''}</div>
       <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
       <div>Crédits gagnés <b>${fmt(s.gold)}</b></div><div>Combo max <b>${s.maxCombo}</b></div>
       <div>Boss vaincus <b>${s.bosses}</b></div><div>Fusions terrain <b>${s.fusions}</b></div>
@@ -3885,7 +4072,7 @@ const UI = {
       <div class="row" style="justify-content:center;gap:10px;margin-top:14px"><button class="btn" id="go-menu">MENU</button><button class="btn gold" id="go-meta">HÉRITAGE</button><button class="btn prim" id="go-again">REJOUER</button></div>`;
     $('go-menu').onclick = () => Game.quit(false);
     $('go-meta').onclick = () => { Game.quit(false); this.openMeta(); };
-    $('go-again').onclick = () => { this.closeAll(); Game.newGame(dk); };
+    $('go-again').onclick = () => { this.closeAll(); Game.newGame(dk, { daily }); };
     this.open('ov-over');
   },
   openMeta() {
@@ -3989,7 +4176,7 @@ function loop(now) {
       Render.alpha = 1;
       if (G.over) FX.update();
     }
-  }
+  } else if (Game.state === 'menu' && G && G.demo) Demo.frame(dt);
   Render.frame(now);
   UI.frame();
   Perf.workMs = Perf.workMs * .95 + (performance.now() - w0) * .05;
