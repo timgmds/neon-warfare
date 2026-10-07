@@ -328,6 +328,20 @@ svg.links line.on{stroke:var(--bc);stroke-width:2.5;opacity:.85}
 kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border:1px solid #445;border-bottom-width:2px;border-radius:4px;
   font:11px var(--mono);color:#dfe8ff;background:#0d121c}
 
+/* ---------- CODEX ---------- */
+.cxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.cx{display:grid;grid-template-columns:54px 1fr;gap:4px 12px;align-items:start;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;
+  background:linear-gradient(160deg,rgba(255,255,255,.05),transparent)}
+.cx canvas{width:54px;height:54px;grid-row:1/4}
+.cx h4{margin:0;font-size:13px;letter-spacing:.12em;color:var(--cc)}
+.cx .cm{font:10px var(--mono);color:var(--dim);line-height:1.5}
+.cx .cm b{color:#fff}
+.cx p{margin:0;font-size:11px;color:#a9b6cc;line-height:1.45;grid-column:2}
+.cx.lock{opacity:.55}
+.cx.lock canvas{filter:brightness(0) drop-shadow(0 0 1px #5a6478)}
+.cx.lock h4{color:var(--dim)}
+#codex-tabs button.on{background:var(--accent)}
+
 /* ---------- MISSIONS ---------- */
 #missions{position:absolute;right:10px;z-index:28;width:250px;background:rgba(4,7,14,.84);border:1px solid var(--line);border-radius:10px;
   padding:7px 10px 8px;font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
@@ -518,6 +532,10 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   <h2>HÉRITAGE</h2><div class="sub" id="meta-sub"></div><div class="plist" id="meta-list"></div></div></div>
 <div class="ov" id="ov-ach"><div class="modal" style="width:800px"><button class="mclose" data-close>✕</button>
   <h2>SUCCÈS</h2><div class="sub" id="ach-sub"></div><div class="plist" id="ach-list"></div></div></div>
+<div class="ov" id="ov-codex"><div class="modal" style="width:960px"><button class="mclose" data-close>✕</button>
+  <h2>CODEX</h2><div class="sub" id="codex-sub"></div>
+  <div class="seg" id="codex-tabs" style="max-width:340px;margin-bottom:14px"><button data-k="e" class="on">ENNEMIS</button><button data-k="t">TOURELLES</button></div>
+  <div class="cxgrid" id="codex"></div></div></div>
 <div class="ov" id="ov-help"><div class="modal" style="width:840px"><button class="mclose" data-close>✕</button><h2>MANUEL DE COMBAT</h2><div id="help" class="help"></div></div></div>
 <div class="ov" id="ov-confirm"><div class="modal" style="width:390px;text-align:center"><h2 id="cf-t"></h2><div class="sub" id="cf-x"></div>
   <div class="row" style="justify-content:center;gap:10px;margin-top:14px"><button class="btn" id="cf-no">ANNULER</button><button class="btn danger" id="cf-yes">CONFIRMER</button></div></div></div>
@@ -614,7 +632,7 @@ const Store = {
     return {
       settings: { sfx: .6, music: .3, musicStyle: 'ambient', quality: 'auto', theme: 'theme-cyber', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true },
       meta: { frags: 0, perks: {} }, ach: {}, records: {}, daily: {}, stats: { recycled: 0, games: 0, kills: 0 }, save: null, tuto: false,
-      cmd: { lvl: 1, xp: 0 }, doctrine: 'standard'
+      cmd: { lvl: 1, xp: 0 }, doctrine: 'standard', codex: { e: {}, t: {} }
     };
   },
   load() {
@@ -627,6 +645,7 @@ const Store = {
     this.data.meta = Object.assign({ frags: 0, perks: {} }, d.meta || {});
     this.data.stats = Object.assign(this.defaults().stats, d.stats || {});
     this.data.cmd = Object.assign({ lvl: 1, xp: 0 }, d.cmd || {});
+    this.data.codex = Object.assign({ e: {}, t: {} }, d.codex || {});
   },
   save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); } catch (e) { /* stockage indisponible */ } },
   get s() { return this.data.settings; }
@@ -942,6 +961,28 @@ for (const k in BOSSES) BOSSES[k].key = k;
 const BOSS_ORDER = ['colosse', 'hydre', 'overlord', 'scission', 'sentinelle', 'sauteur'];
 const EDEF = k => ENEMIES[k] || BOSSES[k];
 
+/* textes du Codex pour les ennemis */
+const LORE = {
+  drone: 'L\'infanterie de base de l\'essaim. Seul, il ne pèse rien ; en nombre, il use les défenses.',
+  scout: 'Rapide et fragile. Il profite des trous dans la couverture de vos tourelles.',
+  shield: 'Porte un bouclier qui se recharge s\'il n\'est plus touché pendant 3 secondes.',
+  tank: 'Blindage épais : chaque impact perd une partie de ses dégâts. Les gros calibres le percent.',
+  spectre: 'Invisible tant qu\'un Radar ou une Stase ne le révèle pas.',
+  medic: 'Soigne les ennemis autour de lui à intervalles réguliers. Priorité absolue.',
+  flyer: 'Survole le terrain : Inferno, Titan, Magma et les barricades ne le gênent pas.',
+  glitch: 'Instable, il se téléporte en avant le long du chemin.',
+  jammer: 'Son impulsion IEM neutralise les tourelles proches pendant 1,5 s.',
+  carrier: 'Transporte quatre éclaireurs qu\'il libère à sa destruction.',
+  shard: 'Moitié de Scission. Se brise à son tour en deux éclats.',
+  shardlet: 'Dernier éclat d\'une Scission. Rapide, mais fragile.',
+  colosse: 'Forteresse ambulante au blindage massif. Lent, mais il encaisse tout.',
+  hydre: 'Invoque des drones en avançant et libère six éclaireurs en mourant.',
+  overlord: 'Bouclier colossal et impulsions IEM à large portée.',
+  scission: 'Cristal instable : abattu, il se divise en deux fragments, puis en quatre éclats.',
+  sentinelle: 'Projette des boucliers sur tous les ennemis qui l\'entourent.',
+  sauteur: 'S\'immobilise, marque son point d\'atterrissage puis bondit loin en avant.'
+};
+
 const HINTS = {
   shield:  ['Gardiens', 'Bouclier régénérant : il se recharge s\'il n\'est plus touché pendant 3 s.'],
   tank:    ['Blindés', 'Le blindage réduit chaque impact. Préférez Sniper, Laser, Railgun ou les gros calibres.'],
@@ -1054,7 +1095,8 @@ const ACH = {
   recycler: { n: 'Ferrailleur', d: 'Recycler 10 débris (cumulé).', i: '⟳' },
   hard15:   { n: 'Masochiste', d: 'Atteindre la vague 15 en Hardcore ou Cauchemar.', i: '☢' },
   overdrive:{ n: 'Pleine Puissance', d: 'Utiliser les 3 capacités dans une même partie.', i: '✺' },
-  daily:    { n: 'Défi Relevé', d: 'Atteindre la vague 15 lors d\'un Défi du jour.', i: '☼' }
+  daily:    { n: 'Défi Relevé', d: 'Atteindre la vague 15 lors d\'un Défi du jour.', i: '☼' },
+  codex:    { n: 'Encyclopédiste', d: 'Compléter entièrement le Codex.', i: '❖' }
 };
 
 const ABILS = {
@@ -1898,6 +1940,7 @@ const Enemies = {
     };
     Path.place(e); e.px = e.x; e.py = e.y;
     G.enemies.push(e);
+    Codex.see('e', type);
     if (o.child && G.waves[e.wave]) G.waves[e.wave].left++;
     if (e.boss) { Render.shake(8); Sfx.play('boss'); }
     return e;
@@ -2080,6 +2123,7 @@ const Towers = {
       spin: Math.random() * TAU, dead: false, born: performance.now(), spec: null, sm: {}, pierce: 0, shots: 0
     };
     G.towers.push(t); G.tgrid[ty * G.map.C + tx] = t;
+    Codex.see('t', key);
     return t;
   },
   build(key, tx, ty) {
@@ -3079,6 +3123,20 @@ const Cards = {
     if (G.timed.length !== n) Skills.apply();
     return { nano, cash };
   }
+};
+
+/* ============================== CODEX ============================== */
+const Codex = {
+  keys() { return { e: Object.keys(ENEMIES).concat(Object.keys(BOSSES)), t: Object.keys(TOWERS) }; },
+  see(kind, key) {
+    if (!G || G.demo) return;
+    const C = Store.data.codex[kind];
+    if (C[key]) return;
+    C[key] = Date.now(); Store.save();
+    const K = this.keys();
+    if (K.e.every(k => Store.data.codex.e[k]) && K.t.every(k => Store.data.codex.t[k])) Ach.unlock('codex');
+  },
+  progress() { const K = this.keys(), C = Store.data.codex; return [K.e.filter(k => C.e[k]).length + K.t.filter(k => C.t[k]).length, K.e.length + K.t.length]; }
 };
 
 const Ach = {
@@ -4792,6 +4850,8 @@ const UI = {
     }]);
     list.push([`HÉRITAGE<small>${Store.data.meta.frags} fragments</small>`, 'gold', () => this.openMeta()]);
     list.push([`SUCCÈS<small>${Object.keys(Store.data.ach).filter(k => ACH[k]).length} / ${Object.keys(ACH).length}</small>`, '', () => this.openAch()]);
+    const cx = Codex.progress();
+    list.push([`CODEX<small>${cx[0]} / ${cx[1]} fiches</small>`, '', () => this.openCodex()]);
     list.push(['OPTIONS', '', () => this.openOptions()]);
     list.push(['MANUEL', '', () => this.openHelp()]);
     this.btns($('menu-btns'), list);
@@ -4828,6 +4888,7 @@ const UI = {
       ['REPRENDRE', 'prim', () => this.close('ov-pause')],
       ['OPTIONS', '', () => this.openOptions()],
       ['MANUEL', '', () => this.openHelp()],
+      ['CODEX', '', () => this.openCodex()],
       ['RECOMMENCER', '', () => this.confirm('RECOMMENCER ?', G.daily ? 'Le Défi du jour reprend depuis le début.' : 'Nouvelle carte, même difficulté. La partie en cours sera perdue.', () => {
         const dk = G.diffKey, daily = !!G.daily; this.closeAll(); Game.newGame(dk, { daily });
       })],
@@ -5036,6 +5097,37 @@ const UI = {
       Lst.appendChild(el);
     }
     this.open('ov-meta');
+  },
+  openCodex(tab = this.codexTab || 'e') {
+    this.codexTab = tab;
+    const [n, tot] = Codex.progress();
+    $('codex-sub').innerHTML = `<b>${n} / ${tot}</b> fiches découvertes — rencontrez un ennemi ou construisez une tourelle pour débloquer sa fiche.`;
+    $('codex-tabs').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.k === tab); b.onclick = () => { Sfx.play('ui'); this.openCodex(b.dataset.k); }; });
+    const box = $('codex'), C = Store.data.codex[tab];
+    box.innerHTML = '';
+    for (const k of Codex.keys()[tab]) {
+      const own = !!C[k], el = document.createElement('div');
+      el.className = 'cx' + (own ? '' : ' lock');
+      let body;
+      if (tab === 'e') {
+        const d = EDEF(k);
+        el.style.setProperty('--cc', d.color);
+        body = `<h4>${own ? d.name.toUpperCase() : '???'}${d.boss ? ' <small style="color:var(--dang)">BOSS</small>' : ''}</h4>` +
+          `<div class="cm">${own ? `PV <b>${d.hp}</b>${d.armor ? ` · blindage <b>${d.armor}</b>` : ''}${d.shield ? ` · bouclier <b>${d.shield}</b>` : ''} · vitesse <b>${(d.spd * 60 / TILE).toFixed(1)}</b> cases/s<br>prime <b>${d.bounty}¢</b> · fuite <b>-${d.leak}</b>${d.air ? ' · <b>volant</b>' : ''}` : 'Pas encore rencontré'}</div>` +
+          `<p>${own ? LORE[k] || '' : ''}</p>`;
+      } else {
+        const d = TOWERS[k], rec = RECIPES.find(r => r.r === k);
+        el.style.setProperty('--cc', d.color);
+        body = `<h4>${own ? d.name.toUpperCase() : '???'} <small style="color:var(--dim)">${TIER_NAMES[d.tier]}</small></h4>` +
+          `<div class="cm">${own ? (d.kind === 'support' ? 'Soutien' : `dégâts <b>${d.dmg}${d.kind === 'beam' ? '/s' : ''}</b> · portée <b>${(d.range / TILE).toFixed(1)}</b>`) + ` · <b>${d.cost}¢</b>` : rec ? `Fusion de ${TOWERS[rec.a].name} + ${TOWERS[rec.b].name}` : 'Jamais construite'}</div>` +
+          `<p>${own ? d.desc : ''}</p>`;
+      }
+      el.innerHTML = '<canvas></canvas>' + body;
+      const cv = el.querySelector('canvas');
+      if (tab === 'e') Spr.enemyIcon(cv, k, 54); else Spr.icon(cv, k, 54);
+      box.appendChild(el);
+    }
+    this.open('ov-codex');
   },
   openAch() {
     const A = Store.data.ach, n = Object.keys(ACH).filter(k => A[k]).length;
