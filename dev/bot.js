@@ -7,7 +7,7 @@
 window.Bot = {
   cov(G, tx, ty, r) {
     const M = G.map, cx = (tx + .5) * TILE, cy = (ty + .5) * TILE; let n = 0;
-    for (let d = 0; d < M.total; d += 20) { Path.posAt(d, _pt); if (d2(_pt.x, _pt.y, cx, cy) <= r * r) n++; }
+    M.P.forEach((P, pi) => { for (let d = 0; d < P.mergeDist; d += 20) { Path.posAt(d, _pt, pi); if (d2(_pt.x, _pt.y, cx, cy) <= r * r) n++; } });
     return n;
   },
   init(G) {
