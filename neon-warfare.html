@@ -4,9 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#05060c">
-<title>NEON WARFARE 8 · Fusion Protocol</title>
+<title>Neon Warfare 8</title>
 <style>
+/* Univers unique et assumé : écran d'arcade néon, toujours sombre. */
 :root{
+  color-scheme:dark;
   --bg:#05060c; --panel:rgba(7,11,20,.96); --panel2:rgba(9,13,24,.98);
   --line:rgba(0,243,255,.16);
   --accent:#00f3ff; --accent-rgb:0,243,255; --sec:#ff2bd6; --dang:#ff2a6d; --gold:#ffd23f; --nano:#00ffaa; --ok:#39ff88;
@@ -55,7 +57,7 @@ body.no-crt #crt{display:none}
 .badge.on{display:block;animation:blink .8s infinite alternate}
 
 /* ---------- HUD ---------- */
-#hud{position:absolute;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:14px;padding:6px 14px;min-height:56px;
+#hud{position:absolute;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:14px;padding:calc(6px + env(safe-area-inset-top,0px)) 14px 6px;min-height:56px;
   background:linear-gradient(180deg,rgba(0,0,0,.92),rgba(0,0,0,.62));border-bottom:1px solid var(--line)}
 .hud-stats{display:flex;gap:20px;align-items:center;flex:0 0 auto}
 .hstat{display:flex;flex-direction:column;line-height:1;min-width:54px;cursor:default}
@@ -315,7 +317,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   #b-wave{min-width:0}
 }
 @media (max-width:640px){
-  #hud{flex-wrap:wrap;gap:4px 10px;padding:5px 8px}
+  #hud{flex-wrap:wrap;gap:4px 10px;padding:calc(5px + env(safe-area-inset-top,0px)) 8px 5px}
   .hud-stats{flex:1;justify-content:space-between}
   #h-center{order:3;flex-basis:100%;justify-content:space-between;min-height:20px}
   #dock{flex-wrap:wrap;gap:8px;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
@@ -337,7 +339,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   .btn .k,.bcard .hk,.abil .key{display:none}
 }
 @media (max-height:540px) and (min-width:641px){
-  #hud{min-height:44px;padding:3px 10px}
+  #hud{min-height:44px;padding:calc(3px + env(safe-area-inset-top,0px)) 10px 3px}
   .hstat b{font-size:16px}
   #dock{padding:4px 10px}
   .abil{width:42px;height:42px;font-size:18px}
@@ -4283,7 +4285,10 @@ function boot() {
     give(m = 5000, n = 50) { if (G) { G.money += m; G.nanites += n; } }
   };
 }
-boot();
+// si le jeu est affiché dans un visualiseur qui recharge la page à chaud, on sauvegarde avant (entre deux vagues)
+const hot = window.claude && window.claude.hot;
+if (hot && hot.snapshot) hot.snapshot(() => { try { if (G && !G.over && G.phase === 'prep') SaveSys.save(); } catch (e) { /* ignore */ } return {}; });
+if (hot && hot.ready) hot.ready(boot); else boot();
 </script>
 </body>
 </html>
