@@ -26,7 +26,7 @@ window.Bot = {
   play(G, skill = 1) {
     const P = G.preview;
     const want = ['plasma', 'laser', 'tesla', 'blizzard', 'stasis', 'nova', 'railgun', 'storm', 'singularity', 'apocalypse', 'magma', 'swarm'];
-    for (const k of want) { const r = RECIPES.find(x => x.r === k); if (Fusion.canResearch(r) && G.nanites >= r.n) Fusion.research(r); }
+    for (const k of want) { const r = RECIPES.find(x => x.r === k); if (Fusion.canResearch(r) && G.nanites >= Fusion.cost(r)) Fusion.research(r); }
     const sk = ['a1', 'c1', 'e1', 'a1', 'a2', 'a3', 'c1', 'a1', 'c2', 'a2', 'a5', 'a4', 'e2', 'e3', 'c3', 'c4', 'a6', 'e5', 'e4', 'e6', 'c5', 'c6'];
     for (const id of sk) if (Skills.canBuy(id) && G.nanites >= Skills.cost(id) + 4) Skills.buy(id);
     const has = k => G.towers.some(t => t.key === k);
@@ -68,6 +68,9 @@ window.Bot = {
         if (G.boss && G.abil.overdrive <= 0 && Abil.unlocked('overdrive')) Abil.use('overdrive');
       }
       if (G.lives < l0) log.push(`w${G.waveNum}:-${l0 - G.lives}`);
+      // protocoles : le bot prend la première carte proposée (choix neutre, ni optimal ni pire)
+      while (G.cardQ > 0 && G.offer) Cards.pick(0);
+      UI.closeAll();
     }
     return { diff, wave: G.waveNum, ms: (performance.now() - t0) | 0, towers: G.towers.length, fus: G.unlocked.size, sk: Skills.total(), leaks: log.join(' ') };
   },
