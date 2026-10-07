@@ -1481,30 +1481,75 @@ const MapGen = {
   generate(seed, portrait) {
     const rng = mulberry32(seed);
     const C = this.C, R = this.R, LC = 14, LR = 7;
-    let best = null;
+    // une carte sur deux est « en fourche » : une seconde entrée rejoint le chemin principal
+    const fork = rng() < .5;
+    let best = null, branch = null;
     for (let a = 0; a < 300 && !best; a++) {
-      const p = this.walk(rng, LC, LR, 30, 46);
-      if (p && this.turns(p) >= 9) best = p;
+      const p = this.walk(rng, LC, LR, fork ? 28 : 30, fork ? 40 : 46);
+      if (!p || this.turns(p) < 9) continue;
+      if (fork) { const b = this.branch(rng, LC, LR, p); if (!b) continue; branch = b; }
+      best = p;
     }
-    if (!best) best = this.serpentine(LC, LR);
-    const cells = new Uint8Array(C * R), tiles = [];
-    const put = (x, y) => { tiles.push([x, y]); cells[y * C + x] = 1; };
-    put(0, 2 * best[0][1] + 1);
-    for (let k = 0; k < best.length; k++) {
-      const [i, j] = best[k];
-      if (k > 0) { const [pi, pj] = best[k - 1]; put(pi + i + 1, pj + j + 1); }
-      put(2 * i + 1, 2 * j + 1);
+    if (!best) { best = this.serpentine(LC, LR); branch = null; }
+    const cells = new Uint8Array(C * R);
+    const toTiles = (nodes, closeTo) => {
+      const tiles = [[0, 2 * nodes[0][1] + 1]];
+      for (let k = 0; k < nodes.length; k++) {
+        const [i, j] = nodes[k];
+        if (k > 0) { const [pi, pj] = nodes[k - 1]; tiles.push([pi + i + 1, pj + j + 1]); }
+        tiles.push([2 * i + 1, 2 * j + 1]);
+      }
+      if (closeTo) { const [i, j] = nodes[nodes.length - 1], [mi, mj] = closeTo; tiles.push([i + mi + 1, j + mj + 1]); }
+      return tiles;
+    };
+    const main = toTiles(best);
+    main.push([C - 1, 2 * best[best.length - 1][1] + 1]);
+    const paths = [main];
+    if (branch) {
+      // tuiles propres à la branche, puis le tronc commun depuis le point de jonction
+      const own = toTiles(branch.nodes, best[branch.k]);
+      paths.push(own.concat(main.slice(1 + 2 * branch.k)));
     }
-    put(C - 1, 2 * best[best.length - 1][1] + 1);
+    for (const P of paths) for (const [x, y] of P) cells[y * C + x] = 1;
     // débris recyclables
     let count = Math.floor(C * R * .075), guard = 0;
     while (count > 0 && guard++ < 3000) {
       const x = Math.floor(rng() * C), y = Math.floor(rng() * R);
       if (cells[y * C + x] === 0) { cells[y * C + x] = 2; count--; }
     }
-    let map = { C, R, cells, path: tiles };
+    let map = { C, R, cells, paths };
     if (portrait) map = this.transpose(map);
     return map;
+  },
+  // seconde entrée : marche qui évite le chemin principal et le rejoint dans sa partie centrale
+  branch(rng, LC, LR, A) {
+    const onA = new Map(); A.forEach(([i, j], k) => onA.set(j * LC + i, k));
+    const kMin = Math.floor(A.length * .3), kMax = Math.floor(A.length * .7);
+    const starts = []; for (let j = 0; j < LR; j++) if (!onA.has(j * LC) && Math.abs(j - A[0][1]) >= 2) starts.push(j);
+    for (let attempt = 0; attempt < 12 && starts.length; attempt++) {
+      const sj = starts[Math.floor(rng() * starts.length)];
+      const vis = new Uint8Array(LC * LR), path = [[0, sj]], stack = [this.dirs(rng)];
+      vis[sj * LC] = 1;
+      let steps = 0;
+      while (path.length && steps++ < 1500) {
+        const [i, j] = path[path.length - 1];
+        if (path.length >= 7) {
+          for (const [di, dj] of NB4) {
+            const k = onA.get((j + dj) * LC + i + di);
+            if (i + di >= 0 && i + di < LC && j + dj >= 0 && j + dj < LR && k !== undefined && k >= kMin && k <= kMax) return { nodes: path.slice(), k };
+          }
+        }
+        const opts = stack[stack.length - 1];
+        let moved = false;
+        if (path.length < 24) while (opts.length) {
+          const [di, dj] = opts.shift(), ni = i + di, nj = j + dj;
+          if (ni < 0 || nj < 0 || ni >= LC || nj >= LR || vis[nj * LC + ni] || onA.has(nj * LC + ni)) continue;
+          vis[nj * LC + ni] = 1; path.push([ni, nj]); stack.push(this.dirs(rng)); moved = true; break;
+        }
+        if (!moved) { const [bi, bj] = path.pop(); stack.pop(); vis[bj * LC + bi] = 0; }
+      }
+    }
+    return null;
   },
   walk(rng, LC, LR, minN, maxN) {
     const sj = 1 + Math.floor(rng() * (LR - 2));
@@ -1554,55 +1599,72 @@ const MapGen = {
   transpose(m) {
     const C2 = m.R, R2 = m.C, cells = new Uint8Array(C2 * R2);
     for (let y = 0; y < m.R; y++) for (let x = 0; x < m.C; x++) cells[x * C2 + y] = m.cells[y * m.C + x];
-    return { C: C2, R: R2, cells, path: m.path.map(([x, y]) => [y, x]) };
+    return { C: C2, R: R2, cells, paths: m.paths.map(P => P.map(([x, y]) => [y, x])) };
   }
 };
 
 /* ============================== CHEMIN ============================== */
+/* Une carte peut avoir plusieurs tracés (M.P). Chaque ennemi suit le sien (e.pi).
+   Les tuiles se suivent à 1 case d'écart, la distance d'une tuile i vaut donc (1,5 + i) cases. */
 const Path = {
-  build(M) {
-    const T = M.path, ctr = ([x, y]) => [(x + .5) * TILE, (y + .5) * TILE];
-    const pts = [];
-    const a = ctr(T[0]), b = ctr(T[1]);
-    pts.push([a[0] - (b[0] - a[0]) * 1.5, a[1] - (b[1] - a[1]) * 1.5]);
-    pts.push(a);
+  ctr: ([x, y]) => [(x + .5) * TILE, (y + .5) * TILE],
+  points(T, tail) {
+    const c = this.ctr, pts = [], a = c(T[0]), b = c(T[1]);
+    pts.push([a[0] - (b[0] - a[0]) * 1.5, a[1] - (b[1] - a[1]) * 1.5], a);
     for (let i = 1; i < T.length - 1; i++) {
       const p = T[i - 1], q = T[i], r = T[i + 1];
-      if (q[0] - p[0] !== r[0] - q[0] || q[1] - p[1] !== r[1] - q[1]) pts.push(ctr(q));
+      if (q[0] - p[0] !== r[0] - q[0] || q[1] - p[1] !== r[1] - q[1]) pts.push(c(q));
     }
-    const y = ctr(T[T.length - 1]), z = ctr(T[T.length - 2]);
-    pts.push(y); pts.push([y[0] + (y[0] - z[0]) * 1.5, y[1] + (y[1] - z[1]) * 1.5]);
-    const n = pts.length;
-    M.wp = pts; M.n = n;
-    M.px = new Float32Array(n); M.py = new Float32Array(n);
-    M.dx = new Float32Array(n); M.dy = new Float32Array(n); M.len = new Float32Array(n);
-    M.cum = new Float32Array(n); M.ang = new Float32Array(n);
+    const y = c(T[T.length - 1]), z = c(T[T.length - 2]);
+    pts.push(y);
+    if (tail) pts.push([y[0] + (y[0] - z[0]) * 1.5, y[1] + (y[1] - z[1]) * 1.5]);
+    return pts;
+  },
+  one(T, C, mergeAt) {
+    const pts = this.points(T, true), n = pts.length;
+    const P = { tiles: T, wp: pts, n, px: new Float32Array(n), py: new Float32Array(n), dx: new Float32Array(n), dy: new Float32Array(n),
+      len: new Float32Array(n), cum: new Float32Array(n), ang: new Float32Array(n), tdist: new Map() };
     let acc = 0;
     for (let i = 0; i < n; i++) {
-      M.px[i] = pts[i][0]; M.py[i] = pts[i][1]; M.cum[i] = acc;
+      P.px[i] = pts[i][0]; P.py[i] = pts[i][1]; P.cum[i] = acc;
       if (i < n - 1) {
         const dx = pts[i + 1][0] - pts[i][0], dy = pts[i + 1][1] - pts[i][1], l = Math.hypot(dx, dy) || 1;
-        M.dx[i] = dx; M.dy[i] = dy; M.len[i] = l; M.ang[i] = Math.atan2(dy, dx); acc += l;
+        P.dx[i] = dx; P.dy[i] = dy; P.len[i] = l; P.ang[i] = Math.atan2(dy, dx); acc += l;
       }
     }
-    M.ang[n - 1] = M.ang[n - 2];
-    M.total = acc;
-    M.entry = a; M.exit = y;
+    P.ang[n - 1] = P.ang[n - 2];
+    P.total = acc;
+    P.entry = this.ctr(T[0]); P.exit = this.ctr(T[T.length - 1]);
+    T.forEach(([x, y], i) => P.tdist.set(y * C + x, (1.5 + i) * TILE));
+    // tronçon propre d'une branche (avant la jonction) : c'est lui qu'on dessine
+    P.mergeDist = mergeAt != null ? (1.5 + mergeAt) * TILE : acc;
+    P.drawPts = mergeAt != null ? this.points(T.slice(0, mergeAt + 1), false) : pts;
+    return P;
+  },
+  build(M) {
+    const main = M.paths[0], key = ([x, y]) => y * M.C + x, onMain = new Set(main.map(key));
+    M.P = M.paths.map((T, pi) => {
+      let merge = null;
+      if (pi > 0) for (let i = 0; i < T.length; i++) if (onMain.has(key(T[i]))) { merge = i; break; }
+      return this.one(T, M.C, merge);
+    });
+    M.exit = M.P[0].exit;
   },
   place(e) {
-    const M = G.map; let s = e.seg;
-    while (s < M.n - 2 && e.dist > M.cum[s + 1]) s++;
-    while (s > 0 && e.dist < M.cum[s]) s--;
+    const P = G.map.P[e.pi]; let s = e.seg;
+    while (s < P.n - 2 && e.dist > P.cum[s + 1]) s++;
+    while (s > 0 && e.dist < P.cum[s]) s--;
     e.seg = s;
-    const t = (e.dist - M.cum[s]) / M.len[s];
-    e.x = M.px[s] + M.dx[s] * t; e.y = M.py[s] + M.dy[s] * t; e.ang = M.ang[s];
+    const t = (e.dist - P.cum[s]) / P.len[s];
+    e.x = P.px[s] + P.dx[s] * t; e.y = P.py[s] + P.dy[s] * t; e.ang = P.ang[s];
+    e.rem = P.total - e.dist;
   },
-  posAt(dist, out) {
-    const M = G.map; dist = clamp(dist, 0, M.total);
-    let lo = 0, hi = M.n - 2;
-    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (M.cum[mid] <= dist) lo = mid; else hi = mid - 1; }
-    const t = (dist - M.cum[lo]) / M.len[lo];
-    out.x = M.px[lo] + M.dx[lo] * t; out.y = M.py[lo] + M.dy[lo] * t; out.a = M.ang[lo];
+  posAt(dist, out, pi = 0) {
+    const P = G.map.P[pi] || G.map.P[0]; dist = clamp(dist, 0, P.total);
+    let lo = 0, hi = P.n - 2;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (P.cum[mid] <= dist) lo = mid; else hi = mid - 1; }
+    const t = (dist - P.cum[lo]) / P.len[lo];
+    out.x = P.px[lo] + P.dx[lo] * t; out.y = P.py[lo] + P.dy[lo] * t; out.a = P.ang[lo];
     return out;
   }
 };
@@ -1735,7 +1797,7 @@ const Enemies = {
       id: G.nextId++, type, d, alive: true, boss: !!d.boss, air: !!d.air, stealth: !!d.stealth, elite,
       hp: d.hp * hm, maxHp: d.hp * hm, shield: (d.shield || 0) * hm, maxShield: (d.shield || 0) * hm,
       armor: ((d.armor || 0) + mu.armorAdd) * mu.armor * Math.sqrt(o.hpMul || 1), spd: d.spd * mu.spd * G.mod.espd, r: d.r * (elite ? 1.25 : 1),
-      dist: o.dist || 0, seg: 0, x: 0, y: 0, px: 0, py: 0, ang: 0,
+      dist: o.dist || 0, seg: 0, x: 0, y: 0, px: 0, py: 0, ang: 0, pi: G.map.P[o.pi] ? o.pi : 0, rem: 0,
       slowT: 0, slowF: 1, burnT: 0, burnDps: 0, burnSrc: null, freezeT: 0, revealT: 0, markT: 0, markV: 0, hitT: 0, shCd: 0,
       wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: Math.random() * TAU,
       tA: d.summon ? d.summon.every : d.heal ? 60 : rndi(90, 200), tB: rndi(120, 240), sumLeft: d.summon ? d.summon.max : 0
@@ -1775,14 +1837,14 @@ const Enemies = {
         e.tA = d.summon.every; e.sumLeft--;
         const w = G.waves[e.wave];
         for (let k = 0; k < d.summon.n; k++)
-          this.spawn(d.summon.type, { dist: Math.max(0, e.dist - 26 - k * 16), hpMul: (w ? w.hpMul : 1) * .6, wave: e.wave, child: true });
+          this.spawn(d.summon.type, { dist: Math.max(0, e.dist - 26 - k * 16), hpMul: (w ? w.hpMul : 1) * .6, wave: e.wave, child: true, pi: e.pi });
         FX.ring(e.x, e.y, d.color, 50, 20, 2);
       }
       let sp = e.spd;
       if (e.freezeT > 0) { e.freezeT--; sp = 0; }
       else if (e.slowT > 0) { e.slowT--; sp *= e.slowF; if (e.slowT === 0) e.slowF = 1; }
       e.dist += sp;
-      if (e.dist >= M.total) { this.leak(e); if (G.over) return; continue; }
+      if (e.dist >= M.P[e.pi].total) { this.leak(e); if (G.over) return; continue; }
       Path.place(e);
       if (e.air) { e.ph += .05; const w = Math.sin(e.ph) * 7; e.x -= Math.sin(e.ang) * w; e.y += Math.cos(e.ang) * w; }
       if (e.boss && !boss) boss = e;
@@ -1836,7 +1898,7 @@ const Enemies = {
     if (e.d.spawn) {
       const s = e.d.spawn;
       for (let k = 0; k < s.n; k++)
-        this.spawn(s.type, { dist: Math.max(0, e.dist - k * 12), hpMul: (w ? w.hpMul : 1) * .5, wave: e.wave, child: true });
+        this.spawn(s.type, { dist: Math.max(0, e.dist - k * 12), hpMul: (w ? w.hpMul : 1) * .5, wave: e.wave, child: true, pi: e.pi });
       FX.float(e.x, e.y - 20, 'BRÈCHE', e.d.color, 12);
     }
     const dm = G.mod.drop;
@@ -1868,7 +1930,7 @@ const Enemies = {
     if (w) { w.left--; w.leaks++; }
     const dmg = e.d.leak * (e.elite ? 2 : 1);
     G.lives -= dmg; G.combo = 0; G.stats.leaks++;
-    const [x, y] = G.map.exit;
+    const [x, y] = G.map.P[e.pi].exit;
     FX.float(x, y - 24, '-' + dmg, '#ff2a6d', 18);
     FX.ring(x, y, '#ff2a6d', 40, 22, 3);
     Render.shake(e.boss ? 20 : 7); Render.flash(e.boss ? .4 : .18, '#ff2a6d'); Sfx.play('leak');
@@ -1988,7 +2050,7 @@ const Towers = {
       if (!e.alive || (d.ground && e.air) || (!seeAll && e.stealth && e.revealT <= 0)) continue;
       const dd = d2(e.x, e.y, t.cx, t.cy);
       if (dd > r2) continue;
-      const v = s === 0 ? e.dist : s === 1 ? e.hp + e.shield : s === 2 ? -(e.hp + e.shield) : -dd;
+      const v = s === 0 ? -e.rem : s === 1 ? e.hp + e.shield : s === 2 ? -(e.hp + e.shield) : -dd;
       if (v > bv) { bv = v; best = e; }
     }
     return best;
@@ -2156,7 +2218,7 @@ const Towers = {
     for (let k = 1; k < d.strikes; k++) targets.push(cand.length ? cand[Math.floor(Math.random() * cand.length)] : e);
     for (const o of targets) {
       const sp = o.freezeT > 0 ? 0 : o.spd * (o.slowT > 0 ? o.slowF : 1);
-      Path.posAt(o.dist + sp * 28, _pt);
+      Path.posAt(o.dist + sp * 28, _pt, o.pi);
       const x = o.air ? o.x : _pt.x, y = o.air ? o.y : _pt.y;
       Strikes.add(x + rnd(-6, 6), y + rnd(-6, 6), d.sr, dmg, t, d.color, 28, false);
     }
@@ -2185,7 +2247,7 @@ const Shots = {
     const dist = Math.hypot(e.x - x, e.y - y);
     p.dur = 26 + dist / 9;
     const sp = e.freezeT > 0 ? 0 : e.spd * (e.slowT > 0 ? e.slowF : 1);
-    Path.posAt(e.dist + sp * p.dur, _pt);
+    Path.posAt(e.dist + sp * p.dur, _pt, e.pi);
     p.tx = _pt.x; p.ty = _pt.y; p.sx = x; p.sy = y; p.t = 0; p.arc = 30 + dist * .25;
     p.sz = t.d.key === 'magma' ? 5 : 4; p.e = null;
   },
@@ -2205,7 +2267,7 @@ const Shots = {
   },
   vortex(t, e, dmg) {
     const sp = e.freezeT > 0 ? 0 : e.spd * (e.slowT > 0 ? e.slowF : 1);
-    Path.posAt(e.dist + sp * 20, _pt);
+    Path.posAt(e.dist + sp * 20, _pt, e.pi);
     const d = t.d;
     G.vortices.push({ x: _pt.x, y: _pt.y, r: d.vr, life: d.dur, max: d.dur, dps: dmg, pull: d.pull, src: t, col: d.color, a: 0 });
     FX.ring(_pt.x, _pt.y, d.color, 8, 24, 3, d.vr * 1.4);
@@ -2380,15 +2442,18 @@ const Waves = {
     G.waves[n] = w;
     const base = G.tick + 40, gap = Math.max(11, 30 - n * .35) * P.gapMul, R = this.rng(n, 0x5eed);
     const eliteP = n >= (G.mut.elite > 1 ? 4 : 8) ? Math.min(.15, .03 + n * .002) * G.mut.elite : 0;
-    let t = base;
+    let t = base, pi = 0;
+    const nP = G.map.P.length;
     for (let i = 0; i < P.list.length; i++) {
       const type = P.list[i];
-      G.spawnQ.push({ at: Math.round(t), type, elite: R() < eliteP, wave: n, hpMul: P.hpMul });
+      // sur une carte en fourche, chaque paquet d'ennemis choisit son entrée
+      if (nP > 1 && (i === 0 || P.list[i - 1] !== type)) pi = Math.floor(R() * nP);
+      G.spawnQ.push({ at: Math.round(t), type, elite: R() < eliteP, wave: n, hpMul: P.hpMul, pi });
       w.left++;
       const same = i + 1 < P.list.length && P.list[i + 1] === type;
       t += gap * (ENEMIES[type].spd > 2 ? .55 : 1) * (same ? 1 : 2.2) * (.85 + R() * .3);
     }
-    P.bosses.forEach((b, i) => { G.spawnQ.push({ at: Math.round(base + (t - base) * .4 + i * 150), type: b, wave: n, hpMul: P.hpMul }); w.left++; });
+    P.bosses.forEach((b, i) => { G.spawnQ.push({ at: Math.round(base + (t - base) * .4 + i * 150), type: b, wave: n, hpMul: P.hpMul, pi: Math.floor(R() * nP) }); w.left++; });
     G.spawnQ.sort((a, b) => a.at - b.at);
     for (const tw of G.towers) tw.fresh = false;
     G.phase = 'combat';
@@ -2414,7 +2479,7 @@ const Waves = {
     const Q = G.spawnQ;
     while (Q.length && Q[0].at <= G.tick) {
       const s = Q.shift();
-      Enemies.spawn(s.type, { hpMul: s.hpMul, elite: s.elite, wave: s.wave });
+      Enemies.spawn(s.type, { hpMul: s.hpMul, elite: s.elite, wave: s.wave, pi: s.pi || 0 });
     }
     for (const k in G.waves) { const w = G.waves[k]; if (w.left <= 0) this.cleared(w); }
     if (G.phase === 'prep' && Store.s.autoWave && !G.over && --G.autoT <= 0) this.launch();
@@ -2823,7 +2888,7 @@ const SaveSys = {
       v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
       doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       nanites: G.nanites, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
-      map: { C: M.C, R: M.R, cells: Array.from(M.cells).join(''), path: M.path },
+      map: { C: M.C, R: M.R, cells: Array.from(M.cells).join(''), paths: M.paths },
       towers: G.towers.map(t => [t.key, t.tx, t.ty, t.level, t.invested, t.kills, Math.round(t.dealt), t.strat, t.oc ? 1 : 0]),
       date: Date.now()
     };
@@ -2878,7 +2943,7 @@ const Game = {
     if (!s) return false;
     try {
       Demo.stop();
-      const map = { C: s.map.C, R: s.map.R, cells: Uint8Array.from(s.map.cells, ch => +ch), path: s.map.path };
+      const map = { C: s.map.C, R: s.map.R, cells: Uint8Array.from(s.map.cells, ch => +ch), paths: s.map.paths || [s.map.path] };
       this.makeState(s.diffKey, map, s.seed);
       if (s.daily) { G.daily = s.daily; G.mutKeys = s.mutKeys || []; G.mut = makeMut(G.mutKeys); }
       Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, recycle: s.recycle,
@@ -2988,7 +3053,7 @@ const Demo = {
   stop() { if (G && G.demo) { G = null; FX.clear(); Shots.pool.clear(); Render.dirtyMap = true; } },
   scan() {
     const M = G.map, pts = [];
-    for (let d = 0; d < M.total; d += 24) { Path.posAt(d, _pt); pts.push(_pt.x, _pt.y); }
+    M.P.forEach((P, pi) => { for (let d = 0; d < P.mergeDist; d += 24) { Path.posAt(d, _pt, pi); pts.push(_pt.x, _pt.y); } });
     this.cand = [];
     for (let y = 0; y < M.R; y++) for (let x = 0; x < M.C; x++) {
       if (M.cells[y * M.C + x] !== 0) continue;
@@ -3330,7 +3395,11 @@ const Render = {
     for (const [x, y, sx, sy] of [[0, 0, 1, 1], [W, 0, -1, 1], [W, H, -1, -1], [0, H, 1, -1]]) {
       c.beginPath(); c.moveTo(x + sx * k, y); c.lineTo(x, y); c.lineTo(x, y + sy * k); c.stroke();
     }
-    const P = M.wp, line = () => { c.beginPath(); c.moveTo(P[0][0], P[0][1]); for (let i = 1; i < P.length; i++) c.lineTo(P[i][0], P[i][1]); };
+    // tous les tracés dans le même chemin canvas : la jonction d'une fourche se fond proprement
+    const line = () => {
+      c.beginPath();
+      for (const { drawPts: P } of M.P) { c.moveTo(P[0][0], P[0][1]); for (let i = 1; i < P.length; i++) c.lineTo(P[i][0], P[i][1]); }
+    };
     c.lineJoin = 'round'; c.lineCap = 'round';
     line(); c.strokeStyle = rgba(A, .1); c.lineWidth = TILE * 1.22; c.stroke();
     line(); c.shadowColor = A; c.shadowBlur = 14 * View.dpr; c.strokeStyle = rgba(A, .65); c.lineWidth = TILE * .9; c.stroke(); c.shadowBlur = 0;
@@ -3389,19 +3458,24 @@ const Render = {
     c.globalCompositeOperation = 'lighter';
     c.strokeStyle = rgba(A, .32); c.lineWidth = 2; c.lineCap = 'round'; c.lineJoin = 'round';
     c.beginPath();
-    for (let d = off; d < M.total; d += gap) {
-      Path.posAt(d, _pt);
-      const ca = Math.cos(_pt.a), sa = Math.sin(_pt.a), x = _pt.x, y = _pt.y;
-      c.moveTo(x - ca * 3 - sa * 5, y - sa * 3 + ca * 5); c.lineTo(x + ca * 3, y + sa * 3); c.lineTo(x - ca * 3 + sa * 5, y - sa * 3 - ca * 5);
-    }
+    M.P.forEach((P, pi) => {
+      for (let d = off; d < P.mergeDist; d += gap) {
+        Path.posAt(d, _pt, pi);
+        const ca = Math.cos(_pt.a), sa = Math.sin(_pt.a), x = _pt.x, y = _pt.y;
+        c.moveTo(x - ca * 3 - sa * 5, y - sa * 3 + ca * 5); c.lineTo(x + ca * 3, y + sa * 3); c.lineTo(x - ca * 3 + sa * 5, y - sa * 3 - ca * 5);
+      }
+    });
     c.stroke();
     c.globalCompositeOperation = 'source-over';
   },
   drawPortals(c, t) {
-    const M = G.map, [ex, ey] = M.entry, [xx, xy] = M.exit, sec = this.theme.sec, A = this.theme.accent, k = t * .002;
-    c.lineWidth = 2.5; c.strokeStyle = rgba(sec, .85);
-    for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(ex, ey, 15, k + i * TAU / 3, k + i * TAU / 3 + 1.3); c.stroke(); }
-    c.strokeStyle = rgba(sec, .45); c.lineWidth = 1.5; c.beginPath(); c.arc(ex, ey, 9, -k * 1.5, -k * 1.5 + 4); c.stroke();
+    const M = G.map, [xx, xy] = M.exit, sec = this.theme.sec, A = this.theme.accent, k = t * .002;
+    for (const P of M.P) {
+      const [ex, ey] = P.entry;
+      c.lineWidth = 2.5; c.strokeStyle = rgba(sec, .85);
+      for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(ex, ey, 15, k + i * TAU / 3, k + i * TAU / 3 + 1.3); c.stroke(); }
+      c.strokeStyle = rgba(sec, .45); c.lineWidth = 1.5; c.beginPath(); c.arc(ex, ey, 9, -k * 1.5, -k * 1.5 + 4); c.stroke();
+    }
     const ratio = G.lives / G.maxLives, col = ratio > .5 ? A : ratio > .25 ? '#ffae00' : '#ff2a6d', pul = 1 + Math.sin(t * .005) * .08;
     c.save(); c.translate(xx, xy); c.rotate(k * .5);
     polyPath(c, 6, 17 * pul, 0); c.fillStyle = 'rgba(5,8,15,.92)'; c.fill(); c.strokeStyle = col; c.lineWidth = 2; c.stroke();
@@ -3409,7 +3483,7 @@ const Render = {
     c.restore();
     c.globalCompositeOperation = 'lighter';
     c.drawImage(Spr.glow(col), xx - 15, xy - 15, 30, 30);
-    c.drawImage(Spr.glow(sec, false), ex - 12, ey - 12, 24, 24);
+    for (const P of M.P) c.drawImage(Spr.glow(sec, false), P.entry[0] - 12, P.entry[1] - 12, 24, 24);
     c.globalCompositeOperation = 'source-over';
   },
   rangeCircle(c, x, y, r, col, fa, sa, dash) {
