@@ -929,10 +929,17 @@ const ENEMIES = {
 const BOSSES = {
   colosse:  { name: 'COLOSSE', hp: 1500, armor: 3, spd: .5, bounty: 160, leak: 20, r: 22, color: '#ff3d3d', shape: 'boss1', rot: true, boss: true },
   hydre:    { name: 'HYDRE', hp: 1250, armor: 1.5, spd: .6, bounty: 160, leak: 20, r: 21, color: '#3dff8a', shape: 'boss2', boss: true, summon: { type: 'drone', every: 200, n: 2, max: 8 }, spawn: { type: 'scout', n: 6 } },
-  overlord: { name: 'OVERLORD', hp: 1000, shield: 700, spd: .55, bounty: 180, leak: 25, r: 23, color: '#c43dff', shape: 'boss3', boss: true, jam: true, jamR: 150 }
+  overlord: { name: 'OVERLORD', hp: 1000, shield: 700, spd: .55, bounty: 180, leak: 25, r: 23, color: '#c43dff', shape: 'boss3', boss: true, jam: true, jamR: 150 },
+  scission:   { name: 'SCISSION', hp: 1050, armor: 2, spd: .55, bounty: 150, leak: 20, r: 21, color: '#ff9f1c', shape: 'boss4', rot: true, boss: true, spawn: { type: 'shard', n: 2, hp: 1 } },
+  sentinelle: { name: 'SENTINELLE', hp: 1250, shield: 400, spd: .5, bounty: 170, leak: 20, r: 22, color: '#4dd2ff', shape: 'boss5', boss: true, aura: { every: 240, r: 130, f: .3 } },
+  sauteur:    { name: 'SAUTEUR', hp: 1150, armor: 3, spd: .45, bounty: 170, leak: 22, r: 20, color: '#ff5cf0', shape: 'boss6', rot: true, boss: true, leap: { every: 330, dist: 230 } }
 };
+/* fragments de la Scission : jamais présents dans les vagues normales */
+ENEMIES.shard =    { name: 'Fragment', hp: 380, armor: 1, spd: .8, bounty: 25, leak: 6, r: 14, color: '#ffbf5c', shape: 'boss4', rot: true, w: 0, from: 999, spawn: { type: 'shardlet', n: 2, hp: 1 } };
+ENEMIES.shardlet = { name: 'Éclat', hp: 130, spd: 1.15, bounty: 8, leak: 3, r: 9, color: '#ffd9a0', shape: 'diamond', w: 0, from: 999 };
 for (const k in ENEMIES) ENEMIES[k].key = k;
 for (const k in BOSSES) BOSSES[k].key = k;
+const BOSS_ORDER = ['colosse', 'hydre', 'overlord', 'scission', 'sentinelle', 'sauteur'];
 const EDEF = k => ENEMIES[k] || BOSSES[k];
 
 const HINTS = {
@@ -1451,6 +1458,23 @@ function drawEnemyShape(x, d, elite) {
       x.shadowBlur = 0; x.fillStyle = 'rgba(30,0,50,.7)'; circ(x, 0, 0, r * .4); x.fill();
       x.fillStyle = '#ffccff'; circ(x, 0, 0, r * .16); x.fill();
       break;
+    case 'boss4':   // cristal fendu : il va se diviser
+      for (const s of [-1, 1]) { x.save(); x.translate(0, s * r * .28); polyPath(x, 4, r * .85, 0); x.fill(); x.stroke(); x.restore(); }
+      x.shadowBlur = 0; x.strokeStyle = 'rgba(40,10,0,.8)'; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(-r * .9, 0); x.lineTo(-r * .3, r * .12); x.lineTo(r * .2, -r * .1); x.lineTo(r * .9, 0); x.stroke();
+      x.fillStyle = '#fff'; circ(x, r * .35, 0, r * .13); x.fill();
+      break;
+    case 'boss5':   // sentinelle : hexagone entouré d'arcs de bouclier
+      polyPath(x, 6, r * .9, Math.PI / 6); x.fill(); x.stroke();
+      x.shadowBlur = 0; x.strokeStyle = 'rgba(160,240,255,.9)'; x.lineWidth = 2.5;
+      for (let i = 0; i < 3; i++) { x.beginPath(); x.arc(0, 0, r * 1.18, i * TAU / 3 + .2, i * TAU / 3 + 1.6); x.stroke(); }
+      x.fillStyle = 'rgba(0,30,50,.75)'; circ(x, 0, 0, r * .38); x.fill(); x.fillStyle = '#dff8ff'; circ(x, 0, 0, r * .15); x.fill();
+      break;
+    case 'boss6':   // sauteur : chevron prêt à bondir
+      x.beginPath(); x.moveTo(r * 1.25, 0); x.lineTo(-r * .55, r * 1.05); x.lineTo(-r * .15, 0); x.lineTo(-r * .55, -r * 1.05); x.closePath(); x.fill(); x.stroke();
+      x.beginPath(); x.moveTo(r * .2, 0); x.lineTo(-r * 1.05, r * .75); x.lineTo(-r * .8, 0); x.lineTo(-r * 1.05, -r * .75); x.closePath(); x.globalAlpha = .7; x.fill(); x.globalAlpha = 1;
+      x.shadowBlur = 0; x.fillStyle = '#fff'; circ(x, r * .45, 0, r * .14); x.fill();
+      break;
   }
   if (elite) { x.shadowBlur = 0; x.strokeStyle = '#ffd23f'; x.lineWidth = 2; circ(x, 0, 0, r + 4); x.stroke(); }
   x.restore();
@@ -1843,7 +1867,8 @@ const Enemies = {
       dist: o.dist || 0, seg: 0, x: 0, y: 0, px: 0, py: 0, ang: 0, pi: G.map.P[o.pi] ? o.pi : 0, rem: 0,
       slowT: 0, slowF: 1, burnT: 0, burnDps: 0, burnSrc: null, freezeT: 0, revealT: 0, markT: 0, markV: 0, hitT: 0, shCd: 0,
       wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: Math.random() * TAU,
-      tA: d.summon ? d.summon.every : d.heal ? 60 : rndi(90, 200), tB: rndi(120, 240), sumLeft: d.summon ? d.summon.max : 0
+      tA: d.summon ? d.summon.every : d.heal ? 60 : rndi(90, 200), tB: rndi(120, 240), sumLeft: d.summon ? d.summon.max : 0,
+      tC: d.aura ? 90 : 0, tD: d.leap ? d.leap.every : 0, leapTo: 0
     };
     Path.place(e); e.px = e.x; e.py = e.y;
     G.enemies.push(e);
@@ -1883,7 +1908,19 @@ const Enemies = {
           this.spawn(d.summon.type, { dist: Math.max(0, e.dist - 26 - k * 16), hpMul: (w ? w.hpMul : 1) * .6, wave: e.wave, child: true, pi: e.pi });
         FX.ring(e.x, e.y, d.color, 50, 20, 2);
       }
+      if (d.aura && --e.tC <= 0) { e.tC = d.aura.every; this.aura(e, d.aura); }
+      if (d.leap && --e.tD <= 0) {
+        if (!e.leapTo) {   // annonce : marqueur au point d'atterrissage pendant 1 s
+          e.leapTo = Math.min(M.P[e.pi].total - 40, e.dist + d.leap.dist); e.tD = 60;
+          FX.float(e.x, e.y - 30, 'BOND !', d.color, 14); Sfx.play('alarm', .6);
+        } else {
+          FX.spark(e.x, e.y, d.color, 20, 4); e.dist = Math.max(e.dist, e.leapTo); e.leapTo = 0; e.tD = d.leap.every;
+          Path.place(e); e.px = e.x; e.py = e.y;
+          FX.ring(e.x, e.y, d.color, 70, 26, 4); FX.spark(e.x, e.y, d.color, 24, 4.5); Render.shake(9); Sfx.play('boom', .6);
+        }
+      }
       let sp = e.spd;
+      if (e.leapTo) sp = 0;   // se ramasse avant de bondir
       if (e.freezeT > 0) { e.freezeT--; sp = 0; }
       else if (e.slowT > 0) { e.slowT--; sp *= e.slowF; if (e.slowT === 0) e.slowF = 1; }
       e.dist += sp;
@@ -1901,6 +1938,18 @@ const Enemies = {
       if (d2(o.x, o.y, e.x, e.y) < r2) { o.hp = Math.min(o.maxHp, o.hp + o.maxHp * .06); any = true; }
     }
     if (any) FX.ring(e.x, e.y, '#5dff7a', 85, 22, 1.5);
+  },
+  // Sentinelle : recouvre les ennemis proches d'un bouclier (fraction de leurs PV max)
+  aura(e, a) {
+    const r2 = a.r * a.r; let n = 0;
+    for (const o of G.enemies) {
+      if (!o.alive || o === e || d2(o.x, o.y, e.x, e.y) > r2) continue;
+      const s = o.maxHp * a.f;
+      if (o.maxShield < s) o.maxShield = s;
+      o.shield = Math.max(o.shield, s); o.shCd = 120; n++;
+    }
+    FX.ring(e.x, e.y, '#4dd2ff', a.r, 30, 3, 10);
+    if (n) FX.float(e.x, e.y - 30, 'BOUCLIERS', '#4dd2ff', 12);
   },
   blink(e) {
     FX.spark(e.x, e.y, e.d.color, 8, 2.4);
@@ -1941,8 +1990,8 @@ const Enemies = {
     if (e.d.spawn) {
       const s = e.d.spawn;
       for (let k = 0; k < s.n; k++)
-        this.spawn(s.type, { dist: Math.max(0, e.dist - k * 12), hpMul: (w ? w.hpMul : 1) * .5, wave: e.wave, child: true, pi: e.pi });
-      FX.float(e.x, e.y - 20, 'BRÈCHE', e.d.color, 12);
+        this.spawn(s.type, { dist: Math.max(0, e.dist - k * 14), hpMul: (w ? w.hpMul : 1) * (s.hp || .5) * (e.elite ? 1.5 : 1), wave: e.wave, child: true, pi: e.pi });
+      FX.float(e.x, e.y - 20, s.type === 'scout' ? 'BRÈCHE' : 'SCISSION', e.d.color, 12);
     }
     const dm = G.mod.drop;
     if (e.boss) {
@@ -2487,8 +2536,8 @@ const Waves = {
     return { n, name: th.name, theme: th.id, list: order, counts, bosses: boss ? this.bossesFor(n) : [], hpMul: this.hpMul(n) * (th.hpMul || 1) * G.mut.hp, gapMul: th.gapMul || 1 };
   },
   bossesFor(n) {
-    const order = ['colosse', 'hydre', 'overlord'], k = n / 5 - 1, c = n >= 45 ? 3 : n >= 30 ? 2 : 1, out = [];
-    for (let i = 0; i < c; i++) out.push(order[(k + i) % 3]);
+    const k = n / 5 - 1, c = n >= 45 ? 3 : n >= 30 ? 2 : 1, out = [];
+    for (let i = 0; i < c; i++) out.push(BOSS_ORDER[(k + i) % BOSS_ORDER.length]);
     return out;
   },
   canLaunch() { return !!G && !G.over && (G.phase === 'prep' || G.spawnQ.length === 0); },
@@ -3797,6 +3846,15 @@ const Render = {
     c.globalAlpha = 1;
   },
   drawOver(c, t) {
+    // marqueur d'atterrissage du Sauteur
+    for (const e of G.enemies) {
+      if (!e.alive || !e.leapTo) continue;
+      Path.posAt(e.leapTo, _pt, e.pi);
+      const k = 1 - e.tD / 60, r = 30 - k * 10;
+      c.strokeStyle = rgba(e.d.color, .5 + .5 * k); c.lineWidth = 2.5; c.setLineDash([6, 5]); c.lineDashOffset = -t * .06;
+      c.beginPath(); c.arc(_pt.x, _pt.y, r, 0, TAU); c.stroke(); c.setLineDash([]);
+      c.beginPath(); c.moveTo(e.x, e.y); c.lineTo(_pt.x, _pt.y); c.globalAlpha = .35; c.stroke(); c.globalAlpha = 1;
+    }
     for (const s of G.strikes) {
       const k = 1 - s.t / s.max, r = s.r * (1.6 - k * .6);
       c.strokeStyle = rgba(s.col, .4 + k * .5); c.lineWidth = 2;
@@ -4042,7 +4100,8 @@ const UI = {
     const p = [`PV ${fmt(d.hp * hpMul)}`];
     if (d.armor) p.push('blindé'); if (d.shield) p.push('bouclier'); if (d.air) p.push('volant'); if (d.stealth) p.push('furtif');
     if (d.spd >= 2) p.push('rapide'); if (d.heal) p.push('soigneur'); if (d.jam) p.push('IEM'); if (d.blink) p.push('téléportation');
-    if (d.spawn) p.push('libère des unités'); if (d.summon) p.push('invoque des drones');
+    if (d.spawn) p.push(d.spawn.type === 'scout' ? 'libère des unités' : 'se divise'); if (d.summon) p.push('invoque des drones');
+    if (d.aura) p.push('protège ses alliés'); if (d.leap) p.push('bondit en avant');
     return p.join(' · ');
   },
 
