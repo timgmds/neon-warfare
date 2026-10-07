@@ -53,6 +53,8 @@ body.no-crt #crt{display:none}
 .btn.nano{border-color:var(--nano);color:var(--nano)}
 .btn.nano:hover:not(:disabled){background:var(--nano);color:#000;border-color:var(--nano);box-shadow:0 0 14px var(--nano)}
 .btn .k{opacity:.55;font-size:9px;margin-left:6px;font-family:var(--mono)}
+.btn.big{padding:12px 22px;font-size:13px;letter-spacing:.2em}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .badge{display:none;position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:var(--nano);box-shadow:0 0 8px var(--nano)}
 .badge.on{display:block;animation:blink .8s infinite alternate}
 
@@ -222,7 +224,9 @@ body.no-crt #crt{display:none}
 .title span{display:block;font-size:.3em;letter-spacing:.62em;color:var(--accent);margin-top:12px;text-shadow:0 0 10px rgba(var(--accent-rgb),.8)}
 @keyframes glitch{0%,91%,100%{transform:none}92%{text-shadow:-4px 0 #ff2bd6,4px 0 #00f3ff;transform:skewX(-7deg)}94%{text-shadow:4px 0 #ff2bd6,-4px 0 #00f3ff;transform:skewX(5deg)}96%{transform:none}}
 .mbtns{display:flex;flex-direction:column;gap:9px;width:min(330px,80vw);margin-top:26px}
-.mbtns .btn{padding:13px;font-size:13px;letter-spacing:.28em}
+.mbtns .btn{padding:11px;font-size:13px;letter-spacing:.28em}
+#ov-menu{overflow-y:auto;align-items:safe center}
+.menu{padding-block:10px}
 #menu-btns .btn:not(:hover){background:rgba(4,7,14,.86)}
 .mbtns .btn small{display:block;font-size:9px;letter-spacing:.15em;opacity:.7;margin-top:3px;font-weight:600}
 .mfoot{margin-top:20px;font-size:11px;color:var(--dim);letter-spacing:1px;line-height:1.7}
@@ -301,12 +305,81 @@ svg.links line.on{stroke:var(--bc);stroke-width:2.5;opacity:.85}
 .mvp{display:flex;gap:12px;align-items:center;justify-content:center;margin:0 auto 14px;padding:8px 16px;border:1px solid var(--tc);border-radius:10px;
   background:rgba(255,255,255,.03);box-shadow:0 0 18px -8px var(--tc);width:fit-content}
 .mvp canvas{width:44px;height:44px}
+.gobtns{flex-wrap:wrap}
+@media (max-width:640px){.gobtns .big{flex:1 1 100%;order:-1}#missions .mh b{font-size:9px}}
 .help h3{color:var(--accent);letter-spacing:.2em;font-size:12px;margin:18px 0 6px}
 .help p,.help li{font-size:12.5px;color:#b7c4da;line-height:1.6;margin:0 0 5px}
 .help ul{margin:0;padding-left:18px}
 .help .cols{display:grid;grid-template-columns:1fr 1fr;gap:2px 22px}
 kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border:1px solid #445;border-bottom-width:2px;border-radius:4px;
   font:11px var(--mono);color:#dfe8ff;background:#0d121c}
+
+/* ---------- MISSIONS ---------- */
+#missions{position:absolute;right:10px;z-index:28;width:250px;background:rgba(4,7,14,.84);border:1px solid var(--line);border-radius:10px;
+  padding:7px 10px 8px;font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#missions .mh{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:9px;letter-spacing:.25em;color:var(--dim);font-weight:800}
+#missions .mh b{margin-left:auto;color:var(--gold);letter-spacing:.04em;font:700 10px var(--mono)}
+#missions .mh em{font-style:normal;color:var(--dim);font-size:13px;width:12px;text-align:center}
+.mxp{height:2px;background:#161b26;border-radius:1px;margin-top:5px;overflow:hidden}
+.mxp s{display:block;height:100%;background:var(--gold);text-decoration:none;transition:width .5s}
+#missions.min #mlist{display:none}
+#missions.flash{animation:mflash .9s}
+@keyframes mflash{30%{box-shadow:0 0 26px 2px var(--ok);border-color:var(--ok)}}
+.mi{margin-top:8px}
+.mi .mt{display:flex;gap:7px;align-items:baseline;color:#dfe8f8;line-height:1.3}
+.mi .mt i{font-style:normal;color:var(--accent);width:13px;text-align:center;flex:0 0 auto}
+.mi .mt span{flex:1;min-width:0}
+.mi .mr{font-family:var(--mono);font-size:10px;white-space:nowrap;font-weight:700}
+.mi .mb{display:flex;align-items:center;gap:7px;margin-top:4px}
+.mi .mb div{flex:1;height:4px;background:#161b26;border-radius:2px;overflow:hidden}
+.mi .mb s{display:block;height:100%;background:var(--accent);text-decoration:none;transition:width .3s}
+.mi .mb em{font:10px var(--mono);font-style:normal;color:var(--dim);min-width:52px;text-align:right}
+
+/* ---------- PROTOCOLES (cartes) ---------- */
+.cmodal{border-color:rgba(255,210,63,.6);box-shadow:0 20px 60px rgba(0,0,0,.9),0 0 50px -14px var(--gold)}
+.cmodal h2{color:var(--gold);text-shadow:0 0 14px rgba(255,210,63,.6)}
+.cgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pcard{position:relative;border:1px solid var(--rc);border-radius:12px;padding:20px 14px 14px;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;text-align:center;gap:9px;min-height:230px;background:linear-gradient(170deg,rgba(255,255,255,.07),rgba(255,255,255,.01));
+  transition:transform .15s,box-shadow .15s;animation:cardIn .4s cubic-bezier(.2,.9,.3,1.3) backwards}
+.pcard:nth-child(2){animation-delay:.08s}
+.pcard:nth-child(3){animation-delay:.16s}
+.pcard:hover,.pcard:focus-visible{transform:translateY(-6px);box-shadow:0 0 34px -6px var(--rc);outline:none}
+.pcard .ci{width:66px;height:66px;border-radius:50%;border:2px solid var(--rc);display:flex;align-items:center;justify-content:center;font-size:28px;
+  color:var(--rc);box-shadow:0 0 22px -4px var(--rc),inset 0 0 14px -6px var(--rc)}
+.pcard .rr{font-size:9px;letter-spacing:.32em;color:var(--rc);font-weight:800}
+.pcard h3{margin:0;font-size:15px;letter-spacing:.06em;text-wrap:balance}
+.pcard p{margin:0;font-size:12px;color:#b9c6dd;line-height:1.5}
+.pcard .st{margin-top:auto;font:10px var(--mono);color:var(--dim)}
+.pcard .ct{display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;min-width:0}
+.pcard .hk{position:absolute;top:8px;left:10px;font:10px var(--mono);color:var(--dim)}
+.pcard.pact{background:linear-gradient(170deg,rgba(255,61,90,.12),rgba(255,255,255,.01))}
+@keyframes cardIn{from{opacity:0;transform:translateY(26px) scale(.92)}}
+
+/* ---------- DOCTRINES & COMMANDANT ---------- */
+.docs{display:flex;flex-wrap:wrap;gap:8px;margin:7px 0 8px}
+.doc{display:flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:5px 12px 5px 6px;cursor:pointer;
+  font-size:12px;font-weight:700;letter-spacing:.04em;background:rgba(255,255,255,.02);color:#cfe3ff;font-family:var(--font)}
+.doc i{font-style:normal;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid currentColor;font-size:11px}
+.doc:hover:not(.lock){border-color:var(--gold)}
+.doc.on{border-color:var(--gold);color:var(--gold);background:rgba(255,210,63,.09);box-shadow:0 0 14px -6px var(--gold)}
+.doc.lock{opacity:.38;cursor:not-allowed}
+.doc-desc{font-size:12px;color:var(--dim);margin-bottom:16px;min-height:18px}
+.doc-desc b{color:var(--gold)}
+.cmdb{width:min(330px,80vw);margin-top:22px;text-align:left}
+.cmdb .cl{display:flex;align-items:baseline;gap:8px;font-size:11px;letter-spacing:.2em;color:var(--dim);font-weight:700}
+.cmdb .cl b{font:800 18px var(--mono);color:var(--gold);letter-spacing:0}
+.cmdb .cl span{color:#fff;letter-spacing:.12em}
+.cmdb .cl em{margin-left:auto;font:10px var(--mono);font-style:normal}
+.xpbar{height:6px;background:#141925;border-radius:3px;overflow:hidden;margin-top:6px;border:1px solid rgba(255,210,63,.25)}
+.xpbar s{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9500,var(--gold));text-decoration:none;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.cmdb .nx{font-size:10.5px;color:var(--dim);margin-top:6px}
+.cmdb .nx b{color:var(--gold)}
+.goline{font-size:15px;margin:2px 0 10px;font-weight:700;letter-spacing:.04em}
+.goline.rec{color:var(--gold);text-shadow:0 0 14px rgba(255,210,63,.6);font-size:18px;animation:blink .6s infinite alternate}
+#combo.t1 b{color:#ffae00} #combo.t2 b{color:#ff5e3a;font-size:28px} #combo.t3 b{color:#ff2bd6;font-size:32px;text-shadow:0 0 14px #ff2bd6}
+#combo.burst{animation:cburst .45s}
+@keyframes cburst{40%{transform:scale(1.45)}}
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width:900px){
@@ -331,6 +404,12 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   .bcard canvas{width:36px;height:36px}
   .panel{width:auto;padding:8px 10px;max-height:52vh;overflow-y:auto}
   .panel .note{display:none}
+  #missions{width:min(210px,56vw);right:6px}
+  .cgrid{grid-template-columns:1fr;gap:10px}
+  .pcard{min-height:0;flex-direction:row;text-align:left;padding:12px;gap:12px}
+  .pcard .ci{width:48px;height:48px;font-size:20px;flex:0 0 auto}
+  .pcard .ct{align-items:flex-start;gap:4px}
+  .pcard .st,.pcard .hk{display:none}
   .tree{grid-template-columns:1fr}
   .help .cols{grid-template-columns:1fr}
   .modal{padding:18px 14px}
@@ -388,6 +467,8 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   </div>
 </footer>
 
+<div id="missions" class="hidden"><div class="mh" id="mh"><span>MISSIONS</span><b id="m-cmd"></b><em id="m-tog">−</em></div>
+  <div class="mxp"><s id="m-xp"></s></div><div id="mlist"></div></div>
 <div id="tpanel" class="panel"></div>
 <div id="banner"></div>
 <div id="toasts"></div>
@@ -397,13 +478,20 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <div class="ov" id="ov-menu">
   <div class="menu">
     <div class="title">NEON WARFARE<span>FUSION PROTOCOL · 8</span></div>
+    <div class="cmdb" id="menu-cmd"></div>
     <div class="mbtns" id="menu-btns"></div>
     <div class="mfoot" id="menu-foot"></div>
   </div>
 </div>
 <div class="ov" id="ov-new"><div class="modal" style="width:880px"><button class="mclose" data-close>✕</button>
-  <h2>NOUVELLE PARTIE</h2><div class="sub">Choisissez le niveau de menace. Une carte unique est générée à chaque partie.</div>
+  <h2>NOUVELLE PARTIE</h2><div class="sub">Choisissez votre doctrine, puis le niveau de menace. Une carte unique est générée à chaque partie.</div>
+  <div class="lbl-s">DOCTRINE</div><div class="docs" id="doc-row"></div><div class="doc-desc" id="doc-desc"></div>
+  <div class="lbl-s" style="margin-bottom:8px">MENACE</div>
   <div class="dgrid" id="diff-grid"></div></div></div>
+<div class="ov" id="ov-cards"><div class="modal cmodal" style="width:900px">
+  <h2 id="cards-t">PROTOCOLE</h2><div class="sub" id="cards-sub"></div>
+  <div class="cgrid" id="cards"></div>
+  <div class="row" style="justify-content:center;margin-top:16px"><button class="btn gold" id="cards-reroll"></button></div></div></div>
 <div class="ov" id="ov-pause"><div class="modal" style="width:390px;text-align:center">
   <h2>PAUSE</h2><div class="sub" id="pause-info"></div><div class="mbtns" style="margin:12px auto 0" id="pause-btns"></div></div></div>
 <div class="ov" id="ov-opts"><div class="modal" style="width:500px"><button class="mclose" data-close>✕</button><h2>OPTIONS</h2><div id="opts"></div></div></div>
@@ -428,7 +516,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '8.0';
+const VERSION = '8.1';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -511,7 +599,8 @@ const Store = {
   defaults() {
     return {
       settings: { sfx: .6, music: .35, quality: 'auto', theme: 'theme-cyber', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true },
-      meta: { frags: 0, perks: {} }, ach: {}, records: {}, daily: {}, stats: { recycled: 0, games: 0, kills: 0 }, save: null, tuto: false
+      meta: { frags: 0, perks: {} }, ach: {}, records: {}, daily: {}, stats: { recycled: 0, games: 0, kills: 0 }, save: null, tuto: false,
+      cmd: { lvl: 1, xp: 0 }, doctrine: 'standard'
     };
   },
   load() {
@@ -523,6 +612,7 @@ const Store = {
     this.data.settings = Object.assign(this.defaults().settings, d.settings || {});
     this.data.meta = Object.assign({ frags: 0, perks: {} }, d.meta || {});
     this.data.stats = Object.assign(this.defaults().stats, d.stats || {});
+    this.data.cmd = Object.assign({ lvl: 1, xp: 0 }, d.cmd || {});
   },
   save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); } catch (e) { /* stockage indisponible */ } },
   get s() { return this.data.settings; }
@@ -558,7 +648,7 @@ const Sfx = {
   // délai minimal (ms) entre deux occurrences d'un même son : évite la saturation à haute cadence
   gap: { shot: 55, laser: 110, sniper: 90, rail: 140, zap: 80, boom: 80, mortar: 90, missile: 90, pop: 40, hit: 50, crit: 70, flame: 120,
     freeze: 300, pulse: 120, vortex: 300, coin: 45, ui: 30, build: 60, upgrade: 60, sell: 60, error: 140, leak: 160, wave: 400,
-    boss: 800, ach: 600, fuse: 300, nuke: 300, alarm: 1200 },
+    boss: 800, ach: 600, fuse: 300, nuke: 300, alarm: 1200, mission: 400, levelup: 1000, combo: 200, card: 100 },
   play(name, vol = 1, pitch = 1) {
     if (!this.ctx || Store.s.sfx <= 0 || this.ctx.state !== 'running' || Demo.busy) return;
     const now = performance.now(), g = this.gap[name] || 40;
@@ -610,6 +700,10 @@ const Sfx = {
   _boss(t, v) { this.osc('sawtooth', 82, 55, 1.6, .11 * v, t, true); this.osc('sawtooth', 84, 57, 1.6, .09 * v, t, true); this.noise(1.2, .05 * v, t, 'lowpass', 400, 60); },
   _alarm(t, v) { for (let i = 0; i < 3; i++) this.osc('square', 880, 660, .18, .04 * v, t + i * .24, true); },
   _ach(t, v) { [660, 880, 1320].forEach((f, i) => this.osc('triangle', f, f, .22, .055 * v, t + i * .08)); },
+  _mission(t, v) { this.osc('triangle', 990, 990, .14, .06 * v, t); this.osc('triangle', 1480, 1480, .3, .06 * v, t + .09); },
+  _levelup(t, v) { [523, 659, 784, 1047, 1319].forEach((f, i) => this.osc('square', f, f, .28, .035 * v, t + i * .07)); this.osc('sine', 262, 262, .9, .06 * v, t); },
+  _combo(t, v, p) { [0, 4, 7, 12].forEach((s, i) => { const f = 440 * p * Math.pow(2, s / 12); this.osc('sawtooth', f, f * 1.01, .12, .03 * v, t + i * .045); }); },
+  _card(t, v) { this.noise(.12, .05 * v, t, 'bandpass', 2500, 5000, 2); },
   _fuse(t, v) { this.osc('sawtooth', 180, 1700, .7, .05 * v, t); this.osc('sine', 90, 900, .7, .08 * v, t); this.noise(.6, .05 * v, t + .1, 'highpass', 2000, 8000); },
   _nuke(t, v) { this.osc('sawtooth', 1700, 40, 1.1, .09 * v, t); this.noise(1.3, .28 * v, t + .2, 'lowpass', 2200, 40); }
 };
@@ -736,7 +830,7 @@ const TOWERS = {
   storm:    { name: 'Tempête', tier: 3, cost: 1200, range: 160, dmg: 40, rate: 22, color: '#7db4ff', kind: 'chain', head: 'coil', chain: { n: 6, f: .85, r: 110 }, slow: { f: .6, t: 40 }, heat: 12, cool: .8, sfx: 'zap',
     desc: 'Orage ionique : chaîne de 6 rebonds qui ralentit.' },
   // ----- FUSION T4 -----
-  apocalypse: { name: 'Apocalypse', tier: 4, cost: 2600, range: 420, dmg: 700, rate: 150, color: '#ffd23f', kind: 'orbital', head: 'apoc', strikes: 3, sr: 60, heat: 50, cool: .5,
+  apocalypse: { name: 'Apocalypse', tier: 4, cost: 2800, range: 340, dmg: 520, rate: 190, color: '#ffd23f', kind: 'orbital', head: 'apoc', strikes: 3, sr: 52, heat: 50, cool: .5,
     desc: 'Appelle 3 frappes orbitales sur les ennemis à portée. L\'arme ultime.' }
 };
 for (const k in TOWERS) TOWERS[k].key = k;
@@ -758,6 +852,7 @@ const RECIPES = [
   { a: 'nova', b: 'railgun', r: 'apocalypse', n: 35 }
 ];
 const TIER_NAMES = ['STANDARD', 'SOUTIEN', 'FUSION T2', 'FUSION T3', 'FUSION T4'];
+const COMBO_STEPS = [25, 50, 75, 100, 150, 200, 300, 500];
 const STRATS = ['PREMIER', 'FORT', 'FAIBLE', 'PROCHE'];
 
 /* w : coût en « points de menace » — from : première vague d'apparition */
@@ -805,7 +900,7 @@ const WTHEMES = [
 ];
 
 const DIFFS = {
-  recrue:    { name: 'RECRUE', hp: .75, lives: 150, money: 400, bounty: 1.15, frag: .5, color: '#39ff88', desc: 'Pour découvrir le jeu en douceur. Ennemis affaiblis, économie généreuse.' },
+  recrue:    { name: 'RECRUE', hp: .7, lives: 150, money: 400, bounty: 1.15, frag: .5, color: '#39ff88', desc: 'Pour découvrir le jeu en douceur. Ennemis affaiblis, économie généreuse.' },
   standard:  { name: 'STANDARD', hp: 1, lives: 100, money: 300, bounty: 1, frag: 1, color: '#00f3ff', desc: 'L\'expérience équilibrée. Chaque décision compte.' },
   hardcore:  { name: 'HARDCORE', hp: 1.35, lives: 60, money: 260, bounty: .95, frag: 1.6, color: '#ff9500', desc: 'L\'esprit du protocole original. Peu de marge d\'erreur.' },
   cauchemar: { name: 'CAUCHEMAR', hp: 1.8, lives: 30, money: 240, bounty: .9, frag: 2.5, color: '#ff2a6d', desc: 'Ennemis surpuissants, noyau fragile. Pour les légendes.' }
@@ -905,6 +1000,80 @@ const ABILS = {
   overdrive: { n: 'Surcharge', i: '⚡', code: 'KeyE', cd: 4200, skill: 'a6', dur: 480, color: '#ffae00',
     d: 'Toutes les tourelles tirent 2x plus vite, sans surchauffe, pendant 8 s.' }
 };
+
+/* ---------- Commandant : niveau permanent, grades et doctrines ---------- */
+const RANKS = ['Recrue', 'Soldat', 'Caporal', 'Sergent', 'Adjudant', 'Sous-lieutenant', 'Lieutenant', 'Capitaine', 'Commandant',
+  'Lieutenant-colonel', 'Colonel', 'Général de brigade', 'Général de division', 'Général d\'armée', 'Maréchal', 'Légende'];
+const XP_DIFF = { recrue: .6, standard: 1, hardcore: 1.4, cauchemar: 2 };
+
+/* Doctrines : style de jeu choisi au lancement, débloquées en montant de niveau */
+const DOCTRINES = {
+  standard:  { n: 'Polyvalente', i: '◇', lvl: 1, d: 'Aucun bonus, aucun malus.' },
+  artillery: { n: 'Artillerie', i: '✹', lvl: 3, d: 'Titan et Magma -25% de coût. Zones d\'explosion +15%.', kcost: { titan: .75, magma: .75 }, splash: 1.15 },
+  engineer:  { n: 'Génie', i: '⚙', lvl: 5, d: 'Ventilo, Ordi et Nexus -40% de coût. Chaleur de surcadence -25%.', kcost: { fan: .6, computer: .6, nexus: .6 }, heat: .75 },
+  banker:    { n: 'Finance', i: '¢', lvl: 7, d: '4% d\'intérêts dès le départ, mais -8% de dégâts.', interest: .04, dmg: .92 },
+  alchemist: { n: 'Alchimie', i: '✧', lvl: 10, d: '+6 nanites de départ. Plans de fusion -20%.', nano: 6, bp: .8 },
+  marksman:  { n: 'Précision', i: '⌖', lvl: 13, d: 'Sniper et Railgun +35% de dégâts. Critique +5%.', kdmg: { sniper: 1.35, railgun: 1.35 }, crit: .05 },
+  bastion:   { n: 'Bastion', i: '⛨', lvl: 16, d: '+40 intégrité max. +2 réparés à chaque vague.', lives: 40, regen: 2 },
+  blitz:     { n: 'Blitz', i: '»', lvl: 20, d: 'Cadence +15% pour toutes les tourelles, mais ennemis +10% plus rapides.', rate: 1.15, espd: 1.1 }
+};
+
+/* ---------- Missions : 3 objectifs actifs, remplacés dès qu'ils sont accomplis ----------
+   ev : événement suivi — max : progression = meilleure valeur atteinte — fixed : objectif qui ne grandit pas avec les vagues */
+const MISSIONS = [
+  { id: 'kills',   i: '✦', base: 90,   ev: 'kill', d: n => `Éliminer ${n} ennemis` },
+  { id: 'air',     i: '➶', base: 12,   ev: 'kill', from: 7, f: e => e.air, d: n => `Abattre ${n} volants` },
+  { id: 'stealth', i: '◈', base: 8,    ev: 'kill', from: 5, f: e => e.stealth, d: n => `Éliminer ${n} spectres furtifs` },
+  { id: 'armor',   i: '⛨', base: 8,    ev: 'kill', from: 4, f: e => e.type === 'tank' || e.type === 'carrier', d: n => `Détruire ${n} blindés ou porteurs` },
+  { id: 'elite',   i: '★', base: 2,    ev: 'kill', from: 8, fixed: true, f: e => e.elite, d: n => `Éliminer ${n} ennemis d'élite` },
+  { id: 'boss',    i: '☠', base: 1,    ev: 'kill', fixed: true, f: e => e.boss, near: true, d: () => 'Vaincre le prochain boss' },
+  { id: 'burn',    i: '♨', base: 20,   ev: 'kill', f: e => e.burnT > 0, need: () => G.towers.some(t => t.d.burn), d: n => `Éliminer ${n} ennemis en feu` },
+  { id: 'cold',    i: '❄', base: 30,   ev: 'kill', f: e => e.slowT > 0 || e.freezeT > 0, need: () => G.towers.some(t => t.d.slow), d: n => `Éliminer ${n} ennemis ralentis` },
+  { id: 'combo',   i: '⚡', base: 30,   ev: 'combo', max: true, d: n => `Atteindre un combo de ${n}` },
+  { id: 'clean',   i: '♥', base: 3,    ev: 'clean', fixed: true, d: n => `Repousser ${n} vagues sans aucune fuite` },
+  { id: 'fuse',    i: '⚒', base: 1,    ev: 'fuse', fixed: true, need: () => G.unlocked.size > 0, d: () => 'Fusionner deux tourelles sur le terrain' },
+  { id: 'upgrade', i: '▲', base: 10,   ev: 'upgrade', d: n => `Effectuer ${n} améliorations` },
+  { id: 'level',   i: '▲', base: 6,    ev: 'level', max: true, fixed: true, d: n => `Monter une tourelle au niveau ${n}` },
+  { id: 'crit',    i: '✸', base: 45,   ev: 'crit', d: n => `Infliger ${n} coups critiques` },
+  { id: 'orbital', i: '☄', base: 6,    ev: 'orbital', max: true, fixed: true, d: n => `Toucher ${n} ennemis d'une seule Frappe Orbitale` },
+  { id: 'early',   i: '⏩', base: 2,    ev: 'early', fixed: true, d: n => `Appeler ${n} vagues en avance` },
+  { id: 'recycle', i: '⟳', base: 2,    ev: 'recycle', fixed: true, need: () => G.recycle > 0, d: n => `Recycler ${n} débris` },
+  { id: 'rich',    i: '$', base: 1200, ev: 'money', max: true, d: n => `Posséder ${n} crédits` },
+  { id: 'skill',   i: '⟁', base: 3,    ev: 'skill', fixed: true, d: n => `Acheter ${n} rangs de compétence` },
+  { id: 'plan',    i: '✧', base: 1,    ev: 'plan', fixed: true, d: () => 'Synthétiser un plan de fusion' }
+];
+
+/* ---------- Protocoles : une carte à choisir parmi 3 après chaque vague ----------
+   r : rareté (0 standard, 1 rare, 2 pacte) — mod : multiplicateurs cumulés — add : bonus additifs — now : effet immédiat */
+const CARDS = {
+  cash:     { r: 0, i: '¢', n: 'Subvention', d: () => `+${50 + 10 * G.waveNum} crédits immédiatement.`, now: () => { G.money += 50 + 10 * G.waveNum; } },
+  nano:     { r: 0, i: '◈', n: 'Cache de nanites', d: () => '+2 nanites immédiatement.', now: () => { G.nanites += 2; } },
+  repair:   { r: 0, i: '♥', n: 'Réparations', d: () => '+15 intégrité (dans la limite du maximum).', need: () => G.lives < G.maxLives, now: () => { G.lives = Math.min(G.maxLives, G.lives + 15); } },
+  recharge: { r: 0, i: '☄', n: 'Recharge express', d: () => 'Toutes les capacités sont rechargées.', need: () => Abil.keys.some(k => G.abil[k] > 0), now: () => { for (const k of Abil.keys) G.abil[k] = 0; } },
+  scrap:    { r: 0, i: '⟳', n: 'Ferraille', d: () => '+2 charges de recyclage.', now: () => { G.recycle += 2; } },
+  hull:     { r: 0, i: '⛨', n: 'Coque renforcée', d: () => '+10 intégrité maximale (et actuelle).', max: 4, now: () => { G.maxLives += 10; G.lives += 10; } },
+  dmg:      { r: 1, i: '✦', n: 'Munitions perforantes', d: () => '+5% de dégâts pour toutes les tourelles.', mod: { dmg: 1.05 }, max: 5 },
+  rate:     { r: 1, i: '⚙', n: 'Servomoteurs', d: () => '+5% de cadence de tir.', mod: { rate: 1.05 }, max: 4 },
+  range:    { r: 1, i: '◎', n: 'Optique longue', d: () => '+5% de portée.', mod: { range: 1.05 }, max: 3 },
+  crit:     { r: 1, i: '⌖', n: 'Visée laser', d: () => '+3% de chances de critique.', add: { crit: .03 }, max: 3 },
+  splash:   { r: 1, i: '✹', n: 'Charges creuses', d: () => '+12% de rayon d\'explosion.', mod: { splash: 1.12 }, max: 3, need: () => G.towers.some(t => t.d.splash) },
+  burn:     { r: 1, i: '♨', n: 'Napalm', d: () => 'Brûlures +25%.', mod: { burn: 1.25 }, max: 3, need: () => G.towers.some(t => t.d.burn) },
+  slow:     { r: 1, i: '❄', n: 'Azote liquide', d: () => 'Ralentissements 20% plus puissants.', mod: { slow: 1.2 }, max: 2, need: () => G.towers.some(t => t.d.slow) },
+  bounty:   { r: 1, i: '$', n: 'Prime de guerre', d: () => '+6% de crédits par élimination.', mod: { bounty: 1.06 }, max: 3 },
+  cool:     { r: 1, i: '♒', n: 'Caloducs', d: () => '+25% de refroidissement.', mod: { cool: 1.25 }, max: 3 },
+  renovate: { r: 1, i: '▲', n: 'Rénovation', d: () => '+1 niveau gratuit pour vos 2 tourelles les plus faibles.', max: 3, need: () => G.towers.some(t => t.level < Towers.maxLevel(t)),
+    now: () => { G.towers.filter(t => t.level < Towers.maxLevel(t)).sort((a, b) => a.level - b.level).slice(0, 2).forEach(t => { t.level++; t.born = performance.now() - 170; }); } },
+  chain:    { r: 2, i: '⚡', n: 'Supraconducteurs', d: () => 'Arcs électriques : +1 rebond.', add: { chain: 1 }, max: 3, need: () => G.towers.some(t => t.d.chain) },
+  pierce:   { r: 2, i: '⟟', n: 'Ogives à uranium', d: () => 'Toutes les tourelles ignorent 15% du blindage.', add: { pierce: .15 }, max: 3 },
+  gift:     { r: 2, i: '✧', n: 'Plan offert', d: () => 'Un plan de fusion T2 aléatoire, gratuitement.', need: () => RECIPES.some(r => TOWERS[r.r].tier === 2 && Fusion.canResearch(r)),
+    now: () => { const c = RECIPES.filter(r => TOWERS[r.r].tier === 2 && Fusion.canResearch(r)); const r = pick(c); G.unlocked.add(r.r); if (!G.demo) G.freshBp = r.r; UI.toast('Plan offert : ' + TOWERS[r.r].name, 'Constructible dès maintenant.', TOWERS[r.r].color, 4); } },
+  greed:    { r: 2, pact: true, i: '☍', n: 'Pacte de cupidité', d: () => '+20% de crédits par élimination, mais ennemis 15% plus rapides et 10% plus résistants.', mod: { bounty: 1.2, espd: 1.15, ehp: 1.1 }, max: 1 },
+  glass:    { r: 2, pact: true, i: '◬', n: 'Canon de verre', d: () => '+20% de dégâts, mais -25% d\'intégrité maximale.', mod: { dmg: 1.2 }, max: 1,
+    now: () => { G.maxLives = Math.max(5, Math.round(G.maxLives * .75)); G.lives = Math.min(G.lives, G.maxLives); } },
+  surge:    { r: 2, pact: true, i: '⚠', n: 'Survoltage', d: () => '+15% de cadence, mais la surcadence chauffe 2x plus.', mod: { rate: 1.15, heat: 2 }, max: 1 },
+  horde:    { r: 2, pact: true, i: '⁂', n: 'Appel de la horde', d: () => 'Pendant 3 vagues : ennemis +30% de PV, mais +2 nanites et +30% de bonus de fin de vague.', timed: 3, ehp: 1.3, max: 1 }
+};
+const CARD_RARITY = [{ n: 'STANDARD', c: '#9fb0cc' }, { n: 'RARE', c: '#4db8ff' }, { n: 'PACTE', c: '#ff2bd6' }];
 
 /* ============================== SPRITES ==============================
    Tout ce qui est coûteux (dégradés, ombres lumineuses) est dessiné UNE fois
@@ -1466,7 +1635,7 @@ const Status = {
   apply(e, tw) {
     if (!tw || !e.alive) return;
     const d = tw.d;
-    if (d.slow) this.slow(e, d.slow.f, d.slow.t);
+    if (d.slow) this.slow(e, Math.max(.15, 1 - (1 - d.slow.f) * G.mod.slow), d.slow.t);
     if (d.burn) this.burn(e, Towers.burnDps(tw), d.burn.t, tw);
   }
 };
@@ -1490,6 +1659,7 @@ const Combat = {
     if (src) src.dealt += dmg;
     if (!dot) {
       e.hitT = 3;
+      if (crit) Missions.on('crit');
       if (UI.dmgNums) {
         if (crit) FX.float(e.x + rnd(-5, 5), e.y - e.r - 6, fmt(dmg) + '!', '#ffae00', 15);
         else if (dmg >= e.maxHp * .3 && Math.random() < .5) FX.float(e.x + rnd(-6, 6), e.y - e.r - 4, fmt(dmg), '#ffffff', 11);
@@ -1499,24 +1669,25 @@ const Combat = {
     return dmg;
   },
   splash(x, y, r, dmg, src, crit, ground, pierce = 0, status = false) {
-    const arr = G.enemies;
+    const arr = G.enemies; let hits = 0;
     for (let i = 0, n = arr.length; i < n; i++) {
       const e = arr[i];
       if (!e.alive || (ground && e.air)) continue;
       const rr = r + e.r * .6;
-      if (d2(e.x, e.y, x, y) <= rr * rr) { this.hit(e, dmg, src, crit, pierce); if (status) Status.apply(e, src); }
+      if (d2(e.x, e.y, x, y) <= rr * rr) { hits++; this.hit(e, dmg, src, crit, pierce); if (status) Status.apply(e, src); }
     }
+    return hits;
   }
 };
 
 /* ============================== ENNEMIS ============================== */
 const Enemies = {
   spawn(type, o = {}) {
-    const d = EDEF(type), elite = !!o.elite, mu = G.mut, hm = (o.hpMul || 1) * (elite ? 3 : 1) * (d.boss ? mu.bossHp : 1);
+    const d = EDEF(type), elite = !!o.elite, mu = G.mut, hm = (o.hpMul || 1) * (elite ? 3 : 1) * (d.boss ? mu.bossHp : 1) * G.mod.ehp;
     const e = {
       id: G.nextId++, type, d, alive: true, boss: !!d.boss, air: !!d.air, stealth: !!d.stealth, elite,
       hp: d.hp * hm, maxHp: d.hp * hm, shield: (d.shield || 0) * hm, maxShield: (d.shield || 0) * hm,
-      armor: ((d.armor || 0) + mu.armorAdd) * mu.armor * Math.sqrt(o.hpMul || 1), spd: d.spd * mu.spd, r: d.r * (elite ? 1.25 : 1),
+      armor: ((d.armor || 0) + mu.armorAdd) * mu.armor * Math.sqrt(o.hpMul || 1), spd: d.spd * mu.spd * G.mod.espd, r: d.r * (elite ? 1.25 : 1),
       dist: o.dist || 0, seg: 0, x: 0, y: 0, px: 0, py: 0, ang: 0,
       slowT: 0, slowF: 1, burnT: 0, burnDps: 0, burnSrc: null, freezeT: 0, revealT: 0, markT: 0, markV: 0, hitT: 0, shCd: 0,
       wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: Math.random() * TAU,
@@ -1605,6 +1776,12 @@ const Enemies = {
     G.combo++; G.comboT = 150;
     if (G.combo > G.stats.maxCombo) G.stats.maxCombo = G.combo;
     if (G.combo === 100) Ach.unlock('combo');
+    Missions.on('kill', 1, e); Missions.on('combo', G.combo);
+    if (COMBO_STEPS.includes(G.combo) && !G.demo) {
+      FX.float(e.x, e.y - 26, `COMBO ${G.combo} !`, '#ffd23f', 18);
+      Sfx.play('combo', 1, 1 + COMBO_STEPS.indexOf(G.combo) * .12);
+      UI.comboBurst = performance.now();
+    }
     const cm = 1 + Math.min(1, Math.floor(G.combo / 10) * .1);
     const bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * G.mut.bounty * (1 + .02 * (G.waveNum - 1))));
     G.money += bounty; G.stats.gold += bounty;
@@ -1621,6 +1798,8 @@ const Enemies = {
       G.nanites += bn; G.stats.bosses++;
       FX.float(e.x, e.y - 28, `+${bn} ◈`, '#00ffaa', 18);
       Ach.unlock('boss');
+      Cmd.gain(20 * Cmd.mult());
+      if (!G.demo) Game.slowT = 1100;   // ralenti dramatique sur le coup fatal
       Render.shake(16); Render.flash(.35, e.d.color); Sfx.play('boom');
       for (let i = 0; i < 4; i++) FX.ring(e.x, e.y, i & 1 ? '#ffffff' : e.d.color, 50 + i * 30, 26 + i * 6, 3);
       Drops.spawn(e.x - 10, e.y, 'gold'); Drops.spawn(e.x + 10, e.y, 'gold');
@@ -1632,7 +1811,8 @@ const Enemies = {
     }
     FX.spark(e.x, e.y, e.d.color, e.boss ? 60 : 14, e.boss ? 6 : 3.2, 34, 2.6);
     FX.ring(e.x, e.y, e.d.color, e.r * 2.6, 20, 2);
-    Sfx.play('pop', .7, .8 + Math.random() * .5);
+    // la tonalité monte avec le combo : la tension se construit à l'oreille
+    Sfx.play('pop', .7, .75 + Math.min(G.combo, 80) / 80 * .9 + Math.random() * .15);
     if (G.stats.kills === 1) Ach.unlock('first');
   },
   leak(e) {
@@ -1657,9 +1837,9 @@ const Enemies = {
 /* ============================== TOURELLES ============================== */
 const Towers = {
   _hit: [],
-  costOf(k) { return Math.round(TOWERS[k].cost * G.mod.cost); },
+  costOf(k) { return Math.round(TOWERS[k].cost * G.mod.cost * (G.mod.kcost[k] || 1)); },
   maxLevel(t) { return t.d.kind === 'support' ? 5 : 10; },
-  upCost(t) { return Math.round((t.d.cost * .6 * t.level + 30) * G.mod.cost); },
+  upCost(t) { return Math.round((t.d.cost * .6 * t.level + 30) * G.mod.cost * (G.mod.kcost[t.key] || 1)); },
   at(tx, ty) { const M = G.map; return (tx < 0 || ty < 0 || tx >= M.C || ty >= M.R) ? null : G.tgrid[ty * M.C + tx]; },
   canPlace(tx, ty) { const M = G.map; return tx >= 0 && ty >= 0 && tx < M.C && ty < M.R && M.cells[ty * M.C + tx] === 0 && !G.tgrid[ty * M.C + tx]; },
   create(key, tx, ty, level = 1) {
@@ -1708,6 +1888,7 @@ const Towers = {
     FX.ring(t.cx, t.cy, '#39ff88', 30, 20, 2); FX.spark(t.cx, t.cy, '#39ff88', 10, 2.5);
     FX.float(t.cx, t.cy - 20, 'NIV ' + t.level, '#39ff88', 12);
     Sfx.play('upgrade');
+    Missions.on('upgrade'); Missions.on('level', t.level);
     if (t.level >= 10) Ach.unlock('maxlvl');
     return true;
   },
@@ -1732,16 +1913,16 @@ const Towers = {
     const d = t.d, L = t.level - 1;
     t.dmg = d.dmg * Math.pow(1.22, L);
     t.range = d.range * (1 + .04 * L) * G.mod.range * (1 + t.bRange);
-    t.rate = d.rate ? Math.max(2, d.rate * Math.pow(.94, L)) : 0;
+    t.rate = d.rate ? Math.max(2, d.rate * Math.pow(.94, L) / G.mod.rate) : 0;
   },
-  effDmg(t) { return t.dmg * (1 + t.bDmg) * G.mod.dmg; },
-  burnDps(t) { return t.d.burn.dps * Math.pow(1.22, t.level - 1) * (1 + t.bDmg) * G.mod.dmg; },
+  effDmg(t) { return t.dmg * (1 + t.bDmg) * G.mod.dmg * (G.mod.kdmg[t.key] || 1); },
+  burnDps(t) { return t.d.burn.dps * Math.pow(1.22, t.level - 1) * (1 + t.bDmg) * G.mod.dmg * G.mod.burn; },
   dps(t) {
     const d = t.d;
     if (!d.rate || d.kind === 'radar' || d.kind === 'support') return 0;
     const dmg = this.effDmg(t) * (1 + (G.mod.critDmg - 1) * G.mod.crit), sps = 60 / t.rate * (t.oc ? 2 : 1);
     switch (d.kind) {
-      case 'beam': return this.effDmg(t) * (1 + t.ramp) * (t.oc ? 2 : 1);
+      case 'beam': return this.effDmg(t) * (1 + t.ramp) * (t.oc ? 2 : 1) * G.mod.rate;
       case 'missiles': return dmg * sps * d.count;
       case 'orbital': return dmg * sps * d.strikes;
       case 'vortex': return this.effDmg(t) * (d.dur / 60) * sps;
@@ -1856,7 +2037,7 @@ const Towers = {
   chain(t, e, dmg, crit, mx, my) {
     const ch = t.d.chain, hit = this._hit; hit.length = 0;
     let cur = e, px = mx, py = my, dm = dmg;
-    for (let j = 0; j <= ch.n && cur; j++) {
+    for (let j = 0, n = ch.n + G.mod.chain; j <= n && cur; j++) {
       FX.bolt(px, py, cur.x, cur.y, t.d.color, j === 0 ? 2.6 : 1.8, 9);
       if (Render.hq) FX.spark(cur.x, cur.y, t.d.color, 3, 1.8, 14);
       hit.push(cur); px = cur.x; py = cur.y;
@@ -1915,7 +2096,7 @@ const Towers = {
     if (!e) { t.ramp = Math.max(0, t.ramp - .02); return; }
     t.ang = turnTo(t.ang, Math.atan2(e.y - t.cy, e.x - t.cx), .5);
     t.ramp = Math.min(t.d.ramp, t.ramp + t.d.ramp / 150);
-    Combat.hit(e, this.effDmg(t) * (1 + t.ramp) * mul / 60, t, false, 1, true);
+    Combat.hit(e, this.effDmg(t) * (1 + t.ramp) * mul * G.mod.rate / 60, t, false, 1, true);
     if (e.alive) e.hitT = Math.max(e.hitT, 1);
     if (t.oc && !od) { t.heat += t.d.heat * G.mod.heat; if (t.heat >= 100) this.overheat(t); }
     if (Render.hq && (G.tick & 3) === 0) FX.spark(e.x, e.y, t.d.color, 1, 1.6, 14, 2);
@@ -1943,7 +2124,7 @@ const Shots = {
     dmg: 0, crit: false, src: null, col: '#fff', spd: 8, life: 0, t: 0, dur: 1, splash: 0, ground: false, bounce: 0, sz: 3 }), 700),
   init(p, k, t, x, y, e, dmg, crit) {
     p.k = k; p.x = p.px = x; p.y = p.py = y; p.vx = 0; p.vy = 0; p.e = e; p.last = null; p.tx = e.x; p.ty = e.y;
-    p.dmg = dmg; p.crit = crit; p.src = t; p.col = t.d.color; p.splash = t.d.splash || 0; p.ground = !!t.d.ground;
+    p.dmg = dmg; p.crit = crit; p.src = t; p.col = t.d.color; p.splash = (t.d.splash || 0) * G.mod.splash; p.ground = !!t.d.ground;
     p.bounce = t.d.bounce || 0; p.h = 0;
     return p;
   },
@@ -2096,7 +2277,8 @@ const Strikes = {
     for (let i = S.length - 1; i >= 0; i--) {
       const s = S[i];
       if (--s.t > 0) continue;
-      Combat.splash(s.x, s.y, s.r, s.dmg, s.src, false, false, 1);
+      const hits = Combat.splash(s.x, s.y, s.r, s.dmg, s.src, false, false, 1);
+      if (s.big) Missions.on('orbital', hits);
       FX.line(s.x, s.y - 800, s.x, s.y, s.col, s.big ? 28 : 12, s.big ? 26 : 18);
       FX.line(s.x, s.y - 800, s.x, s.y, '#ffffff', s.big ? 8 : 4, s.big ? 20 : 14);
       FX.ring(s.x, s.y, s.col, s.r * 1.25, 30, 4); FX.ring(s.x, s.y, '#ffffff', s.r * .7, 18, 2);
@@ -2111,7 +2293,7 @@ const Strikes = {
 /* ============================== VAGUES ============================== */
 const Waves = {
   // croissance polynomiale douce, puis exponentielle au-delà de la vague 40 (l'infini doit finir par céder)
-  hpMul(n) { const k = n - 1; return (1 + .2 * k + .016 * k * k) * Math.pow(1.032, k) * Math.pow(1.05, Math.max(0, k - 40)) * G.diff.hp; },
+  hpMul(n) { const k = n - 1; return (1 + .2 * k + .016 * k * k) * Math.pow(1.038, k) * Math.pow(1.085, Math.max(0, k - 35)) * G.diff.hp; },
   // hasard reproductible : une carte donnée produit toujours les mêmes vagues (aperçu fiable, Défi du jour équitable)
   rng(n, salt = 0) { return mulberry32((G.seed ^ Math.imul(n + 1, 2654435761) ^ salt) >>> 0); },
   plan(n) {
@@ -2167,6 +2349,7 @@ const Waves = {
       const eb = this.earlyBonus(n);
       G.money += eb; G.stats.gold += eb;
       UI.toast('Appel anticipé', `+${eb} crédits de prime de risque.`, '#ffd23f', 2.5);
+      Missions.on('early');
     }
     if (P.bosses.length) {
       UI.banner(`VAGUE ${n}`, 'ALERTE BOSS · ' + P.bosses.map(b => BOSSES[b].name).join(' + '), '#ff2a6d');
@@ -2191,7 +2374,8 @@ const Waves = {
   },
   cleared(w) {
     delete G.waves[w.n];
-    const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus), nano = Math.round((1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0)) * G.mut.nano);
+    const tb = Cards.tick();
+    const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus * tb.cash), nano = Math.round((1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0)) * G.mut.nano) + tb.nano;
     G.money += bonus; G.stats.gold += bonus; G.nanites += nano;
     let extra = '';
     if (G.mod.interest > 0) {
@@ -2212,6 +2396,10 @@ const Waves = {
     if (w.n >= 10 && G.stats.leaks === 0) Ach.unlock('noleak');
     if (w.n >= 15 && (G.diffKey === 'hardcore' || G.diffKey === 'cauchemar')) Ach.unlock('hard15');
     if (w.n >= 15 && G.daily) Ach.unlock('daily');
+    if (w.leaks === 0) Missions.on('clean');
+    Cmd.gain((4 + 2 * Math.floor(w.n / 5)) * Cmd.mult());
+    Missions.fill();
+    if (w.n % 2 === 0) Cards.offer();   // un protocole toutes les 2 vagues : des choix qui pèsent, sans inflation
     if (Object.keys(G.waves).length === 0 && G.spawnQ.length === 0) {
       G.phase = 'prep'; G.autoT = 480; Music.intensity = 0;
       SaveSys.save();
@@ -2313,6 +2501,7 @@ const Recycle = {
     FX.ring(x, y, '#ffffff', 26, 18, 2); FX.spark(x, y, '#cfd8e8', 14, 3); Sfx.play('coin');
     Store.data.stats.recycled++;
     if (Store.data.stats.recycled >= 10) Ach.unlock('recycler');
+    Missions.on('recycle');
   }
 };
 
@@ -2338,20 +2527,33 @@ const Skills = {
     if (id === 'c5') G.recycle += 2;
     this.apply(); Towers.recalc();
     Sfx.play('upgrade');
+    Missions.on('skill');
     if (this.total() >= 15) Ach.unlock('scholar');
     if (SKILLS[id].cap) UI.toast('Nouvelle capacité', SKILLS[id].d(1), BRANCHES[SKILLS[id].br].color, 4);
     UI.refreshAbils(true);
     return true;
   },
+  // tous les modificateurs de la partie : compétences + Héritage + doctrine + protocoles choisis
   apply() {
-    const r = k => G.skills[k] || 0, pk = Store.data.meta.perks;
-    G.mod = {
+    const r = k => G.skills[k] || 0, pk = Store.data.meta.perks, D = DOCTRINES[G.doctrine] || DOCTRINES.standard;
+    const m = {
       dmg: 1 + .08 * r('a1'), crit: .05 + .04 * r('a2'), range: 1 + .06 * r('a3'), critDmg: 2 + .5 * r('a4'), pierce: .25 * r('a5'),
       cool: 1 + .25 * r('e1'), cost: 1 - .05 * r('e2'), heat: 1 - .2 * r('e3'), refund: .7 + .1 * r('e4'), support: 1 + .4 * r('e5'),
       bounty: 1 + .1 * r('c1'), interest: .03 * r('c2'), magnet: r('c3') > 0, drop: r('c3') ? 1.5 : 1, regen: 3 * r('c4'),
       recycleMul: r('c5') ? 2 : 1, orbDmg: r('c6') ? 1.75 : 1, orbCd: r('c6') ? .7 : 1,
-      abilCd: 1 - .08 * (pk.h_cd || 0), waveBonus: 1 + .25 * (pk.h_bonus || 0)
+      abilCd: 1 - .08 * (pk.h_cd || 0), waveBonus: 1 + .25 * (pk.h_bonus || 0),
+      rate: 1, splash: 1, burn: 1, slow: 1, chain: 0, espd: 1, ehp: 1, bp: 1,
+      kdmg: Object.assign({}, D.kdmg), kcost: Object.assign({}, D.kcost)
     };
+    for (const p of ['dmg', 'heat', 'splash', 'rate', 'espd', 'bp']) if (D[p]) m[p] *= D[p];
+    for (const p of ['crit', 'interest', 'regen']) if (D[p]) m[p] += D[p];
+    for (const id in G.cards) {
+      const c = CARDS[id], s = G.cards[id]; if (!c) continue;
+      if (c.mod) for (const p in c.mod) m[p] *= Math.pow(c.mod[p], s);
+      if (c.add) for (const p in c.add) m[p] += c.add[p] * s;
+    }
+    for (const tp of G.timed) { const c = CARDS[tp.id]; if (c && c.ehp) m.ehp *= c.ehp; }
+    G.mod = m;
   }
 };
 
@@ -2368,12 +2570,15 @@ const Fusion = {
   avail(k) { return TOWERS[k].tier <= 1 || G.unlocked.has(k); },
   recipeFor(a, b) { return RECIPES.find(r => (r.a === a && r.b === b) || (r.a === b && r.b === a)); },
   canResearch(r) { return !G.unlocked.has(r.r) && this.avail(r.a) && this.avail(r.b); },
-  anyResearchable() { return RECIPES.some(r => this.canResearch(r) && G.nanites >= r.n); },
+  cost(r) { return Math.max(1, Math.round(r.n * G.mod.bp)); },
+  anyResearchable() { return RECIPES.some(r => this.canResearch(r) && G.nanites >= this.cost(r)); },
   research(r) {
     if (!this.canResearch(r)) return false;
-    if (G.nanites < r.n) { Sfx.play('error'); return false; }
-    G.nanites -= r.n; G.unlocked.add(r.r); G.freshBp = r.r;
+    const c = this.cost(r);
+    if (G.nanites < c) { Sfx.play('error'); return false; }
+    G.nanites -= c; G.unlocked.add(r.r); G.freshBp = r.r;
     this.scan();
+    Missions.on('plan');
     const d = TOWERS[r.r];
     Sfx.play('fuse'); Render.flash(.3, d.color);
     UI.toast('Plan de fusion acquis : ' + d.name, `Constructible depuis la barre. Astuce : placez ${TOWERS[r.a].name} et ${TOWERS[r.b].name} côte à côte pour les fusionner sur le terrain.`, d.color, 6);
@@ -2394,7 +2599,7 @@ const Fusion = {
   fieldCost(a, b, r) { return Math.max(0, Math.round(Towers.costOf(r.r) - .8 * (a.invested + b.invested))); },
   fieldFuse(a, b, r) {
     if (!G.unlocked.has(r.r)) {
-      UI.toast('Plan requis', `Synthétisez d'abord le plan ${TOWERS[r.r].name} au Labo de fusion (${r.n} ◈).`, '#ff2bd6', 3.5);
+      UI.toast('Plan requis', `Synthétisez d'abord le plan ${TOWERS[r.r].name} au Labo de fusion (${this.cost(r)} ◈).`, '#ff2bd6', 3.5);
       Sfx.play('error'); return;
     }
     const cost = this.fieldCost(a, b, r);
@@ -2412,7 +2617,144 @@ const Fusion = {
     Render.flash(.35, R.color); Render.shake(6);
     Sfx.play('fuse'); UI.banner('FUSION', R.name.toUpperCase(), R.color);
     Ach.unlock('field'); if (r.r === 'apocalypse') Ach.unlock('apoc');
+    Missions.on('fuse'); Missions.on('level', t.level);
     if (!G.demo) UI.select(t);
+  }
+};
+
+/* ============================== MISSIONS ============================== */
+const MDEF = Object.fromEntries(MISSIONS.map(m => [m.id, m]));
+const Missions = {
+  lastId: null,
+  target(m) {
+    const w = Math.max(1, G.waveNum);
+    if (m.id === 'level') return Math.min(10, 5 + Math.floor(w / 8));
+    if (m.fixed) return m.base;
+    const n = m.base * (1 + w / 12);
+    return n >= 1000 ? Math.round(n / 100) * 100 : n >= 20 ? Math.round(n / 5) * 5 : Math.round(n);
+  },
+  avail(m) {
+    if (G.missions.some(x => x.id === m.id) || m.id === this.lastId) return false;
+    if (m.from && G.waveNum + 1 < m.from) return false;
+    if (m.near && 5 - (G.waveNum % 5) > 3) return false;
+    if (m.need && !m.need()) return false;
+    return true;
+  },
+  fill() {
+    if (!G || G.demo) return;
+    while (G.missions.length < 3) {
+      const pool = MISSIONS.filter(m => this.avail(m));
+      if (!pool.length) break;
+      const m = pick(pool), nano = Math.random() < .35;
+      G.missions.push({
+        id: m.id, n: this.target(m), p: 0, xp: 25 + Math.round(Math.min(30, G.waveNum * 1.2)),
+        nano: nano ? 2 + (G.waveNum >= 15 ? 1 : 0) : 0, cash: nano ? 0 : Math.round((60 + 15 * G.waveNum) / 10) * 10
+      });
+    }
+    UI.missionsDirty = true;
+  },
+  on(ev, val = 1, e) {
+    if (!G || G.demo || G.over) return;
+    const L = G.missions;
+    for (let i = L.length - 1; i >= 0; i--) {
+      const s = L[i], m = MDEF[s.id];
+      if (!m || m.ev !== ev || (m.f && !(e && m.f(e)))) continue;
+      const before = s.p;
+      s.p = m.max ? Math.max(s.p, val) : s.p + val;
+      if (s.p !== before) UI.missionsDirty = true;
+      if (s.p >= s.n) this.complete(i);
+    }
+  },
+  complete(i) {
+    const s = G.missions.splice(i, 1)[0], m = MDEF[s.id];
+    G.money += s.cash; G.stats.gold += s.cash; G.nanites += s.nano; G.stats.missions++;
+    Store.data.meta.frags += 1;
+    const xp = Math.round(s.xp * Cmd.mult());
+    UI.toast('Mission accomplie', `${m.d(s.n)}<br><b style="color:${s.nano ? 'var(--nano)' : 'var(--gold)'}">${s.nano ? '+' + s.nano + ' ◈' : '+' + s.cash + '¢'}</b> · <b style="color:var(--gold)">+${xp} XP</b> · <span class="frags">+1 ✦</span>`, '#39ff88', 3.5);
+    Sfx.play('mission');
+    UI.missionFlash = performance.now();
+    this.lastId = s.id;
+    Cmd.gain(xp);
+    this.fill();
+  }
+};
+
+/* ============================== COMMANDANT (progression permanente) ============================== */
+const Cmd = {
+  need(l) { return 120 + 40 * (l - 1); },
+  rank(l) { return RANKS[Math.min(RANKS.length - 1, Math.floor((l - 1) / 2))]; },
+  mult() { return G ? (XP_DIFF[G.diffKey] || 1) * (G.daily ? 1.3 : 1) : 1; },
+  nextDoctrine(l) { return Object.values(DOCTRINES).filter(d => d.lvl > l).sort((a, b) => a.lvl - b.lvl)[0] || null; },
+  gain(x) {
+    x = Math.round(x);
+    if (!x || (G && G.demo)) return;
+    const c = Store.data.cmd;
+    c.xp += x;
+    if (G) G.xpRun += x;
+    while (c.xp >= this.need(c.lvl)) { c.xp -= this.need(c.lvl); c.lvl++; Store.data.meta.frags += 2; this.levelUp(c.lvl); }
+    Store.save();
+    UI.missionsDirty = true;
+  },
+  levelUp(l) {
+    const doc = Object.values(DOCTRINES).find(d => d.lvl === l);
+    UI.banner(`NIVEAU ${l}`, this.rank(l).toUpperCase(), '#ffd23f');
+    UI.toast(`Commandant niveau ${l} · ${this.rank(l)}`, `<span class="frags">+2 ✦</span> fragments d'Héritage${doc ? `<br>Nouvelle doctrine débloquée : <b style="color:var(--gold)">${doc.n}</b>` : ''}`, '#ffd23f', 6);
+    Sfx.play('levelup');
+  }
+};
+
+/* ============================== PROTOCOLES (cartes entre les vagues) ============================== */
+const Cards = {
+  ok(id) {
+    const c = CARDS[id];
+    if (c.max && (G.cards[id] || 0) >= c.max) return false;
+    if (c.timed && G.timed.some(t => t.id === id)) return false;
+    return !c.need || c.need();
+  },
+  roll() {
+    const w = G.waveNum, pool = Object.keys(CARDS).filter(id => this.ok(id)), out = [], rw = [55, 32 + w * .5, 10 + w * .4];
+    while (out.length < 3 && pool.length) out.push(pool.splice(weightedIndex(pool.map(id => rw[CARDS[id].r])), 1)[0]);
+    return out;
+  },
+  offer() {
+    if (G.demo) { const o = this.roll(); if (o.length) this.apply(pick(o)); return; }
+    G.cardQ++;
+    if (!G.offer) G.offer = this.roll();
+    UI.openCards();
+  },
+  apply(id) {
+    const c = CARDS[id];
+    G.cards[id] = (G.cards[id] || 0) + 1;
+    if (c.timed) G.timed.push({ id, left: c.timed });
+    if (c.now) c.now();
+    Skills.apply(); Towers.recalc();
+  },
+  pick(i) {
+    const id = G.offer && G.offer[i]; if (!id) return;
+    const c = CARDS[id];
+    this.apply(id);
+    G.cardQ = Math.max(0, G.cardQ - 1);
+    G.offer = G.cardQ > 0 ? this.roll() : null;
+    Sfx.play(c.pact ? 'fuse' : 'upgrade');
+    Render.flash(.18, c.pact ? '#ff3d5a' : CARD_RARITY[c.r].c);
+    if (G.offer) UI.renderCards(); else UI.close('ov-cards');
+    UI.buildBar(); UI.refreshHUD();
+    if (UI.sel) UI.renderPanel();
+  },
+  rerollCost() { return 30 + 10 * G.waveNum; },
+  reroll() {
+    const c = this.rerollCost();
+    if (G.money < c) { UI.noMoney(); return; }
+    G.money -= c; G.offer = this.roll(); Sfx.play('ui'); UI.renderCards(); UI.refreshHUD();
+  },
+  // pactes à durée limitée : effets de fin de vague puis expiration
+  tick() {
+    let nano = 0, cash = 1;
+    for (const t of G.timed) { if (t.id === 'horde') { nano += 2; cash *= 1.3; } t.left--; }
+    const n = G.timed.length;
+    G.timed = G.timed.filter(t => t.left > 0);
+    if (G.timed.length !== n) Skills.apply();
+    return { nano, cash };
   }
 };
 
@@ -2431,7 +2773,8 @@ const SaveSys = {
     if (!G || G.over || G.demo) return;
     const M = G.map;
     Store.data.save = {
-      v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys, money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
+      v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
+      doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       nanites: G.nanites, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
       map: { C: M.C, R: M.R, cells: Array.from(M.cells).join(''), path: M.path },
       towers: G.towers.map(t => [t.key, t.tx, t.ty, t.level, t.invested, t.kills, Math.round(t.dealt), t.strat, t.oc ? 1 : 0]),
@@ -2444,7 +2787,7 @@ const SaveSys = {
 
 /* ============================== JEU ============================== */
 const Game = {
-  state: 'menu', speed: 1, acc: 0,
+  state: 'menu', speed: 1, acc: 0, slowT: 0,
   makeState(diffKey, map, seed) {
     G = {
       diffKey, diff: DIFFS[diffKey], seed, map, towers: [], tgrid: new Array(map.C * map.R).fill(null), enemies: [], drops: [],
@@ -2452,7 +2795,8 @@ const Game = {
       phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
-      stats: { kills: 0, gold: 0, maxCombo: 0, leaks: 0, bosses: 0, built: 0, fusions: 0, clean: 0 }
+      doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null,
+      stats: { kills: 0, gold: 0, maxCombo: 0, leaks: 0, bosses: 0, built: 0, fusions: 0, clean: 0, missions: 0 }
     };
     Path.build(map);
     return G;
@@ -2465,16 +2809,20 @@ const Game = {
     const portrait = View.w < View.h * .9;
     this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
     if (daily) { G.daily = daily.date; G.mutKeys = daily.mutKeys; G.mut = makeMut(daily.mutKeys); }
+    const dk = Store.data.doctrine, D = DOCTRINES[dk] && DOCTRINES[dk].lvl <= Store.data.cmd.lvl ? DOCTRINES[dk] : DOCTRINES.standard;
+    G.doctrine = D === DOCTRINES.standard ? 'standard' : dk;
     G.money = Math.round((diff.money + 40 * (pk.h_money || 0)) * G.mut.money);
-    G.maxLives = G.lives = Math.max(5, Math.round((diff.lives + 15 * (pk.h_lives || 0)) * G.mut.lives));
-    G.nanites = 3 + 2 * (pk.h_nano || 0);
+    G.maxLives = G.lives = Math.max(5, Math.round((diff.lives + 15 * (pk.h_lives || 0) + (D.lives || 0)) * G.mut.lives));
+    G.nanites = 3 + 2 * (pk.h_nano || 0) + (D.nano || 0);
     G.recycle = 2 + (pk.h_recycle || 0);
     for (let i = 0; i < (pk.h_bp || 0); i++) {
       const c = RECIPES.filter(r => TOWERS[r.r].tier === 2 && !G.unlocked.has(r.r));
       if (c.length) G.unlocked.add(pick(c).r);
     }
+    G.cmdStart = Object.assign({}, Store.data.cmd);
     Skills.apply();
     G.preview = Waves.plan(1);
+    Missions.fill();
     Store.data.stats.games++;
     this.start(true);
   },
@@ -2487,7 +2835,10 @@ const Game = {
       this.makeState(s.diffKey, map, s.seed);
       if (s.daily) { G.daily = s.daily; G.mutKeys = s.mutKeys || []; G.mut = makeMut(G.mutKeys); }
       Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, recycle: s.recycle,
-        skills: s.skills || {}, seen: s.seen || [], used: s.used || {} });
+        skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
+        doctrine: DOCTRINES[s.doctrine] ? s.doctrine : 'standard', missions: (s.missions || []).filter(m => MDEF[m.id]),
+        cards: s.cards || {}, timed: s.timed || [], cardQ: s.cardQ || 0, offer: s.offer || null, xpRun: s.xpRun || 0,
+        cmdStart: s.cmdStart || Object.assign({}, Store.data.cmd) });
       Object.assign(G.abil, s.abil || {});
       Object.assign(G.stats, s.stats || {});
       G.unlocked = new Set(s.unlocked || []);
@@ -2498,14 +2849,16 @@ const Game = {
         t.invested = a[4]; t.kills = a[5]; t.dealt = a[6]; t.strat = a[7]; t.oc = !!a[8]; t.fresh = false;
       }
       G.preview = Waves.plan(G.waveNum + 1);
+      Missions.fill();
       this.start(false);
+      if (G.cardQ > 0) { if (!G.offer) G.offer = Cards.roll(); UI.openCards(); }
       return true;
     } catch (e) {
       console.error(e); G = null; SaveSys.clear(); return false;
     }
   },
   start(fresh) {
-    this.state = 'play'; this.speed = 1; this.acc = 0;
+    this.state = 'play'; this.speed = 1; this.acc = 0; this.slowT = 0;
     FX.clear(); Shots.pool.clear();
     Towers.recalc();
     Music.intensity = 0;
@@ -2534,13 +2887,13 @@ const Game = {
     if (G.demo) { Demo.pending = true; return; }
     const frags = Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1)));
     Store.data.meta.frags += frags;
-    let best;
+    let best, prev;
     if (G.daily) {
       const D = Store.data.daily || (Store.data.daily = {});
-      best = G.waveNum > (D[G.daily] || 0);
+      prev = D[G.daily] || 0; best = G.waveNum > prev;
       if (best) D[G.daily] = G.waveNum;
     } else {
-      best = G.waveNum > (Store.data.records[G.diffKey] || 0);
+      prev = Store.data.records[G.diffKey] || 0; best = G.waveNum > prev;
       if (best) Store.data.records[G.diffKey] = G.waveNum;
     }
     Store.data.stats.kills += G.stats.kills;
@@ -2552,7 +2905,7 @@ const Game = {
     for (let i = 0; i < 4; i++) FX.ring(x, y, i & 1 ? '#ffffff' : '#ff2a6d', 60 + i * 45, 40 + i * 8, 4);
     FX.spark(x, y, '#ff2a6d', 80, 7, 60, 3);
     Render.flash(.6, '#ff2a6d'); Render.shake(25); Sfx.play('boom'); Sfx.play('leak');
-    setTimeout(() => { if (G && G.over) UI.gameOver(frags, best); }, 1600);
+    setTimeout(() => { if (G && G.over) UI.gameOver(frags, best, prev); }, 1600);
   },
   cycleSpeed() { this.speed = this.speed >= 3 ? 1 : this.speed + 1; UI.refreshSpeed(); Sfx.play('ui'); },
   quit(save = true) {
@@ -2733,6 +3086,7 @@ const Render = {
     View.oy = Math.round(View.top + pad + (ah - H * View.scale) / 2);
     Spr.setK(View.scale * View.dpr);
     $('bossbar').style.top = (View.top + 8) + 'px';
+    $('missions').style.top = (View.top + 8) + 'px';
   },
   setTheme(key) {
     if (!THEMES[key]) key = 'theme-cyber';
@@ -3378,6 +3732,8 @@ const Input = {
     if (code === 'F3' || code === 'Backquote') { e.preventDefault(); UI.toggleFps(); return; }
     if (UI.stack.length) {
       const top = UI.top();
+      if (top === 'ov-cards') { const m = /^(Digit|Numpad)([1-3])$/.exec(code); if (m) Cards.pick(+m[2] - 1); return; }
+      if (top === 'ov-over' && (code === 'Enter' || code === 'NumpadEnter' || code === 'Space')) { e.preventDefault(); const b = $('go-again'); if (b) b.click(); return; }
       if ((code === 'KeyP' && top === 'ov-pause') || (code === 'KeyK' && top === 'ov-tree') || (code === 'KeyL' && top === 'ov-lab') || (code === 'KeyH' && top === 'ov-help' && G)) UI.close(top);
       return;
     }
@@ -3420,6 +3776,7 @@ const UI = {
     $('b-wave').onclick = () => Waves.launch();
     $('b-auto').onclick = () => this.toggleAuto();
     $('cf-no').onclick = () => this.close('ov-confirm');
+    $('mh').onclick = () => { Store.s.mMin = !$('missions').classList.contains('min'); Store.save(); this.applyMissionsMin(); Sfx.play('ui'); };
     document.addEventListener('click', e => {
       const b = e.target.closest('button'); if (b) b.blur();
       const c = e.target.closest('[data-close]'); if (c) this.close(c.closest('.ov').id);
@@ -3532,6 +3889,7 @@ const UI = {
     $('tpanel').classList.remove('show'); $('bossbar').style.display = 'none';
     $('cv-game').classList.remove('placing', 'targeting');
     this.buildBar(); this.buildAbils(); this.refreshAuto(); this.refreshSpeed(); this.onPreview();
+    $('missions').classList.remove('hidden'); this.applyMissionsMin(); this.renderMissions();
     Render.resize();
     this.refreshHUD(); this.refreshAbils(true); this.refreshBadges();
     if (!Store.data.tuto) {
@@ -3541,7 +3899,7 @@ const UI = {
     }
   },
   exitGame() {
-    $('hud').classList.add('hidden'); $('dock').classList.add('hidden');
+    $('hud').classList.add('hidden'); $('dock').classList.add('hidden'); $('missions').classList.add('hidden');
     $('tpanel').classList.remove('show'); $('bossbar').style.display = 'none';
     this.sel = null; this.selDebris = null; this.placing = null; this.targeting = null; this.hover.inside = false;
     this.hideTip();
@@ -3551,6 +3909,7 @@ const UI = {
   onResize() {
     window.scrollTo(0, 0);
     this.placePanel();
+    if (G && !G.demo) this.applyMissionsMin();
     if (this.top() === 'ov-tree') requestAnimationFrame(() => this.drawLinks());
   },
 
@@ -3563,6 +3922,8 @@ const UI = {
     if (f % 4 === 0) this.refreshAbils();
     if (this.sel && f % 12 === 0) this.refreshPanelLive();
     if (f % 30 === 0) this.refreshBadges();
+    if (this.missionsDirty && f % 5 === 0) { this.missionsDirty = false; this.renderMissions(); }
+    if (this.missionFlash) { const m = $('missions'); m.classList.remove('flash'); void m.offsetWidth; m.classList.add('flash'); this.missionFlash = 0; }
   },
   refreshHUD() {
     const L = this.last, lives = Math.max(0, Math.ceil(G.lives)), money = Math.floor(G.money);
@@ -3571,6 +3932,7 @@ const UI = {
       $('h-money').textContent = fmt(money); L.money = money;
       this.refreshBar();
       if (money >= 5000) Ach.unlock('rich');
+      Missions.on('money', money);
       if (this.sel) this.refreshPanelButtons();
     }
     if (L.nano !== G.nanites) { const el = $('h-nano'); el.textContent = G.nanites; if (L.nano !== undefined && G.nanites > L.nano) this.anim(el, 'bump'); L.nano = G.nanites; this.refreshBadges(); }
@@ -3600,9 +3962,12 @@ const UI = {
     if (on !== this.last.comboOn) { $('combo').classList.toggle('on', on); this.last.comboOn = on; }
     if (on && this.last.combo !== c) {
       this.last.combo = c;
+      const el = $('combo');
       $('combo-v').textContent = 'x' + (1 + Math.min(1, Math.floor(c / 10) * .1)).toFixed(1);
       $('combo-n').textContent = c + ' élim.';
+      el.classList.toggle('t1', c >= 25 && c < 50); el.classList.toggle('t2', c >= 50 && c < 100); el.classList.toggle('t3', c >= 100);
     }
+    if (this.comboBurst) { const el = $('combo'); el.classList.remove('burst'); void el.offsetWidth; el.classList.add('burst'); this.comboBurst = 0; }
   },
   refreshBoss() {
     const b = G.boss, el = $('bossbar');
@@ -3648,6 +4013,72 @@ const UI = {
       G.seen.push(k);
       this.toast('Renseignement : ' + HINTS[k][0], HINTS[k][1], k === 'boss' ? '#ff2a6d' : '#4df3ff', 7);
     }
+  },
+
+  /* ---------- missions ---------- */
+  applyMissionsMin() {
+    const min = Store.s.mMin === undefined ? View.w < 640 : Store.s.mMin;
+    $('missions').classList.toggle('min', min); $('m-tog').textContent = min ? '+' : '−';
+  },
+  renderMissions() {
+    if (!G || G.demo) return;
+    const c = Store.data.cmd;
+    $('m-cmd').textContent = `NIV ${c.lvl} · ${fmt(c.xp)}/${fmt(Cmd.need(c.lvl))} XP`;
+    $('m-xp').style.width = (c.xp / Cmd.need(c.lvl) * 100).toFixed(1) + '%';
+    $('mlist').innerHTML = G.missions.map(s => {
+      const m = MDEF[s.id], p = Math.min(1, s.p / s.n);
+      return `<div class="mi"><div class="mt"><i>${TXT(m.i)}</i><span>${m.d(s.n)}</span><span class="mr" style="color:${s.nano ? 'var(--nano)' : 'var(--gold)'}">${s.nano ? '+' + s.nano + ' ◈' : '+' + fmt(s.cash) + '¢'}</span></div>` +
+        `<div class="mb"><div><s style="width:${(p * 100).toFixed(1)}%"></s></div><em>${fmt(Math.min(s.p, s.n))}/${fmt(s.n)}</em></div></div>`;
+    }).join('') || '<div class="note" style="margin-top:6px">Nouvelles missions à la prochaine vague.</div>';
+  },
+
+  /* ---------- protocoles ---------- */
+  openCards() {
+    if (!G || !G.offer || !G.offer.length) { if (G) { G.offer = null; G.cardQ = 0; } return; }
+    this.setPlacing(null, true); this.setTargeting(null); this.deselect();
+    this.renderCards(); this.open('ov-cards'); Sfx.play('card');
+  },
+  renderCards() {
+    $('cards-t').textContent = `PROTOCOLE · VAGUE ${G.waveNum}`;
+    $('cards-sub').innerHTML = `Choisissez une amélioration pour la suite de la partie${G.cardQ > 1 ? ` (<b>${G.cardQ}</b> en attente)` : ''}. Raccourcis : <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>.`;
+    const box = $('cards'); box.innerHTML = '';
+    G.offer.forEach((id, i) => {
+      const c = CARDS[id], col = c.pact ? '#ff3d5a' : CARD_RARITY[c.r].c, own = G.cards[id] || 0;
+      const st = c.timed ? `Durée : ${c.timed} vagues` : c.max ? `Niveau ${own} → ${own + 1} / ${c.max}` : 'Effet immédiat';
+      const el = document.createElement('div');
+      el.className = 'pcard' + (c.pact ? ' pact' : ''); el.tabIndex = 0; el.style.setProperty('--rc', col);
+      el.innerHTML = `<span class="hk">${i + 1}</span><div class="ci">${TXT(c.i)}</div><div class="ct"><div class="rr">${c.pact ? 'PACTE' : CARD_RARITY[c.r].n}</div><h3>${c.n}</h3><p>${c.d()}</p><div class="st">${st}</div></div>`;
+      el.onclick = () => Cards.pick(i);
+      el.onkeydown = e => { if (e.key === 'Enter') Cards.pick(i); };
+      box.appendChild(el);
+    });
+    const rb = $('cards-reroll'), rc = Cards.rerollCost();
+    rb.innerHTML = `RELANCER LES CARTES · ${fmt(rc)}¢`; rb.disabled = G.money < rc; rb.onclick = () => Cards.reroll();
+  },
+
+  /* ---------- doctrines ---------- */
+  renderDocs() {
+    const row = $('doc-row'), lvl = Store.data.cmd.lvl;
+    let cur = Store.data.doctrine;
+    if (!DOCTRINES[cur] || DOCTRINES[cur].lvl > lvl) cur = 'standard';
+    const desc = (d, lock) => { $('doc-desc').innerHTML = `<b>${d.n}</b> — ${d.d}${lock ? ` <span style="color:var(--dang)">Débloquée au niveau ${d.lvl}.</span>` : ''}`; };
+    row.innerHTML = '';
+    for (const k in DOCTRINES) {
+      const d = DOCTRINES[k], lock = d.lvl > lvl, b = document.createElement('button');
+      b.className = 'doc' + (k === cur ? ' on' : '') + (lock ? ' lock' : '');
+      b.innerHTML = `<i>${lock ? '⊘' : TXT(d.i)}</i>${d.n}${lock ? ` · niv ${d.lvl}` : ''}`;
+      b.onclick = () => { if (lock) { Sfx.play('error'); return; } Store.data.doctrine = k; Store.save(); Sfx.play('ui'); this.renderDocs(); };
+      b.onpointerenter = () => desc(d, lock);
+      b.onpointerleave = () => desc(DOCTRINES[cur], false);
+      row.appendChild(b);
+    }
+    desc(DOCTRINES[cur], false);
+  },
+  cmdBadge(el) {
+    const c = Store.data.cmd, nd = Cmd.nextDoctrine(c.lvl);
+    el.innerHTML = `<div class="cl">NIV <b>${c.lvl}</b><span>${Cmd.rank(c.lvl).toUpperCase()}</span><em>${fmt(c.xp)} / ${fmt(Cmd.need(c.lvl))} XP</em></div>` +
+      `<div class="xpbar"><s style="width:${(c.xp / Cmd.need(c.lvl) * 100).toFixed(1)}%"></s></div>` +
+      (nd ? `<div class="nx">Prochaine doctrine : <b>${nd.n}</b> au niveau ${nd.lvl}</div>` : '<div class="nx">Toutes les doctrines sont débloquées.</div>');
   },
 
   /* ---------- barre de construction ---------- */
@@ -3768,7 +4199,7 @@ const UI = {
   escape() {
     if (this.stack.length) {
       const top = this.top();
-      if (top !== 'ov-menu' && top !== 'ov-over') this.close(top);
+      if (top !== 'ov-menu' && top !== 'ov-over' && top !== 'ov-cards') this.close(top);
       return;
     }
     if (this.targeting || this.placing || this.sel || this.selDebris) { this.cancel(); return; }
@@ -3941,6 +4372,7 @@ const UI = {
     list.push(['OPTIONS', '', () => this.openOptions()]);
     list.push(['MANUEL', '', () => this.openHelp()]);
     this.btns($('menu-btns'), list);
+    this.cmdBadge($('menu-cmd'));
     const rec = Object.keys(DIFFS).filter(k => Store.data.records[k]).map(k => `${DIFFS[k].name} <b>${Store.data.records[k]}</b>`).join(' · ');
     $('menu-foot').innerHTML = `${rec ? 'Records — ' + rec + '<br>' : ''}Un seul fichier · 100% hors-ligne · v${VERSION}` +
       (Store.s.demo ? '<br><span style="opacity:.6">En arrière-plan : une IA défend une carte en direct</span>' : '');
@@ -3948,6 +4380,7 @@ const UI = {
     if (!G && Store.s.demo) Demo.start();
   },
   openNew() {
+    this.renderDocs();
     const g = $('diff-grid'); g.innerHTML = '';
     for (const k in DIFFS) {
       const d = DIFFS[k], rec = Store.data.records[k] || 0, el = document.createElement('div');
@@ -3966,6 +4399,7 @@ const UI = {
     if (!G || G.over) return;
     this.setPlacing(null, true); this.setTargeting(null);
     $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · Graine <b>${G.seed}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
+      `<br>Doctrine <b>${DOCTRINES[G.doctrine].n}</b> · Commandant niv. <b>${Store.data.cmd.lvl}</b>` +
       (G.daily ? '<br>' + G.mutKeys.map(k => `<b style="color:var(--gold)">${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>') : '');
     this.btns($('pause-btns'), [
       ['REPRENDRE', 'prim', () => this.close('ov-pause')],
@@ -4108,16 +4542,16 @@ const UI = {
       const h = document.createElement('div'); h.className = 'lab-tier'; h.textContent = TIER_NAMES[tier]; Lb.appendChild(h);
       const grid = document.createElement('div'); grid.className = 'rgrid';
       for (const r of RECIPES.filter(x => TOWERS[x.r].tier === tier)) {
-        const d = TOWERS[r.r], own = G.unlocked.has(r.r), can = Fusion.canResearch(r), afford = G.nanites >= r.n;
+        const d = TOWERS[r.r], own = G.unlocked.has(r.r), can = Fusion.canResearch(r), rc = Fusion.cost(r), afford = G.nanites >= rc;
         const missing = [r.a, r.b].filter(k => !Fusion.avail(k)).map(k => TOWERS[k].name);
         const el = document.createElement('div');
         el.className = 'rcard' + (own ? ' own' : '') + (!own && !can ? ' lock' : '');
         el.style.setProperty('--tc', d.color);
-        el.innerHTML = `<div class="eq"><canvas></canvas>+<canvas></canvas>→<canvas class="res"></canvas><div style="margin-left:auto;text-align:right">${own ? '<span class="tag g">PLAN ACQUIS</span>' : `<span class="nanos">${r.n} ◈</span>`}</div></div>
+        el.innerHTML = `<div class="eq"><canvas></canvas>+<canvas></canvas>→<canvas class="res"></canvas><div style="margin-left:auto;text-align:right">${own ? '<span class="tag g">PLAN ACQUIS</span>' : `<span class="nanos">${rc} ◈</span>`}</div></div>
           <h4>${d.name}<small>${TOWERS[r.a].name} + ${TOWERS[r.b].name} · ${Towers.costOf(r.r)}¢</small></h4><p>${d.desc}</p>
           ${d.kind === 'support' ? '' : `<div class="ms"><span>DÉG <b>${d.dmg}${d.kind === 'beam' ? '/s' : ''}</b></span><span>PORTÉE <b>${(d.range / TILE).toFixed(1)}</b></span>${d.rate > 1 ? `<span>CAD <b>${(60 / d.rate).toFixed(1)}/s</b></span>` : ''}</div>`}
           <div class="tags">${this.tagsHtml(d)}</div>
-          ${own ? '' : missing.length ? `<div class="note" style="color:var(--dang)">Plans requis : ${missing.join(', ')}</div>` : `<button class="btn nano" ${afford ? '' : 'disabled'}>SYNTHÉTISER LE PLAN · ${r.n} ◈</button>`}`;
+          ${own ? '' : missing.length ? `<div class="note" style="color:var(--dang)">Plans requis : ${missing.join(', ')}</div>` : `<button class="btn nano" ${afford ? '' : 'disabled'}>SYNTHÉTISER LE PLAN · ${rc} ◈</button>`}`;
         const cvs = el.querySelectorAll('canvas');
         Spr.icon(cvs[0], r.a, 36); Spr.icon(cvs[1], r.b, 36); Spr.icon(cvs[2], r.r, 48);
         const btn = el.querySelector('button');
@@ -4129,24 +4563,40 @@ const UI = {
   },
 
   /* ---------- fin de partie, héritage, succès, manuel ---------- */
-  gameOver(frags, best) {
+  gameOver(frags, best, prev = 0) {
     const s = G.stats, mins = Math.max(1, Math.round(G.tick / 3600)), dk = G.diffKey, daily = !!G.daily;
     let mvp = null;
     for (const t of G.towers) if (t.dealt > 0 && (!mvp || t.dealt > mvp.dealt)) mvp = t;
+    // l'écart au record : le moteur du « encore une »
+    const gap = prev - G.waveNum + 1;
+    const recLine = best ? `<div class="goline rec">★ NOUVEAU RECORD · VAGUE ${G.waveNum} ★</div>`
+      : `<div class="goline">Record : vague ${prev} — plus que <b style="color:var(--gold)">${gap} vague${gap > 1 ? 's' : ''}</b> pour le battre${gap <= 3 ? ' !' : '.'}</div>`;
+    const c0 = G.cmdStart || Store.data.cmd, c1 = Store.data.cmd, ups = c1.lvl - c0.lvl, nd = Cmd.nextDoctrine(c1.lvl);
+    let toGo = 0;
+    if (nd) { toGo = -c1.xp; for (let l = c1.lvl; l < nd.lvl; l++) toGo += Cmd.need(l); }
+    const startW = ups > 0 ? 0 : c0.xp / Cmd.need(c0.lvl) * 100, endW = c1.xp / Cmd.need(c1.lvl) * 100;
     $('over-body').innerHTML = `<h2 style="color:var(--dang)">ÉCHEC SYSTÈME</h2>
-      <div class="sub">${daily ? 'Défi du jour ' + G.daily : G.diff.name} · le noyau a cédé à la vague <b>${G.waveNum}</b>${best && G.waveNum > 1 ? ' — <b style="color:var(--gold)">NOUVEAU RECORD !</b>' : ''}</div>
-      <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
+      <div class="sub" style="margin-bottom:6px">${daily ? 'Défi du jour ' + G.daily : G.diff.name}${G.doctrine !== 'standard' ? ' · doctrine ' + DOCTRINES[G.doctrine].n : ''} · le noyau a cédé à la vague <b>${G.waveNum}</b></div>
+      ${recLine}
+      <div class="cmdb" style="margin:6px auto 4px"><div class="cl">NIV <b>${c1.lvl}</b><span>${Cmd.rank(c1.lvl).toUpperCase()}</span><em style="color:var(--gold)">+${fmt(G.xpRun)} XP</em></div>
+        <div class="xpbar"><s id="go-xp" style="width:${startW.toFixed(1)}%"></s></div>
+        ${ups > 0 ? `<div class="nx" style="color:var(--gold);font-weight:700">▲ ${ups} niveau${ups > 1 ? 'x' : ''} gagné${ups > 1 ? 's' : ''} !</div>` : ''}
+        ${nd ? `<div class="nx">Prochaine doctrine : <b>${nd.n}</b> au niveau ${nd.lvl} — encore ${fmt(toGo)} XP</div>` : ''}</div>
+      <div class="gostats"><div>Éliminations <b>${fmt(s.kills)}</b></div><div>Missions <b>${s.missions}</b></div>
       <div>Crédits gagnés <b>${fmt(s.gold)}</b></div><div>Combo max <b>${s.maxCombo}</b></div>
       <div>Boss vaincus <b>${s.bosses}</b></div><div>Fusions terrain <b>${s.fusions}</b></div>
-      <div>Tourelles bâties <b>${s.built}</b></div><div>Temps de jeu <b>${mins} min</b></div></div>
+      <div>Protocoles <b>${Object.values(G.cards).reduce((a, b) => a + b, 0)}</b></div><div>Temps de jeu <b>${mins} min</b></div></div>
       ${mvp ? `<div class="mvp" style="--tc:${mvp.d.color}"><canvas id="go-mvp"></canvas><div style="text-align:left"><div class="lbl-s">TOURELLE MVP</div><b style="color:${mvp.d.color};letter-spacing:1px">${mvp.d.name.toUpperCase()} · NIV ${mvp.level}</b><div class="note">${fmt(mvp.dealt)} dégâts · ${fmt(mvp.kills)} éliminations</div></div></div>` : ''}
-      <div class="sub" style="font-size:14px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span> (total ${Store.data.meta.frags})</div>
-      <div class="row" style="justify-content:center;gap:10px;margin-top:14px"><button class="btn" id="go-menu">MENU</button><button class="btn gold" id="go-meta">HÉRITAGE</button><button class="btn prim" id="go-again">REJOUER</button></div>`;
+      <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span> (total ${Store.data.meta.frags})</div>
+      <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="go-menu">MENU</button><button class="btn gold" id="go-meta">HÉRITAGE</button><button class="btn prim big" id="go-again">${daily ? 'RETENTER LE DÉFI' : 'ENCORE UNE !'} <span class="k">ENTRÉE</span></button></div>`;
     if (mvp) Spr.icon($('go-mvp'), mvp.key, 44);
+    requestAnimationFrame(() => requestAnimationFrame(() => { const x = $('go-xp'); if (x) x.style.width = endW.toFixed(1) + '%'; }));
+    if (best && G.waveNum > 1) Sfx.play('levelup');
     $('go-menu').onclick = () => Game.quit(false);
     $('go-meta').onclick = () => { Game.quit(false); this.openMeta(); };
     $('go-again').onclick = () => { this.closeAll(); Game.newGame(dk, { daily }); };
     this.open('ov-over');
+    $('go-again').focus();
   },
   openMeta() {
     const M = Store.data.meta;
@@ -4184,6 +4634,12 @@ const UI = {
       <h3>CHALEUR & SOUTIEN</h3><ul>
         <li>La <b>surcadence</b> double la cadence mais fait chauffer la tourelle. À 100% elle s'arrête jusqu'à refroidissement complet.</li>
         <li><b>Ventilo</b> : refroidit les 4 voisines (avec 2 ventilos, beaucoup de tourelles tiennent la surcadence en permanence). <b>Ordi</b> : +25% de dégâts aux voisines. <b>Nexus</b> : les deux, sur 8 voisines.</li></ul>
+      <h3>MISSIONS & PROTOCOLES</h3><ul>
+        <li><b>Missions</b> : 3 objectifs courts sont toujours actifs (panneau en haut à droite). Chacune rapporte crédits ou nanites, de l'XP et un fragment, puis est aussitôt remplacée.</li>
+        <li><b>Protocoles</b> : après chaque vague repoussée, choisissez 1 carte parmi 3 (touches <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>). Bonus immédiats, améliorations cumulables, ou <b style="color:#ff3d5a">pactes</b> : gros gain contre un risque. Relance possible contre des crédits.</li></ul>
+      <h3>COMMANDANT & DOCTRINES</h3><ul>
+        <li>Chaque vague, boss et mission donne de l'<b>XP de Commandant</b>, conservée d'une partie à l'autre. Chaque niveau rapporte 2 fragments et un nouveau grade.</li>
+        <li>Les niveaux débloquent des <b>doctrines</b> (Artillerie, Génie, Finance, Alchimie, Précision, Bastion, Blitz) à choisir au lancement d'une partie.</li></ul>
       <h3>PROGRESSION</h3><ul>
         <li><b>Arbre de compétences</b> (<kbd>K</kbd>) : 18 compétences en 3 branches, payées en nanites, pour la partie en cours. Les nœuds finaux débloquent la <b>Cryo-Bombe</b> et la <b>Surcharge</b>.</li>
         <li><b>Héritage</b> : les fragments gagnés à chaque fin de partie achètent des bonus permanents.</li>
@@ -4240,10 +4696,12 @@ function loop(now) {
   if ((UI.frameN & 31) === 0 && (window.innerWidth !== View.w || window.innerHeight !== View.h)) Render.resize();
   if (Game.state === 'play' && G) {
     if (!G.over && !UI.blocking()) {
-      Game.acc += dt * Game.speed;
+      let sm = 1;
+      if (Game.slowT > 0) { Game.slowT -= dt; sm = .28; }
+      Game.acc += dt * Game.speed * sm;
       const t0 = performance.now();
       let steps = 0;
-      while (Game.acc >= TICK_MS && steps < 12) { Game.update(); Game.acc -= TICK_MS; steps++; if (G.over) break; }
+      while (Game.acc >= TICK_MS && steps < 12) { Game.update(); Game.acc -= TICK_MS; steps++; if (G.over || UI.blocking()) break; }
       if (steps >= 12) Game.acc = 0;
       if (steps) Perf.simMs = Perf.simMs * .9 + (performance.now() - t0) / steps * .1;
       Render.alpha = clamp(Game.acc / TICK_MS, 0, 1);

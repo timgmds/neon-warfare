@@ -26,6 +26,9 @@ La partie est sauvegardée automatiquement entre deux vagues (dans le `localStor
 | **Ennemis** | 10 types (blindés, boucliers, furtifs, volants, soigneurs, brouilleurs IEM, téléporteurs, porteurs…), 3 boss, élites |
 | **Vagues** | infinies, thématiques (Essaim, Raid aérien, Colonne blindée…), boss toutes les 5 vagues, aperçu de la vague suivante |
 | **Défi du jour** | même carte et mêmes 2 mutateurs pour tout le monde ce jour-là, record journalier |
+| **Missions** | 3 objectifs courts toujours actifs (abattre des volants, combo, vagues sans fuite…), remplacés dès qu'ils sont accomplis |
+| **Protocoles** | toutes les 2 vagues, 1 carte à choisir parmi 3 : bonus, améliorations cumulables ou pactes risque/récompense |
+| **Commandant** | niveau permanent et grades (de Recrue à Légende) ; les niveaux débloquent 7 **doctrines** de départ |
 | **Chaleur** | surcadence (cadence ×2) qui fait chauffer ; les Ventilos permettent de la tenir |
 | **Divers** | 19 succès, 5 thèmes visuels, musique générative, cartes procédurales (portrait/paysage), démo IA en fond de menu |
 
@@ -34,7 +37,7 @@ La partie est sauvegardée automatiquement entre deux vagues (dans le `localStor
 | Touche | Action |
 |---|---|
 | `Espace` | Lancer / appeler la vague (prime si appel anticipé) |
-| `1` … `0` | Choisir une tourelle (`Maj` + clic pour en poser plusieurs) |
+| `1` … `0` | Choisir une tourelle (`Maj` + clic pour en poser plusieurs) ; `1` `2` `3` choisissent un protocole |
 | `Q` `W` `E` (`A` `Z` `E` en AZERTY) | Capacités |
 | `U` / `X` | Améliorer / vendre la tourelle sélectionnée |
 | `T` / `O` | Changer le ciblage / surcadence |
@@ -66,7 +69,7 @@ Tout est dans `neon-warfare.html`, organisé en modules :
 
 `Store` (sauvegarde) · `Sfx` / `Music` (Web Audio) · données (`TOWERS`, `RECIPES`, `ENEMIES`,
 `SKILLS`, `PERKS`, `MUTATORS`…) · `Spr` (sprites) · `MapGen` / `Path` · `FX` · `Combat` ·
-`Enemies` · `Towers` · `Shots` · `Waves` · `Abil` · `Skills` · `Fusion` · `Game` · `Demo` ·
+`Enemies` · `Towers` · `Shots` · `Waves` · `Abil` · `Skills` · `Fusion` · `Missions` · `Cmd` · `Cards` · `Game` · `Demo` ·
 `Render` · `Input` · `UI` · boucle principale.
 
 Pour ajouter une tourelle : une entrée dans `TOWERS` (+ une recette dans `RECIPES` si c'est une fusion).
@@ -86,4 +89,6 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v8.1** : missions, protocoles (cartes), niveau de Commandant et doctrines, combo qui s'emballe,
+  ralenti sur les boss, écran de fin « encore une ».
 - **v8.0 — Fusion Protocol** : refonte complète de la v7.1 « Scavenger Patch » (voir l'historique git).
