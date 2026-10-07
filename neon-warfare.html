@@ -772,7 +772,7 @@ const ENEMIES = {
 };
 const BOSSES = {
   colosse:  { name: 'COLOSSE', hp: 1500, armor: 3, spd: .5, bounty: 160, leak: 20, r: 22, color: '#ff3d3d', shape: 'boss1', rot: true, boss: true },
-  hydre:    { name: 'HYDRE', hp: 1400, armor: 1.5, spd: .6, bounty: 160, leak: 20, r: 21, color: '#3dff8a', shape: 'boss2', boss: true, summon: { type: 'drone', every: 180, n: 2 }, spawn: { type: 'scout', n: 6 } },
+  hydre:    { name: 'HYDRE', hp: 1250, armor: 1.5, spd: .6, bounty: 160, leak: 20, r: 21, color: '#3dff8a', shape: 'boss2', boss: true, summon: { type: 'drone', every: 200, n: 2, max: 8 }, spawn: { type: 'scout', n: 6 } },
   overlord: { name: 'OVERLORD', hp: 1000, shield: 700, spd: .55, bounty: 180, leak: 25, r: 23, color: '#c43dff', shape: 'boss3', boss: true, jam: true, jamR: 150 }
 };
 for (const k in ENEMIES) ENEMIES[k].key = k;
@@ -1517,7 +1517,7 @@ const Enemies = {
       dist: o.dist || 0, seg: 0, x: 0, y: 0, px: 0, py: 0, ang: 0,
       slowT: 0, slowF: 1, burnT: 0, burnDps: 0, burnSrc: null, freezeT: 0, revealT: 0, markT: 0, markV: 0, hitT: 0, shCd: 0,
       wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: Math.random() * TAU,
-      tA: d.summon ? d.summon.every : d.heal ? 60 : rndi(90, 200), tB: rndi(120, 240)
+      tA: d.summon ? d.summon.every : d.heal ? 60 : rndi(90, 200), tB: rndi(120, 240), sumLeft: d.summon ? d.summon.max : 0
     };
     Path.place(e); e.px = e.x; e.py = e.y;
     G.enemies.push(e);
@@ -1550,8 +1550,8 @@ const Enemies = {
       if (d.heal && --e.tA <= 0) { e.tA = 60; this.heal(e); }
       if (d.blink && --e.tA <= 0) { e.tA = rndi(160, 230); this.blink(e); }
       if (d.jam && --e.tB <= 0) { e.tB = d.boss ? 300 : 240; this.jam(e, d.jamR || 110); }
-      if (d.summon && --e.tA <= 0) {
-        e.tA = d.summon.every;
+      if (d.summon && e.sumLeft > 0 && --e.tA <= 0) {
+        e.tA = d.summon.every; e.sumLeft--;
         const w = G.waves[e.wave];
         for (let k = 0; k < d.summon.n; k++)
           this.spawn(d.summon.type, { dist: Math.max(0, e.dist - 26 - k * 16), hpMul: (w ? w.hpMul : 1) * .6, wave: e.wave, child: true });
@@ -2134,7 +2134,7 @@ const Waves = {
     return { n, name: th.name, theme: th.id, list: order, counts, bosses: boss ? this.bossesFor(n) : [], hpMul: this.hpMul(n) * (th.hpMul || 1) * G.mut.hp, gapMul: th.gapMul || 1 };
   },
   bossesFor(n) {
-    const order = ['colosse', 'hydre', 'overlord'], k = n / 5 - 1, c = n >= 40 ? 3 : n >= 25 ? 2 : 1, out = [];
+    const order = ['colosse', 'hydre', 'overlord'], k = n / 5 - 1, c = n >= 45 ? 3 : n >= 30 ? 2 : 1, out = [];
     for (let i = 0; i < c; i++) out.push(order[(k + i) % 3]);
     return out;
   },
@@ -3968,6 +3968,9 @@ const UI = {
       ['REPRENDRE', 'prim', () => this.close('ov-pause')],
       ['OPTIONS', '', () => this.openOptions()],
       ['MANUEL', '', () => this.openHelp()],
+      ['RECOMMENCER', '', () => this.confirm('RECOMMENCER ?', G.daily ? 'Le Défi du jour reprend depuis le début.' : 'Nouvelle carte, même difficulté. La partie en cours sera perdue.', () => {
+        const dk = G.diffKey, daily = !!G.daily; this.closeAll(); Game.newGame(dk, { daily });
+      })],
       [G.phase === 'prep' ? 'SAUVEGARDER & QUITTER' : 'QUITTER<small>reprise au début de la vague en cours</small>', '', () => Game.quit()],
       ['ABANDONNER', 'danger', () => this.confirm('ABANDONNER ?', 'La partie sera perdue. Les fragments gagnés restent acquis.', () => { this.closeAll(); Game.gameOver(); })]
     ]);
