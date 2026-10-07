@@ -22,7 +22,8 @@ body.theme-solar{--bg:#0c0700;--accent:#ffae00;--accent-rgb:255,174,0;--sec:#ff5
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:var(--font);
   user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;-webkit-font-smoothing:antialiased}
-canvas{position:absolute;left:0;top:0;display:block}
+canvas{display:block}
+#cv-bg,#cv-fx,#cv-map,#cv-game{position:absolute;left:0;top:0}
 #cv-game{cursor:default}
 #cv-game.placing{cursor:copy}
 #cv-game.targeting{cursor:crosshair}
@@ -42,7 +43,7 @@ body.no-crt #crt{display:none}
 .btn.on{background:var(--accent);color:#000;border-color:var(--accent)}
 .btn.prim{border-color:var(--accent);color:var(--accent)}
 .btn.danger{border-color:var(--dang);color:var(--dang)}
-.btn.danger:hover:not(:disabled){background:var(--dang);color:#fff;border-color:var(--dang);box-shadow:0 0 14px var(--dang)}
+.btn.danger:hover:not(:disabled),.btn.danger.on{background:var(--dang);color:#fff;border-color:var(--dang);box-shadow:0 0 14px var(--dang)}
 .btn.gold{border-color:var(--gold);color:var(--gold)}
 .btn.gold:hover:not(:disabled){background:var(--gold);color:#000;border-color:var(--gold);box-shadow:0 0 14px var(--gold)}
 .btn.nano{border-color:var(--nano);color:var(--nano)}
@@ -319,11 +320,15 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   #b-wave{padding:10px 14px;font-size:11px}
   .bcard{width:52px;height:64px}
   .bcard canvas{width:36px;height:36px}
-  .panel{width:auto}
+  .panel{width:auto;padding:8px 10px;max-height:52vh;overflow-y:auto}
+  .panel .note{display:none}
   .tree{grid-template-columns:1fr}
   .help .cols{grid-template-columns:1fr}
   .modal{padding:18px 14px}
   #toasts{bottom:150px;right:8px}
+}
+@media (hover:none){
+  .btn .k,.bcard .hk,.abil .key{display:none}
 }
 @media (max-height:540px) and (min-width:641px){
   #hud{min-height:44px;padding:3px 10px}
@@ -3309,6 +3314,7 @@ const UI = {
     this.showMenu();
   },
   onResize() {
+    window.scrollTo(0, 0);
     this.placePanel();
     if (this.top() === 'ov-tree') requestAnimationFrame(() => this.drawLinks());
   },
@@ -3434,7 +3440,7 @@ const UI = {
       i++;
     }
     this.refreshBar();
-    if (G.freshBp && this.cards[G.freshBp]) this.cards[G.freshBp].el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (G.freshBp && this.cards[G.freshBp]) { const el = this.cards[G.freshBp].el; bar.scrollLeft = el.offsetLeft - bar.offsetLeft - bar.clientWidth / 2; }
   },
   refreshBar() {
     for (const k in this.cards) {
@@ -3580,7 +3586,7 @@ const UI = {
     let fuse = '';
     for (const f of Fusion.fieldOptions(t)) {
       const R = TOWERS[f.r.r];
-      fuse += `<div class="fuse-opt${f.owned ? '' : ' off'}" data-o="${f.o.id}" style="--fc:${R.color}"><canvas></canvas><span>+ ${TOWERS[f.o.key].name} → <b>${R.name}</b></span><span class="c">${f.owned ? f.cost + '¢' : 'PLAN ?'}</span></div>`;
+      fuse += `<div class="fuse-opt${f.owned ? '' : ' off'}" data-o="${f.o.id}" style="--fc:${R.color}"><canvas></canvas><span>+ ${TOWERS[f.o.key].name} → <b>${R.name}</b></span><span class="c">${f.owned ? (f.cost ? f.cost + '¢' : 'GRATUIT') : 'PLAN ?'}</span></div>`;
     }
     if (fuse) fuse = `<div class="lbl-s" style="margin-top:8px;color:var(--sec)">FUSION SUR LE TERRAIN</div>` + fuse;
     const upTxt = t.level >= maxL ? 'NIVEAU MAX' : `AMÉLIORER <span class="k">${Towers.upCost(t)}¢ · U</span>`;
@@ -3646,9 +3652,11 @@ const UI = {
       return;
     }
     P.style.right = 'auto';
-    const sx = View.ox + (s.tx + .5) * ts, sy = View.oy + (s.ty + .5) * ts, off = ts * .6 + 14;
-    let x = sx + off;
+    // à distance de la tuile sélectionnée pour laisser ses voisines visibles (partenaires de fusion, soutiens)
+    const sx = View.ox + (s.tx + .5) * ts, sy = View.oy + (s.ty + .5) * ts, off = ts * 1.7 + 6;
+    let x = sx < View.w / 2 ? sx + off : sx - off - pw;
     if (x + pw > View.w - 8) x = sx - off - pw;
+    if (x < 8) x = sx + off;
     x = clamp(x, 8, View.w - pw - 8);
     const y = clamp(sy - ph / 2, View.top + 8, Math.max(View.top + 8, View.h - View.bottom - ph - 8));
     P.style.left = x + 'px'; P.style.top = y + 'px';
@@ -4006,6 +4014,7 @@ function boot() {
       if (Sfx.ctx && Sfx.ctx.state === 'running') Sfx.ctx.suspend();
     } else if (Sfx.ctx && Sfx.ctx.state === 'suspended') Sfx.ctx.resume();
   });
+  window.addEventListener('scroll', () => { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); });
   window.addEventListener('beforeunload', () => { if (G && !G.over && G.phase === 'prep') SaveSys.save(); });
   UI.showMenu();
   requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });
