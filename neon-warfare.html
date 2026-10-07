@@ -153,7 +153,8 @@ body.no-crt #crt{display:none}
 .tag.p{color:#d58cff;border-color:rgba(200,120,255,.3)}
 .heat{height:5px;background:#161b26;border-radius:3px;overflow:hidden;margin:3px 0 6px}
 .heat i{display:block;height:100%;width:0;background:var(--ok);transition:width .15s}
-.row{display:flex;gap:5px;align-items:center;margin-top:6px}
+.row{display:flex;gap:5px;align-items:center;margin-top:6px;min-width:0}
+.panel .row .btn{min-width:0;overflow:hidden;text-overflow:ellipsis;padding-left:8px;padding-right:8px}
 .seg{display:flex;flex:1;border:1px solid rgba(255,255,255,.15);border-radius:5px;overflow:hidden;margin-top:3px}
 .seg button{flex:1;background:transparent;border:0;color:var(--dim);font:700 9px var(--font);letter-spacing:1px;padding:6px 0;cursor:pointer}
 .seg button:hover{color:#fff;background:rgba(255,255,255,.06)}
@@ -3825,13 +3826,13 @@ const UI = {
     let fuse = '';
     for (const f of Fusion.fieldOptions(t)) {
       const R = TOWERS[f.r.r];
-      fuse += `<div class="fuse-opt${f.owned ? '' : ' off'}" data-o="${f.o.id}" style="--fc:${R.color}"><canvas></canvas><span>+ ${TOWERS[f.o.key].name} → <b>${R.name}</b></span><span class="c">${f.owned ? (f.cost ? f.cost + '¢' : 'GRATUIT') : 'PLAN ?'}</span></div>`;
+      fuse += `<div class="fuse-opt${f.owned ? '' : ' off'}" data-o="${f.o.id}" style="--fc:${R.color}"><canvas></canvas><span>+ ${TOWERS[f.o.key].name} → <b>${R.name}</b></span><span class="c">${f.owned ? (f.cost ? fmt(f.cost) + '¢' : 'GRATUIT') : 'PLAN ?'}</span></div>`;
     }
     if (fuse) fuse = `<div class="lbl-s" style="margin-top:8px;color:var(--sec)">FUSION SUR LE TERRAIN</div>` + fuse;
-    const upTxt = t.level >= maxL ? 'NIVEAU MAX' : `AMÉLIORER <span class="k">${Towers.upCost(t)}¢ · U</span>`;
+    const upTxt = t.level >= maxL ? 'NIVEAU MAX' : `AMÉLIORER <span class="k">${fmt(Towers.upCost(t))}¢ · U</span>`;
     P.innerHTML = `<div class="tp-head"><canvas id="tp-ic"></canvas><div><div class="tp-name">${d.name.toUpperCase()}</div><div class="tp-sub">${TIER_NAMES[d.tier]} · NIV ${t.level}/${maxL}</div><div class="pips">${pips}</div></div><span class="tp-close" id="tp-x">✕</span></div>
       ${body}${tags}${ctrl}${fuse}
-      <div class="row" style="margin-top:9px"><button class="btn prim" id="tp-up" style="flex:1">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE ${Towers.sellValue(t)}¢</button></div>`;
+      <div class="row" style="margin-top:9px"><button class="btn prim" id="tp-up" style="flex:1">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE ${fmt(Towers.sellValue(t))}¢</button></div>`;
     Spr.icon($('tp-ic'), t.key, 42);
     $('tp-x').onclick = () => this.deselect();
     $('tp-up').onclick = () => { if (Towers.upgrade(t)) this.renderPanel(); };
