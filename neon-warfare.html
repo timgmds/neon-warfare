@@ -1066,6 +1066,12 @@ const ABILS = {
     d: 'Toutes les tourelles tirent 2x plus vite, sans surchauffe, pendant 8 s.' }
 };
 
+/* ---------- Pièges : posés SUR le chemin, à usage unique ou destructibles ---------- */
+const TRAPS = {
+  mine:      { name: 'Mine', cost: 40, color: '#ff5544', max: 8, r: 58, d: 'Explose au passage d\'un ennemi au sol : gros dégâts de zone. Usage unique.' },
+  barricade: { name: 'Barricade', cost: 120, color: '#ffae00', max: 4, d: 'Bloque les ennemis au sol, qui doivent la détruire pour passer. Les volants l\'ignorent.' }
+};
+
 /* ---------- Spécialisations : au niveau 5 (soutiens : 3), chaque tourelle choisit une voie ----------
    Les voies dépendent du type de tir ; elles multiplient (dmg, rate, range, splash…) ou ajoutent (crit, chain…). */
 const SPEC_LVL = 5, SPEC_LVL_SUPPORT = 3;
@@ -1477,6 +1483,26 @@ function drawEnemyShape(x, d, elite) {
       break;
   }
   if (elite) { x.shadowBlur = 0; x.strokeStyle = '#ffd23f'; x.lineWidth = 2; circ(x, 0, 0, r + 4); x.stroke(); }
+  x.restore();
+}
+
+function drawTrapShape(x, type, lit) {
+  x.save();
+  if (type === 'mine') {
+    x.fillStyle = '#7a2a20';
+    for (let i = 0; i < 6; i++) { x.save(); x.rotate(i * TAU / 6); x.fillRect(-1.5, -12, 3, 5); x.restore(); }
+    x.fillStyle = '#1a1e28'; circ(x, 0, 0, 9); x.fill(); x.strokeStyle = '#ff5544'; x.lineWidth = 1.5; x.stroke();
+    x.fillStyle = lit ? '#ff6655' : '#5a1810'; if (lit) { x.shadowColor = '#ff3322'; x.shadowBlur = 10; }
+    circ(x, 0, 0, 3.4); x.fill();
+  } else {
+    roundRect(x, -15, -9, 30, 18, 3); x.fillStyle = '#2a2416'; x.fill();
+    x.save(); roundRect(x, -15, -9, 30, 18, 3); x.clip();
+    x.fillStyle = '#ffae00';
+    for (let i = -30; i < 30; i += 8) { x.beginPath(); x.moveTo(i, -9); x.lineTo(i + 4, -9); x.lineTo(i - 14, 9); x.lineTo(i - 18, 9); x.closePath(); x.fill(); }
+    x.restore();
+    roundRect(x, -15, -9, 30, 18, 3); x.strokeStyle = '#1a1206'; x.lineWidth = 2; x.stroke();
+    x.fillStyle = '#5a4a2a'; x.fillRect(-13, 9, 4, 4); x.fillRect(9, 9, 4, 4);
+  }
   x.restore();
 }
 
@@ -1923,7 +1949,9 @@ const Enemies = {
       if (e.leapTo) sp = 0;   // se ramasse avant de bondir
       if (e.freezeT > 0) { e.freezeT--; sp = 0; }
       else if (e.slowT > 0) { e.slowT--; sp *= e.slowF; if (e.slowT === 0) e.slowF = 1; }
-      e.dist += sp;
+      let nd = e.dist + sp;
+      if (sp > 0 && !e.air && G.traps.length) { const lim = Traps.block(e, nd); if (nd > lim) nd = Math.max(e.dist, lim); }
+      e.dist = nd;
       if (e.dist >= M.P[e.pi].total) { this.leak(e); if (G.over) return; continue; }
       Path.place(e);
       if (e.air) { e.ph += .05; const w = Math.sin(e.ph) * 7; e.x -= Math.sin(e.ang) * w; e.y += Math.cos(e.ang) * w; }
@@ -2725,6 +2753,81 @@ const Recycle = {
   }
 };
 
+/* ============================== PIÈGES (mines et barricades sur le chemin) ============================== */
+const Traps = {
+  cost(type) { return Math.round(TRAPS[type].cost * G.mod.cost); },
+  count(type) { return G.traps.filter(t => t.type === type).length; },
+  at(tx, ty) { return G.traps.find(t => t.tx === tx && t.ty === ty) || null; },
+  canPlace(tx, ty) {
+    const M = G.map;
+    if (tx < 0 || ty < 0 || tx >= M.C || ty >= M.R || M.cells[ty * M.C + tx] !== 1 || this.at(tx, ty)) return false;
+    // ni sur les premières cases d'une entrée, ni juste devant le noyau
+    for (const P of M.P) { const d = P.tdist.get(ty * M.C + tx); if (d !== undefined && (d < 3.4 * TILE || d > P.total - 2.5 * TILE)) return false; }
+    return true;
+  },
+  build(type, tx, ty) {
+    const T = TRAPS[type];
+    if (!this.canPlace(tx, ty)) { Sfx.play('error'); return null; }
+    if (this.count(type) >= T.max) { UI.toast(T.name, `Maximum ${T.max} en même temps sur la carte.`, T.color, 2.5); Sfx.play('error'); return null; }
+    const c = this.cost(type);
+    if (G.money < c) { UI.noMoney(); return null; }
+    G.money -= c;
+    // la puissance suit la vague en cours (ou à venir pendant la préparation)
+    const m = Waves.hpMul(Math.max(1, G.waveNum + (G.phase === 'prep' ? 1 : 0)));
+    const tr = { type, tx, ty, x: (tx + .5) * TILE, y: (ty + .5) * TILE, cost: c, born: performance.now(), hitT: 0,
+      dists: G.map.P.map(P => P.tdist.get(ty * G.map.C + tx)), dmg: type === 'mine' ? 110 * m : 0, hp: 0, max: 0 };
+    if (type === 'barricade') tr.max = tr.hp = 280 * m;
+    G.traps.push(tr);
+    FX.ring(tr.x, tr.y, T.color, 26, 18, 2); FX.spark(tr.x, tr.y, T.color, 8, 2);
+    Sfx.play('build');
+    return tr;
+  },
+  remove(tr, refund) {
+    const i = G.traps.indexOf(tr); if (i >= 0) G.traps.splice(i, 1);
+    if (refund) { const v = Math.floor(tr.cost * .5); G.money += v; FX.float(tr.x, tr.y - 12, '+' + v, '#ffd23f', 12); Sfx.play('sell'); }
+  },
+  update() {
+    for (let i = G.traps.length - 1; i >= 0; i--) {
+      const tr = G.traps[i];
+      if (tr.hitT > 0) tr.hitT--;
+      if (tr.type !== 'mine') continue;
+      for (const e of G.enemies) {
+        if (!e.alive || e.air || d2(e.x, e.y, tr.x, tr.y) > (14 + e.r) * (14 + e.r)) continue;
+        G.traps.splice(i, 1); this.explode(tr); break;
+      }
+    }
+  },
+  explode(tr) {
+    const r = TRAPS.mine.r;
+    Combat.splash(tr.x, tr.y, r, tr.dmg, null, false, true, .5);
+    FX.ring(tr.x, tr.y, '#ff5544', r * 1.2, 26, 4); FX.ring(tr.x, tr.y, '#ffffff', r * .6, 16, 2);
+    FX.spark(tr.x, tr.y, '#ffae00', 26, 5, 34, 3); FX.spark(tr.x, tr.y, '#ff5544', 14, 3);
+    if (Render.hq) for (let i = 0; i < 5; i++) FX.smoke(tr.x + rnd(-10, 10), tr.y + rnd(-10, 10), 55, rnd(5, 8));
+    Render.shake(6); Sfx.play('boom');
+    G.stats.mines = (G.stats.mines || 0) + 1;
+  },
+  // barricades : distance maximale que l'ennemi peut atteindre ce tick ; il entame la barricade qui l'arrête
+  block(e, nd) {
+    let lim = Infinity, hit = null;
+    for (const tr of G.traps) {
+      if (tr.type !== 'barricade') continue;
+      const bd = tr.dists[e.pi]; if (bd === undefined) continue;
+      const stop = bd - TILE * .45 - e.r * .5;
+      if (e.dist <= stop + 2 && nd > stop && stop < lim) { lim = stop; hit = tr; }
+    }
+    if (hit) {
+      hit.hp -= e.maxHp * .003 * (e.boss ? 1.5 : 1); hit.hitT = 3;
+      if (hit.hp <= 0) {
+        this.remove(hit, false);
+        FX.ring(hit.x, hit.y, '#ffae00', 40, 22, 3); FX.spark(hit.x, hit.y, '#ffae00', 20, 4); FX.float(hit.x, hit.y - 16, 'BARRICADE DÉTRUITE', '#ffae00', 11);
+        Render.shake(4); Sfx.play('boom', .5);
+        return Infinity;
+      }
+    }
+    return lim;
+  }
+};
+
 /* ============================== COMPÉTENCES / FUSION / SUCCÈS ============================== */
 const Skills = {
   rank(id) { return G.skills[id] || 0; },
@@ -2994,7 +3097,8 @@ const SaveSys = {
     const M = G.map;
     Store.data.save = {
       v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
-      doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
+      doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart,
+      traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       nanites: G.nanites, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
       map: { C: M.C, R: M.R, cells: Array.from(M.cells).join(''), paths: M.paths },
       towers: G.towers.map(t => [t.key, t.tx, t.ty, t.level, t.invested, t.kills, Math.round(t.dealt), t.strat, t.oc ? 1 : 0, t.spec, t.shots]),
@@ -3015,7 +3119,7 @@ const Game = {
       phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
-      doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null,
+      doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null, traps: [],
       stats: { kills: 0, gold: 0, maxCombo: 0, leaks: 0, bosses: 0, built: 0, fusions: 0, clean: 0, missions: 0 }
     };
     Path.build(map);
@@ -3069,6 +3173,8 @@ const Game = {
         t.invested = a[4]; t.kills = a[5]; t.dealt = a[6]; t.strat = a[7]; t.oc = !!a[8]; t.fresh = false; t.shots = a[10] || 0;
         const S = Towers.specs(t); if (a[9] != null && S && S[a[9]]) { t.spec = a[9]; t.sm = S[a[9]]; }
       }
+      for (const a of s.traps || []) if (TRAPS[a[0]]) G.traps.push({ type: a[0], tx: a[1], ty: a[2], x: (a[1] + .5) * TILE, y: (a[2] + .5) * TILE,
+        dmg: a[3], hp: a[4], max: a[5], cost: a[6], born: 0, hitT: 0, dists: G.map.P.map(P => P.tdist.get(a[2] * G.map.C + a[1])) });
       G.preview = Waves.plan(G.waveNum + 1);
       Missions.fill();
       this.start(false);
@@ -3097,7 +3203,7 @@ const Game = {
     if (G.comboT > 0 && --G.comboT === 0) G.combo = 0;
     Enemies.update();
     if (G.over) return;
-    Towers.update(); Shots.update(); Strikes.update();
+    Towers.update(); Shots.update(); Strikes.update(); Traps.update();
     Enemies.compact();
     Drops.update(); Recycle.update();
     FX.update();
@@ -3201,6 +3307,10 @@ const Demo = {
       if (G.money >= Fusion.fieldCost(p.a, p.b, r)) { Fusion.fieldFuse(p.a, p.b, r); break; }
     }
     for (const t of G.towers) if (Towers.needsSpec(t)) Towers.setSpec(t, Math.random() < .5 ? 0 : 1);
+    if (G.money > 400 && Math.random() < .4) {
+      const P = pick(G.map.P), tl = P.tiles[Math.floor(P.tiles.length * rnd(.25, .8))], type = Math.random() < .7 ? 'mine' : 'barricade';
+      if (Traps.count(type) < 2) Traps.build(type, tl[0], tl[1]);
+    }
     const base = ['blaster', 'sniper', 'vulcan', 'cryo', 'titan', 'aero', 'inferno', 'blaster'];
     for (let guard = 0; guard < 40; guard++) {
       const want = 6 + G.waveNum * .85;
@@ -3545,6 +3655,7 @@ const Render = {
     this.drawFlow(c, now);
     this.drawPortals(c, now);
     this.drawUnder(c, now);
+    this.drawTraps(c, now);
     this.drawTowers(c, now);
     this.drawFusePairs(c, now);
     this.drawShadows(c);
@@ -3683,6 +3794,22 @@ const Render = {
       if (tw.stun > 0) {
         c.fillStyle = '#fff35c'; c.font = 'bold 13px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
         c.fillText(TXT('⚡'), x + 14, y - 13);
+      }
+    }
+  },
+  drawTraps(c, t) {
+    for (const tr of G.traps) {
+      if (tr.ang === undefined) { const pi = Math.max(0, tr.dists.findIndex(d => d !== undefined)); Path.posAt(tr.dists[pi] || 0, _pt, pi); tr.ang = _pt.a; }
+      const age = t - tr.born, s = age >= 0 && age < 250 ? .6 + .4 * age / 250 : 1;
+      c.save(); c.translate(tr.x, tr.y); c.scale(s, s);
+      if (tr.type === 'barricade') c.rotate(tr.ang + Math.PI / 2);
+      if (tr.hitT > 0) c.translate(rnd(-1, 1), rnd(-1, 1));
+      drawTrapShape(c, tr.type, ((t / 400) | 0) % 2 === 0);
+      c.restore();
+      if (tr.type === 'barricade' && tr.hp < tr.max) {
+        const p = Math.max(0, tr.hp / tr.max);
+        c.fillStyle = 'rgba(0,0,0,.75)'; c.fillRect(tr.x - 14, tr.y - 20, 28, 4);
+        c.fillStyle = p > .5 ? '#ffae00' : '#ff2a6d'; c.fillRect(tr.x - 13.5, tr.y - 19.5, 27 * p, 3);
       }
     }
   },
@@ -3864,7 +3991,16 @@ const Render = {
       c.fillStyle = rgba(s.col, .06 + k * .14); c.beginPath(); c.arc(s.x, s.y, s.r, 0, TAU); c.fill();
     }
     const h = UI.hover, M = G.map;
-    if (UI.placing && h.inside && h.tx >= 0 && h.ty >= 0 && h.tx < M.C && h.ty < M.R) {
+    if (UI.placing && UI.placing.startsWith('trap:') && h.inside && h.tx >= 0 && h.ty >= 0 && h.tx < M.C && h.ty < M.R) {
+      const type = UI.placing.slice(5), ok = Traps.canPlace(h.tx, h.ty) && Traps.count(type) < TRAPS[type].max, rich = G.money >= Traps.cost(type);
+      const x = (h.tx + .5) * TILE, y = (h.ty + .5) * TILE, col = ok && rich ? '#39ff88' : '#ff2a6d';
+      c.fillStyle = rgba(col, .18); c.fillRect(h.tx * TILE, h.ty * TILE, TILE, TILE);
+      c.strokeStyle = col; c.lineWidth = 1.5; c.strokeRect(h.tx * TILE + 1, h.ty * TILE + 1, TILE - 2, TILE - 2);
+      if (ok) {
+        if (type === 'mine') this.rangeCircle(c, x, y, TRAPS.mine.r, '#ff5544', .06, .5, true);
+        c.globalAlpha = .7; c.save(); c.translate(x, y); drawTrapShape(c, type, true); c.restore(); c.globalAlpha = 1;
+      }
+    } else if (UI.placing && h.inside && h.tx >= 0 && h.ty >= 0 && h.tx < M.C && h.ty < M.R) {
       const key = UI.placing, d = TOWERS[key], ok = Towers.canPlace(h.tx, h.ty), rich = G.money >= Towers.costOf(key);
       const x = (h.tx + .5) * TILE, y = (h.ty + .5) * TILE, col = ok && rich ? '#39ff88' : '#ff2a6d';
       c.fillStyle = rgba(col, .16); c.fillRect(h.tx * TILE, h.ty * TILE, TILE, TILE);
@@ -3961,7 +4097,7 @@ const Input = {
         return;
       }
       UI.pend = null;
-      const t = Towers.build(UI.placing, h.tx, h.ty);
+      const t = UI.placing.startsWith('trap:') ? Traps.build(UI.placing.slice(5), h.tx, h.ty) : Towers.build(UI.placing, h.tx, h.ty);
       if (t && !e.shiftKey) UI.setPlacing(null, true);
       return;
     }
@@ -3969,6 +4105,8 @@ const Input = {
     const tw = Towers.at(h.tx, h.ty);
     if (tw) { if (UI.sel === tw) UI.deselect(); else UI.select(tw); return; }
     if (M.cells[h.ty * M.C + h.tx] === 2) { UI.selectDebris(h.tx, h.ty); return; }
+    const tr = Traps.at(h.tx, h.ty);
+    if (tr) { UI.selectTrap(tr); return; }
     UI.deselect();
   },
   key(e) {
@@ -4333,9 +4471,26 @@ const UI = {
     const bar = $('bar'); bar.innerHTML = ''; this.cards = {}; this.hotkeys = [];
     const keys = Object.keys(TOWERS).filter(k => Fusion.avail(k)).sort((a, b) => TOWERS[a].tier - TOWERS[b].tier);
     let i = 0, sep = false;
+    const sepEl = () => { const s = document.createElement('div'); s.className = 'bsep'; bar.appendChild(s); };
+    // les pièges se rangent entre les tourelles de base et les fusions
+    const traps = () => {
+      sepEl();
+      for (const type in TRAPS) {
+        const T = TRAPS[type], k = 'trap:' + type, el = document.createElement('div');
+        el.className = 'bcard'; el.style.setProperty('--tc', T.color);
+        el.innerHTML = `<span class="tr" style="color:${T.color}">PIÈGE</span><canvas></canvas><span class="pr"></span>`;
+        const cv = el.querySelector('canvas'), dpr = Math.min(2, window.devicePixelRatio || 1);
+        cv.width = cv.height = 44 * dpr; const x = cv.getContext('2d'); x.setTransform(dpr * 1.25, 0, 0, dpr * 1.25, 22 * dpr, 22 * dpr); drawTrapShape(x, type, true);
+        el.onclick = () => this.setPlacing(this.placing === k ? null : k);
+        el.onpointerenter = e => { if (e.pointerType !== 'touch') this.showTipAt(`<h4>${T.name} <span style="color:var(--gold);font-family:var(--mono)">${Traps.cost(type)}¢</span></h4><div class="d">${T.d}</div><div class="d" style="margin-top:4px">Se pose sur le chemin · ${T.max} maximum · puissance adaptée à la vague</div>`, el.getBoundingClientRect(), T.color); };
+        el.onpointerleave = () => this.hideTip();
+        bar.appendChild(el);
+        this.cards[k] = { el, pr: el.querySelector('.pr'), cost: -1, off: null, trap: type };
+      }
+    };
     for (const k of keys) {
       const d = TOWERS[k];
-      if (d.tier >= 2 && !sep) { sep = true; const s = document.createElement('div'); s.className = 'bsep'; bar.appendChild(s); }
+      if (d.tier >= 2 && !sep) { sep = true; traps(); sepEl(); }
       const el = document.createElement('div');
       el.className = 'bcard' + (G.freshBp === k ? ' fresh' : '');
       el.style.setProperty('--tc', d.color);
@@ -4353,12 +4508,13 @@ const UI = {
       if (i < 10) this.hotkeys[i] = k;
       i++;
     }
+    if (!sep) traps();
     this.refreshBar();
     if (G.freshBp && this.cards[G.freshBp]) { const el = this.cards[G.freshBp].el; bar.scrollLeft = el.offsetLeft - bar.offsetLeft - bar.clientWidth / 2; }
   },
   refreshBar() {
     for (const k in this.cards) {
-      const c = this.cards[k], cost = Towers.costOf(k);
+      const c = this.cards[k], cost = c.trap ? Traps.cost(c.trap) : Towers.costOf(k);
       if (c.cost !== cost) { c.cost = cost; c.pr.textContent = cost; }
       const off = G.money < cost;
       if (off !== c.off) { c.off = off; c.el.classList.toggle('off', off); }
@@ -4436,6 +4592,18 @@ const UI = {
     this.sel = null; this.selDebris = { tx, ty };
     if (this.placing) this.setPlacing(null, true);
     this.renderDebris(); Sfx.play('ui');
+  },
+  selectTrap(tr) {
+    this.sel = null; this.selDebris = { tx: tr.tx, ty: tr.ty, trap: tr };
+    const T = TRAPS[tr.type], P = $('tpanel');
+    P.style.setProperty('--tc', T.color);
+    P.innerHTML = `<div class="tp-head"><div><div class="tp-name">${T.name.toUpperCase()}</div><div class="tp-sub">PIÈGE · ${Traps.count(tr.type)} / ${T.max} SUR LA CARTE</div></div><span class="tp-close" id="tp-x">✕</span></div>
+      <div class="note">${T.d}</div>
+      <div class="sgrid" style="margin-top:8px">${tr.type === 'mine' ? `<div style="grid-column:1/3">DÉGÂTS <b>${fmt(tr.dmg)}</b></div>` : `<div style="grid-column:1/3">RÉSISTANCE <b>${fmt(Math.max(0, tr.hp))} / ${fmt(tr.max)}</b></div>`}</div>
+      <div class="pbtns"><button class="btn danger" id="tp-rm">RETIRER · +${fmt(Math.floor(tr.cost * .5))}¢</button></div>`;
+    $('tp-x').onclick = () => this.deselect();
+    $('tp-rm').onclick = () => { Traps.remove(tr, true); this.deselect(); };
+    P.classList.add('show'); this.placePanel(); Sfx.play('ui');
   },
   deselect() { this.sel = null; this.selDebris = null; $('tpanel').classList.remove('show'); },
   cancel() {
