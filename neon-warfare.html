@@ -575,7 +575,7 @@ const Sfx = {
   },
   noise(dur, vol, t, type, f0, f1, q = 1) {
     const c = this.ctx, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-    s.buffer = this.noiseBuf; f.type = type; f.Q.value = q;
+    s.buffer = this.noiseBuf; s.loop = true; f.type = type; f.Q.value = q;
     f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
     s.connect(f); f.connect(g); g.connect(this.sfxGain); s.start(t, Math.random() * .5); s.stop(t + dur + .03);
@@ -1664,7 +1664,7 @@ const Towers = {
     const t = {
       id: G.nextId++, key, d, tx, ty, cx: (tx + .5) * TILE, cy: (ty + .5) * TILE, level, invested: 0, kills: 0, dealt: 0,
       strat: 0, oc: false, heat: 0, over: false, stun: 0, cd: rnd(0, 10), ang: -Math.PI / 2, target: null, aimT: 0,
-      recoil: 0, flash: 0, ramp: 0, beam: null, fresh: true, bDmg: 0, bCool: 0, bRange: 0, dmg: 0, range: 0, rate: 1,
+      recoil: 0, flash: 0, ramp: 0, beam: null, fresh: G.phase === 'prep', bDmg: 0, bCool: 0, bRange: 0, dmg: 0, range: 0, rate: 1,
       spin: Math.random() * TAU, dead: false, born: performance.now()
     };
     G.towers.push(t); G.tgrid[ty * G.map.C + tx] = t;
@@ -1723,6 +1723,7 @@ const Towers = {
       }
     }
     for (const t of G.towers) this.refresh(t);
+    Fusion.scan();
   },
   refresh(t) {
     const d = t.d, L = t.level - 1;
@@ -2352,6 +2353,15 @@ const Skills = {
 };
 
 const Fusion = {
+  // paires de tourelles adjacentes fusionnables (affichées sur la carte), recalculées quand la grille change
+  scan() {
+    const P = G.fusePairs = [];
+    for (const t of G.towers) for (const [dx, dy] of [[1, 0], [0, 1]]) {
+      const o = Towers.at(t.tx + dx, t.ty + dy); if (!o) continue;
+      const r = this.recipeFor(t.key, o.key);
+      if (r) P.push({ a: t, b: o, owned: G.unlocked.has(r.r), col: TOWERS[r.r].color });
+    }
+  },
   avail(k) { return TOWERS[k].tier <= 1 || G.unlocked.has(k); },
   recipeFor(a, b) { return RECIPES.find(r => (r.a === a && r.b === b) || (r.a === b && r.b === a)); },
   canResearch(r) { return !G.unlocked.has(r.r) && this.avail(r.a) && this.avail(r.b); },
@@ -2360,6 +2370,7 @@ const Fusion = {
     if (!this.canResearch(r)) return false;
     if (G.nanites < r.n) { Sfx.play('error'); return false; }
     G.nanites -= r.n; G.unlocked.add(r.r); G.freshBp = r.r;
+    this.scan();
     const d = TOWERS[r.r];
     Sfx.play('fuse'); Render.flash(.3, d.color);
     UI.toast('Plan de fusion acquis : ' + d.name, `Constructible depuis la barre. Astuce : placez ${TOWERS[r.a].name} et ${TOWERS[r.b].name} côte à côte pour les fusionner sur le terrain.`, d.color, 6);
@@ -2398,7 +2409,7 @@ const Fusion = {
     Render.flash(.35, R.color); Render.shake(6);
     Sfx.play('fuse'); UI.banner('FUSION', R.name.toUpperCase(), R.color);
     Ach.unlock('field'); if (r.r === 'apocalypse') Ach.unlock('apoc');
-    UI.select(t);
+    if (!G.demo) UI.select(t);
   }
 };
 
@@ -2437,7 +2448,7 @@ const Game = {
       strikes: [], vortices: [], spawnQ: [], waves: {}, money: 0, lives: 0, maxLives: 0, nanites: 0, recycle: 0, waveNum: 0,
       phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
-      daily: null, mutKeys: [], mut: makeMut([]), demo: false,
+      daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
       stats: { kills: 0, gold: 0, maxCombo: 0, leaks: 0, bosses: 0, built: 0, fusions: 0, clean: 0 }
     };
     Path.build(map);
@@ -2597,6 +2608,20 @@ const Demo = {
       this.nextUnlock += 6;
       const c = RECIPES.filter(r => Fusion.canResearch(r) && TOWERS[r.r].tier <= 3 && TOWERS[r.r].kind !== 'support');
       if (c.length) G.unlocked.add(pick(c).r);
+    }
+    // l'IA aime montrer la fusion sur le terrain : elle prépare des paires puis les fusionne
+    if (Math.random() < .5) {
+      for (const r of RECIPES) {
+        if (!G.unlocked.has(r.r) || TOWERS[r.a].tier > 1 || TOWERS[r.b].tier > 1) continue;
+        const a = G.towers.find(t => t.key === r.a); if (!a || G.money < Towers.costOf(r.b) + 200) continue;
+        const nb = NB4.find(([dx, dy]) => Towers.canPlace(a.tx + dx, a.ty + dy));
+        if (nb) { Towers.build(r.b, a.tx + nb[0], a.ty + nb[1]); break; }
+      }
+    }
+    for (const p of G.fusePairs) {
+      if (!p.owned || p.a.dead || p.b.dead || Math.random() > .5) continue;
+      const r = Fusion.recipeFor(p.a.key, p.b.key);
+      if (G.money >= Fusion.fieldCost(p.a, p.b, r)) { Fusion.fieldFuse(p.a, p.b, r); break; }
     }
     const base = ['blaster', 'sniper', 'vulcan', 'cryo', 'titan', 'aero', 'inferno', 'blaster'];
     for (let guard = 0; guard < 40; guard++) {
@@ -2937,6 +2962,7 @@ const Render = {
     this.drawPortals(c, now);
     this.drawUnder(c, now);
     this.drawTowers(c, now);
+    this.drawFusePairs(c, now);
     this.drawShadows(c);
     this.drawEnemies(c, false);
     this.drawBeams(c, now);
@@ -3063,6 +3089,24 @@ const Render = {
       if (tw.stun > 0) {
         c.fillStyle = '#fff35c'; c.font = 'bold 13px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
         c.fillText(TXT('⚡'), x + 14, y - 13);
+      }
+    }
+  },
+  // indice visuel : deux tourelles voisines peuvent fusionner (vif si le plan est acquis)
+  drawFusePairs(c, t) {
+    const P = G.fusePairs; if (!P || !P.length) return;
+    const pulse = .5 + .5 * Math.sin(t * .006);
+    for (const p of P) {
+      if (p.a.dead || p.b.dead) continue;
+      const mx = (p.a.cx + p.b.cx) / 2, my = (p.a.cy + p.b.cy) / 2, s = p.owned ? 4.5 + pulse * 1.5 : 3;
+      c.beginPath(); c.moveTo(mx, my - s); c.lineTo(mx + s, my); c.lineTo(mx, my + s); c.lineTo(mx - s, my); c.closePath();
+      if (p.owned) {
+        c.globalCompositeOperation = 'lighter';
+        c.drawImage(Spr.glow(p.col), mx - 11, my - 11, 22, 22);
+        c.globalCompositeOperation = 'source-over';
+        c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = p.col; c.lineWidth = 1.5; c.stroke();
+      } else {
+        c.fillStyle = 'rgba(255,43,214,.35)'; c.fill();
       }
     }
   },
@@ -3307,6 +3351,13 @@ const Input = {
       const tw = Towers.at(h.tx, h.ty);
       if (tw) { UI.select(tw); return; }
       if (M.cells[h.ty * M.C + h.tx] === 2) { UI.selectDebris(h.tx, h.ty); return; }
+      // tactile : 1er toucher = aperçu (portée, validité), 2e toucher sur la même case = construction
+      if (h.touch && (!UI.pend || UI.pend.tx !== h.tx || UI.pend.ty !== h.ty)) {
+        UI.pend = { tx: h.tx, ty: h.ty };
+        if (!UI.touchHint) { UI.touchHint = true; UI.toast('Construction', 'Touchez à nouveau la case pour confirmer.', '#00f3ff', 3); }
+        return;
+      }
+      UI.pend = null;
       const t = Towers.build(UI.placing, h.tx, h.ty);
       if (t && !e.shiftKey) UI.setPlacing(null, true);
       return;
@@ -3635,7 +3686,7 @@ const UI = {
   },
   setPlacing(k, silent) {
     if (k && this.targeting) this.setTargeting(null);
-    this.placing = k;
+    this.placing = k; this.pend = null;
     if (k) { this.deselect(); if (!silent) Sfx.play('ui'); }
     $('cv-game').classList.toggle('placing', !!k);
     if (G) this.refreshBar();
@@ -3778,7 +3829,7 @@ const UI = {
     const upTxt = t.level >= maxL ? 'NIVEAU MAX' : `AMÉLIORER <span class="k">${Towers.upCost(t)}¢ · U</span>`;
     P.innerHTML = `<div class="tp-head"><canvas id="tp-ic"></canvas><div><div class="tp-name">${d.name.toUpperCase()}</div><div class="tp-sub">${TIER_NAMES[d.tier]} · NIV ${t.level}/${maxL}</div><div class="pips">${pips}</div></div><span class="tp-close" id="tp-x">✕</span></div>
       ${body}${tags}${ctrl}${fuse}
-      <div class="row" style="margin-top:9px"><button class="btn prim" id="tp-up" style="flex:1">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite depuis la dernière vague.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE ${Towers.sellValue(t)}¢</button></div>`;
+      <div class="row" style="margin-top:9px"><button class="btn prim" id="tp-up" style="flex:1">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE ${Towers.sellValue(t)}¢</button></div>`;
     Spr.icon($('tp-ic'), t.key, 42);
     $('tp-x').onclick = () => this.deselect();
     $('tp-up').onclick = () => { if (Towers.upgrade(t)) this.renderPanel(); };
@@ -4117,7 +4168,7 @@ const UI = {
       <h3>OBJECTIF</h3><p>Les ennemis suivent le chemin lumineux jusqu'à votre <b>noyau</b> (l'hexagone). Chaque ennemi qui passe réduit votre <b>intégrité</b>. Les vagues sont infinies et de plus en plus puissantes, avec un <b>boss toutes les 5 vagues</b>. Tenez le plus longtemps possible.</p>
       <h3>CONSTRUIRE & AMÉLIORER</h3><ul>
         <li>Choisissez une tourelle dans la barre du bas (touches <kbd>1</kbd>…<kbd>0</kbd>) puis cliquez sur une case libre. <kbd>Maj</kbd> + clic pour en poser plusieurs.</li>
-        <li>Cliquez sur une tourelle : amélioration (niveau 10 max), ciblage, surcadence, revente. Une tourelle construite depuis la dernière vague est <b>remboursée à 100%</b>.</li>
+        <li>Cliquez sur une tourelle : amélioration (niveau 10 max), ciblage, surcadence, revente. Entre deux vagues, une tourelle tout juste construite est <b>remboursée à 100%</b> (droit à l'erreur).</li>
         <li>Les <b>débris</b> bloquent des cases : recyclez-les (charges limitées) pour des crédits ou des nanites.</li>
         <li>Appeler une vague en avance (quand la précédente a fini d'apparaître) rapporte une <b>prime</b>.</li></ul>
       <h3>FUSION DES CANONS</h3><ul>
@@ -4179,6 +4230,8 @@ function loop(now) {
   let dt = now - lastT; lastT = now;
   if (dt > 250) dt = 250; else if (dt < 0) dt = 0;
   Perf.frame(dt);
+  // filet de sécurité : certains navigateurs mobiles ratent l'événement resize (rotation, barre d'adresse)
+  if ((UI.frameN & 31) === 0 && (window.innerWidth !== View.w || window.innerHeight !== View.h)) Render.resize();
   if (Game.state === 'play' && G) {
     if (!G.over && !UI.blocking()) {
       Game.acc += dt * Game.speed;
