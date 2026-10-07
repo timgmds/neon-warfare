@@ -157,6 +157,9 @@ body.no-crt #crt{display:none}
 .heat i{display:block;height:100%;width:0;background:var(--ok);transition:width .15s}
 .row{display:flex;gap:5px;align-items:center;margin-top:6px;min-width:0}
 .panel .row .btn{min-width:0;overflow:hidden;text-overflow:ellipsis;padding-left:8px;padding-right:8px}
+.pbtns{display:grid;gap:5px;margin-top:9px}
+.pbtns .btn{width:100%;padding:8px 6px;white-space:normal}
+#tp-up{padding:10px 6px}
 .seg{display:flex;flex:1;border:1px solid rgba(255,255,255,.15);border-radius:5px;overflow:hidden;margin-top:3px}
 .seg button{flex:1;background:transparent;border:0;color:var(--dim);font:700 9px var(--font);letter-spacing:1px;padding:6px 0;cursor:pointer}
 .seg button:hover{color:#fff;background:rgba(255,255,255,.06)}
@@ -598,7 +601,7 @@ const Store = {
   data: null,
   defaults() {
     return {
-      settings: { sfx: .6, music: .35, quality: 'auto', theme: 'theme-cyber', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true },
+      settings: { sfx: .6, music: .3, musicStyle: 'ambient', quality: 'auto', theme: 'theme-cyber', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true },
       meta: { frags: 0, perks: {} }, ach: {}, records: {}, daily: {}, stats: { recycled: 0, games: 0, kills: 0 }, save: null, tuto: false,
       cmd: { lvl: 1, xp: 0 }, doctrine: 'standard'
     };
@@ -709,32 +712,76 @@ const Sfx = {
 };
 
 /* ============================== MUSIQUE GÉNÉRATIVE ============================== */
+const MUSIC_STYLES = { ambient: 'Ambiance', synthwave: 'Synthwave', off: 'Aucune' };
 const Music = {
-  bpm: 100, step: 0, next: 0, timer: null, intensity: 0,
+  bpm: 100, step: 0, next: 0, timer: null, intensity: 0, bus: null,
   prog: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], // Am F C G
+  // ambiance : accords enrichis (Am9, Fmaj7, Cmaj7, G6) et gamme pentatonique pour les arpèges
+  aProg: [[45, 57, 60, 64, 67, 71], [41, 53, 57, 60, 64], [36, 48, 55, 59, 64], [43, 55, 59, 62, 64]],
+  aScale: [57, 60, 62, 64, 67, 69, 72, 74, 76, 79],
   boot() {
     if (this.timer || !Sfx.ctx) return;
-    this.next = Sfx.ctx.currentTime + .2;
+    const c = Sfx.ctx;
+    // bus d'écho : donne de l'espace aux notes sans coûter de CPU
+    const d = c.createDelay(1), fb = c.createGain(), lp = c.createBiquadFilter(), wet = c.createGain();
+    d.delayTime.value = .62; fb.gain.value = .38; lp.type = 'lowpass'; lp.frequency.value = 2000; wet.gain.value = .55;
+    d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(wet); wet.connect(Sfx.musicGain);
+    this.bus = d;
+    this.next = c.currentTime + .2;
     this.timer = setInterval(() => this.tick(), 70);
   },
   tick() {
-    const c = Sfx.ctx;
-    if (!c || c.state !== 'running' || Store.s.music <= 0) { if (c) this.next = c.currentTime + .1; return; }
+    const c = Sfx.ctx, st = Store.s.musicStyle;
+    if (!c || c.state !== 'running' || Store.s.music <= 0 || st === 'off') { if (c) this.next = c.currentTime + .1; return; }
     if (this.next < c.currentTime - .05) this.next = c.currentTime + .05; // rattrapage après onglet en arrière-plan
-    const spb = 60 / this.bpm / 4;
-    while (this.next < c.currentTime + .3) { this.play(this.step, this.next, spb); this.next += spb; this.step++; }
+    const amb = st !== 'synthwave', spb = 60 / (amb ? 72 : this.bpm) / 4;
+    while (this.next < c.currentTime + .3) { amb ? this.playAmbient(this.step, this.next, spb) : this.play(this.step, this.next, spb); this.next += spb; this.step++; }
   },
   mf(m) { return 440 * Math.pow(2, (m - 69) / 12); },
+  playAmbient(step, t, spb) {
+    const I = this.intensity, s = step & 31, ch = this.aProg[(step >> 5) & 3];
+    if (s === 0) {
+      // nappe : deux oscillateurs légèrement désaccordés par note, attaque lente
+      for (let i = 1; i < ch.length; i++) {
+        const f = this.mf(ch[i]);
+        this.pad(f * 1.0023, t, spb * 36, .0075); this.pad(f * .9977, t + .03, spb * 36, .0075);
+      }
+      this.note('sine', this.mf(ch[0]), t, spb * 30, .05, 300, true);
+    }
+    const every = I >= 2 ? 1 : I >= 1 ? 2 : 4;
+    if (s % every === 0) {
+      const h = Math.sin(step * 12.9898) * 43758.5453, r = h - Math.floor(h);
+      if (r < (I >= 1 ? .8 : .55)) {
+        const sc = this.aScale, n = sc[Math.floor(r * 997) % (I >= 2 ? sc.length : 7)] + (I >= 2 && s % 8 === 4 ? 12 : 0);
+        this.pluck(this.mf(n), t, I >= 2 ? .024 : .02);
+      }
+    }
+    if (I >= 1 && s % 4 === 0) this.kick(t, .06);
+    if (I >= 2 && s % 4 === 2) this.hat(t, .008);
+  },
+  pad(f, t, dur, vol) {
+    const c = Sfx.ctx, o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter();
+    o.type = 'triangle'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.value = 900;
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + 1.8); g.gain.setValueAtTime(vol, t + dur * .6); g.gain.linearRampToValueAtTime(.0001, t + dur);
+    o.connect(fl); fl.connect(g); g.connect(Sfx.musicGain); o.start(t); o.stop(t + dur + .05);
+  },
+  pluck(f, t, vol) {
+    const c = Sfx.ctx, o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter();
+    o.type = 'triangle'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.setValueAtTime(3200, t); fl.frequency.exponentialRampToValueAtTime(600, t + .5);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + .9);
+    o.connect(fl); fl.connect(g); g.connect(Sfx.musicGain); if (this.bus) g.connect(this.bus);
+    o.start(t); o.stop(t + .95);
+  },
   play(step, t, spb) {
     const bar = (step >> 4) & 3, s = step & 15, ch = this.prog[bar], I = this.intensity;
     if (s % 2 === 0) {
       const root = ch[0] - 24 + (s % 8 === 6 ? 12 : 0);
-      this.note('sawtooth', this.mf(root), t, spb * 1.7, .045 + I * .012, 260 + I * 320);
+      this.note('sawtooth', this.mf(root), t, spb * 1.7, .035 + I * .01, 200 + I * 180);
     }
     if (I >= 1 || s % 4 === 0) {
       const idx = I >= 1 ? s % 3 : (s >> 2) % 3;
       const n = ch[idx] + 12 + (I >= 1 && s >= 8 ? 12 : 0);
-      this.note(I >= 2 ? 'square' : 'triangle', this.mf(n), t, spb * .9, I >= 2 ? .016 : .022, 2600);
+      this.note('triangle', this.mf(n), t, spb * .9, .018, 2200);
     }
     if (s === 0) ch.forEach(m => this.note('sine', this.mf(m), t, spb * 16, .014, 1400, true));
     if (I >= 1) {
@@ -749,10 +796,10 @@ const Music = {
     g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + (slow ? dur * .3 : .01)); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
     o.connect(fl); fl.connect(g); g.connect(Sfx.musicGain); o.start(t); o.stop(t + dur + .05);
   },
-  kick(t) {
+  kick(t, vol = .09) {
     const c = Sfx.ctx, o = c.createOscillator(), g = c.createGain();
-    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(40, t + .12);
-    g.gain.setValueAtTime(.11, t); g.gain.exponentialRampToValueAtTime(.0001, t + .16);
+    o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(40, t + .12);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + .16);
     o.connect(g); g.connect(Sfx.musicGain); o.start(t); o.stop(t + .17);
   },
   hat(t, v) {
@@ -4260,10 +4307,10 @@ const UI = {
       fuse += `<div class="fuse-opt${f.owned ? '' : ' off'}" data-o="${f.o.id}" style="--fc:${R.color}"><canvas></canvas><span>+ ${TOWERS[f.o.key].name} → <b>${R.name}</b></span><span class="c">${f.owned ? (f.cost ? fmt(f.cost) + '¢' : 'GRATUIT') : 'PLAN ?'}</span></div>`;
     }
     if (fuse) fuse = `<div class="lbl-s" style="margin-top:8px;color:var(--sec)">FUSION SUR LE TERRAIN</div>` + fuse;
-    const upTxt = t.level >= maxL ? 'NIVEAU MAX' : `AMÉLIORER <span class="k">${fmt(Towers.upCost(t))}¢ · U</span>`;
+    const upTxt = t.level >= maxL ? 'NIVEAU MAX' : `▲ AMÉLIORER · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢</b> <span class="k">U</span>`;
     P.innerHTML = `<div class="tp-head"><canvas id="tp-ic"></canvas><div><div class="tp-name">${d.name.toUpperCase()}</div><div class="tp-sub">${TIER_NAMES[d.tier]} · NIV ${t.level}/${maxL}</div><div class="pips">${pips}</div></div><span class="tp-close" id="tp-x">✕</span></div>
       ${body}${tags}${ctrl}${fuse}
-      <div class="row" style="margin-top:9px"><button class="btn prim" id="tp-up" style="flex:1">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE ${fmt(Towers.sellValue(t))}¢</button></div>`;
+      <div class="pbtns"><button class="btn prim" id="tp-up">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE · ${fmt(Towers.sellValue(t))}¢ <span class="k">X</span></button></div>`;
     Spr.icon($('tp-ic'), t.key, 42);
     $('tp-x').onclick = () => this.deselect();
     $('tp-up').onclick = () => { if (Towers.upgrade(t)) this.renderPanel(); };
@@ -4418,7 +4465,8 @@ const UI = {
     const tg = (v) => v ? 'ON' : 'OFF';
     O.innerHTML = `
       <div class="opt"><span>Effets sonores</span><input type="range" min="0" max="100" id="o-sfx" value="${Math.round(s.sfx * 100)}"></div>
-      <div class="opt"><span>Musique<small>Synthétiseur génératif, s'intensifie en combat</small></span><input type="range" min="0" max="100" id="o-mus" value="${Math.round(s.music * 100)}"></div>
+      <div class="opt"><span>Musique<small>Générée en direct, s'intensifie en combat</small></span><input type="range" min="0" max="100" id="o-mus" value="${Math.round(s.music * 100)}"></div>
+      <div class="opt"><span>Style musical<small>Ambiance : nappes douces · Synthwave : rythmée</small></span><button class="btn" id="o-mst">${MUSIC_STYLES[s.musicStyle] || 'Ambiance'}</button></div>
       <div class="opt"><span>Qualité graphique<small>AUTO réduit les effets si le jeu ralentit</small></span><button class="btn" id="o-q">${q[s.quality]}${s.quality === 'auto' && Perf.degraded ? ' (BASSE)' : ''}</button></div>
       <div class="opt"><span>Thème visuel</span><button class="btn" id="o-th">${THEMES[s.theme] ? THEMES[s.theme].name : '?'}</button></div>
       <div class="opt"><span>Effet CRT<small>Lignes de balayage rétro</small></span><button class="btn" id="o-crt">${tg(s.crt)}</button></div>
@@ -4431,6 +4479,7 @@ const UI = {
     $('o-sfx').onchange = () => { Store.save(); Sfx.play('coin'); };
     $('o-mus').oninput = e => { s.music = e.target.value / 100; Sfx.applyVolumes(); };
     $('o-mus').onchange = () => Store.save();
+    $('o-mst').onclick = () => { const ks = Object.keys(MUSIC_STYLES); s.musicStyle = ks[(ks.indexOf(s.musicStyle) + 1) % ks.length]; Music.step = 0; Store.save(); this.openOptions(); };
     $('o-q').onclick = () => { s.quality = s.quality === 'auto' ? 'high' : s.quality === 'high' ? 'low' : 'auto'; Perf.degraded = false; Store.save(); Render.applyQuality(); this.openOptions(); };
     $('o-th').onclick = () => { const ks = Object.keys(THEMES); s.theme = ks[(ks.indexOf(s.theme) + 1) % ks.length]; Store.save(); Render.setTheme(s.theme); this.openOptions(); };
     $('o-crt').onclick = () => { s.crt = !s.crt; Store.save(); Render.setTheme(s.theme); this.openOptions(); };
