@@ -760,9 +760,9 @@ const ENEMIES = {
   carrier: { name: 'Porteur', hp: 210, armor: 2, spd: .72, bounty: 15, leak: 6, r: 13, color: '#b05cff', shape: 'hex', rot: true, spawn: { type: 'scout', n: 4 }, w: 5, from: 11 }
 };
 const BOSSES = {
-  colosse:  { name: 'COLOSSE', hp: 2400, armor: 5, spd: .5, bounty: 160, leak: 40, r: 22, color: '#ff3d3d', shape: 'boss1', rot: true, boss: true },
-  hydre:    { name: 'HYDRE', hp: 2000, armor: 2, spd: .6, bounty: 160, leak: 40, r: 21, color: '#3dff8a', shape: 'boss2', boss: true, summon: { type: 'drone', every: 150, n: 2 }, spawn: { type: 'scout', n: 6 } },
-  overlord: { name: 'OVERLORD', hp: 1800, shield: 1400, spd: .55, bounty: 180, leak: 50, r: 23, color: '#c43dff', shape: 'boss3', boss: true, jam: true, jamR: 160 }
+  colosse:  { name: 'COLOSSE', hp: 1500, armor: 3, spd: .5, bounty: 160, leak: 20, r: 22, color: '#ff3d3d', shape: 'boss1', rot: true, boss: true },
+  hydre:    { name: 'HYDRE', hp: 1400, armor: 1.5, spd: .6, bounty: 160, leak: 20, r: 21, color: '#3dff8a', shape: 'boss2', boss: true, summon: { type: 'drone', every: 180, n: 2 }, spawn: { type: 'scout', n: 6 } },
+  overlord: { name: 'OVERLORD', hp: 1000, shield: 700, spd: .55, bounty: 180, leak: 25, r: 23, color: '#c43dff', shape: 'boss3', boss: true, jam: true, jamR: 150 }
 };
 for (const k in ENEMIES) ENEMIES[k].key = k;
 for (const k in BOSSES) BOSSES[k].key = k;
@@ -2127,7 +2127,7 @@ const Waves = {
   },
   cleared(w) {
     delete G.waves[w.n];
-    const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus), nano = 1 + (w.n % 5 === 0 ? 2 : 0);
+    const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus), nano = 1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0);
     G.money += bonus; G.stats.gold += bonus; G.nanites += nano;
     let extra = '';
     if (G.mod.interest > 0) {
