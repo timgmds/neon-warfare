@@ -215,7 +215,7 @@ body.no-crt #crt{display:none}
 #bossbar .tr{position:relative;height:10px;background:rgba(0,0,0,.8);border:1px solid var(--dang);border-radius:6px;overflow:hidden;box-shadow:0 0 18px rgba(255,42,109,.35)}
 #evchip{position:absolute;left:50%;transform:translateX(-50%);top:66px;z-index:25;display:none;align-items:center;gap:8px;pointer-events:none;
   padding:5px 12px;border-radius:20px;border:1px solid var(--ec,#fff);background:rgba(3,6,12,.85);box-shadow:0 0 14px var(--ec,#fff);font-size:11px;font-weight:800;letter-spacing:.2em;color:#fff;white-space:nowrap}
-#evchip.low{top:104px}
+#evchip.low{margin-top:38px}
 #evchip i{font-style:normal;color:var(--ec);font-size:14px}
 #evchip s{display:block;width:70px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);overflow:hidden}
 #evchip s b{display:block;height:100%;background:var(--ec)}
@@ -345,6 +345,56 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .cx .cm{font:10px var(--mono);color:var(--dim);line-height:1.5}
 .cx .cm b{color:#fff}
 .cx p{margin:0;font-size:11px;color:#a9b6cc;line-height:1.45;grid-column:2}
+/* multijoueur */
+.mp-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.mp-box{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.mp-box h3{margin:0;font-size:14px;letter-spacing:.25em;color:var(--accent)}
+.mp-box p{margin:0;font-size:12px;color:#a9b6cc;flex:1}
+.mp-in{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.2);border-radius:6px;color:var(--txt);font:600 13px var(--font);padding:8px 10px;min-width:0;width:180px;max-width:100%}
+.mp-in.big{width:100%;font:800 18px var(--mono);letter-spacing:.15em;text-align:center;text-transform:uppercase}
+.mp-in:focus,.mp-ta:focus,#mp-msg:focus{outline:1px solid var(--accent)}
+.mp-ta{width:100%;min-height:74px;resize:vertical;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#cfe3ff;font:11px var(--mono);padding:8px;margin:6px 0;word-break:break-all;box-sizing:border-box}
+.mp-st{margin:12px 0 4px;padding:8px 12px;border-radius:8px;background:rgba(0,243,255,.07);border:1px solid rgba(0,243,255,.25);font-size:12px;color:#cfe3ff;text-align:center}
+.mp-st.err{background:rgba(255,42,109,.08);border-color:rgba(255,42,109,.35);color:#ffb3c8}
+.mp-code{display:flex;flex-direction:column;align-items:center;gap:8px;margin:6px 0 4px}
+.mp-code span{font-size:10px;letter-spacing:.35em;color:var(--dim);font-weight:700}
+.mp-code b{font:900 clamp(30px,8vw,48px) var(--mono);letter-spacing:.12em;color:var(--gold);text-shadow:0 0 18px rgba(255,210,63,.55)}
+.mp-pls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.mp-pl{display:flex;align-items:center;gap:10px;border:1px solid var(--pc);border-radius:10px;padding:10px 12px;background:rgba(255,255,255,.03);min-width:0}
+.mp-pl i{width:12px;height:12px;border-radius:50%;background:var(--pc);box-shadow:0 0 10px var(--pc);flex:0 0 auto}
+.mp-pl b{font-size:14px;letter-spacing:.06em;overflow-wrap:anywhere;min-width:0}
+.mp-pl span{margin-left:auto;font-size:9px;letter-spacing:.2em;color:var(--dim);white-space:nowrap}
+.mp-pl em{font-style:normal;font-size:9px;font-weight:800;letter-spacing:.15em;color:#000;background:var(--ok);border-radius:4px;padding:2px 6px}
+.mp-modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.mp-mode{text-align:left;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 12px;color:var(--txt);cursor:pointer;font-family:var(--font);display:flex;flex-direction:column;gap:4px}
+.mp-mode b{font-size:13px;letter-spacing:.25em;color:var(--mc)}
+.mp-mode span{font-size:11px;color:#a9b6cc;line-height:1.4}
+.mp-mode.on{border-color:var(--mc);background:rgba(255,255,255,.06);box-shadow:0 0 14px color-mix(in srgb,var(--mc) 35%,transparent)}
+#mp-diff{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr))}
+#mp-diff button{padding:7px 4px}
+.mp-chat{margin-top:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px}
+.mp-log{height:96px;overflow-y:auto;font-size:12px;line-height:1.5;color:#cfe3ff;margin-bottom:6px;overflow-wrap:anywhere}
+.mp-chat form{display:flex;gap:6px}
+#mp-msg{flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:var(--txt);font:12px var(--font);padding:6px 8px}
+#mp{position:absolute;left:10px;z-index:28;width:220px;background:rgba(4,7,14,.86);border:1px solid var(--pc,var(--line));border-radius:10px;padding:7px 10px 8px;font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#mp.hidden{display:none}
+#mp .mp-h{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.15em}
+#mp .mp-h i{width:9px;height:9px;border-radius:50%;background:var(--pc);box-shadow:0 0 8px var(--pc);flex:0 0 auto}
+#mp .mp-h b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#mp .mp-h span{margin-left:auto;color:var(--dim);font:10px var(--mono);white-space:nowrap}
+#mp .mp-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin:6px 0 4px;overflow:hidden}
+#mp .mp-bar s{display:block;height:100%;background:linear-gradient(90deg,var(--dang),#ff7a1a);transition:width .3s}
+#mp .mp-row{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:2px 6px;align-items:baseline;margin-top:3px;color:var(--dim)}
+#mp .mp-row b{color:var(--txt);font-family:var(--mono)}
+.mp-emr{margin-top:5px}
+#mp-emt{background:none;border:0;color:var(--dim);font:700 9px var(--font);letter-spacing:.2em;cursor:pointer;padding:2px 0}
+#mp-em{display:none;flex-wrap:wrap;gap:4px;margin-top:4px}
+#mp-em.on{display:flex}
+#mp-em button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:5px;color:#cfe3ff;font:11px var(--font);padding:3px 6px;cursor:pointer}
+#mp-em button:hover{border-color:var(--accent)}
+#mp-wait{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:40;display:none;pointer-events:none;padding:10px 18px;border-radius:10px;background:rgba(3,6,12,.85);border:1px solid var(--gold);color:var(--gold);font-weight:800;letter-spacing:.2em;font-size:12px;animation:blink 1s infinite alternate}
+.bcard.send .tr{color:#ff2a6d}
+@media (max-width:640px){#mp{width:min(190px,48vw);left:6px}}
 /* casino */
 .casino .jpot{text-align:center;font-size:11px;letter-spacing:.3em;color:var(--dim);font-weight:700;margin-bottom:8px}
 .casino .jpot b{display:block;font-size:26px;letter-spacing:.08em;color:var(--gold);text-shadow:0 0 14px rgba(255,210,63,.6);margin-top:2px}
@@ -597,6 +647,8 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 
 <div id="missions" class="hidden"><div class="mh" id="mh"><span>MISSIONS</span><b id="m-cmd"></b><em id="m-tog">−</em></div>
   <div class="mxp"><s id="m-xp"></s></div><div id="mlist"></div></div>
+<div id="mp" class="hidden"><div id="mp-info"></div><div class="mp-emr"><button id="mp-emt">MESSAGES ▾</button><div id="mp-em"></div></div></div>
+<div id="mp-wait">EN ATTENTE DE VOTRE PARTENAIRE…</div>
 <div id="tpanel" class="panel"></div>
 <div id="banner"></div>
 <div id="toasts"></div>
@@ -636,6 +688,10 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   <h2>CODEX</h2><div class="sub" id="codex-sub"></div>
   <div class="seg" id="codex-tabs" style="max-width:340px;margin-bottom:14px"><button data-k="e" class="on">ENNEMIS</button><button data-k="t">TOURELLES</button></div>
   <div class="cxgrid" id="codex"></div></div></div>
+<div class="ov" id="ov-mp"><div class="modal" style="width:720px"><button class="mclose" data-close>✕</button>
+  <h2>MULTIJOUEUR</h2><div class="sub">À deux, en réseau local ou par internet : <b>versus</b> (chacun sa carte, envoyez des ennemis chez l'adversaire) ou <b>coopération</b> (une carte partagée, chacun ses crédits).</div>
+  <div id="mp-body"></div></div></div>
+<div class="ov" id="ov-mpend"><div class="modal" style="width:480px;text-align:center"><div id="mpend-body"></div></div></div>
 <div class="ov" id="ov-casino"><div class="modal casino" style="width:640px"><button class="mclose" data-close>✕</button>
   <h2>CASINO NÉON</h2><div class="sub" id="cs-sub"></div>
   <div class="seg" id="cs-tabs" style="margin-bottom:14px"><button data-k="slot">MACHINE À SOUS</button><button data-k="bet">PARIS SUR LA VAGUE</button></div>
@@ -1373,7 +1429,9 @@ const ACH = {
   codex:    { n: 'Encyclopédiste', d: 'Compléter entièrement le Codex.', i: '❖' },
   chaos:    { n: 'Météorologue', d: 'Vivre 10 événements aléatoires dans une même partie.', i: '☄' },
   jackpot:  { n: 'Jackpot !', d: 'Aligner trois 7 à la machine à sous.', i: '7' },
-  bookie:   { n: 'Bookmaker', d: 'Gagner 5 paris dans une même partie.', i: '⚖' }
+  bookie:   { n: 'Bookmaker', d: 'Gagner 5 paris dans une même partie.', i: '⚖' },
+  mpwin:    { n: 'Gladiateur', d: 'Remporter une partie en versus.', i: '⚔' },
+  mpcoop:   { n: 'Frères d\'armes', d: 'Tenir jusqu\'au bout une partie en coopération.', i: '⛨' }
 };
 
 const ABILS = {
@@ -2192,6 +2250,7 @@ const Status = {
    gain(v, p) : p = joueur bénéficiaire ; null = revenu commun, partagé entre les joueurs. */
 const COOP = { share: .6, hp: 1.75, start: .75 };
 function gain(v, p = G.actor) {
+  if (G.wallets && p == null && !Net.coop) p = Net.me;   // partenaire parti : tout revient au joueur restant
   if (G.wallets) {
     if (p != null) G.wallets[p] += v;
     else for (let i = 0; i < G.wallets.length; i++) G.wallets[i] += Math.round(v * COOP.share);
@@ -2473,7 +2532,7 @@ const Towers = {
   sellValue(t) { return t.fresh ? t.invested : Math.floor(t.invested * G.mod.refund); },
   sell(t) {
     const v = this.sellValue(t);
-    gain(v, t.owner != null ? t.owner : G.actor); G.stats.gold -= v;
+    gain(v, Net.coop && t.owner != null ? t.owner : G.actor); G.stats.gold -= v;
     FX.float(t.cx, t.cy - 12, '+' + v, '#ffd23f', 14); FX.spark(t.cx, t.cy, '#ffd23f', 10, 2.5); FX.ring(t.cx, t.cy, t.d.color, 26, 16, 2);
     Sfx.play('sell');
     this.remove(t); this.recalc(); if (UI.sel === t) UI.deselect();
@@ -2911,7 +2970,7 @@ const Waves = {
   // croissance polynomiale douce, puis exponentielle au-delà de la vague 40 (l'infini doit finir par céder)
   hpMul(n) {
     const k = n - 1, fork = G.map.P && G.map.P.length > 1 ? .9 : 1;   // deux chemins à couvrir : ennemis un peu moins robustes
-    return (1 + .2 * k + .016 * k * k) * Math.pow(1.038, k) * Math.pow(1.085, Math.max(0, k - 35)) * G.diff.hp * fork;
+    return (1 + .2 * k + .016 * k * k) * Math.pow(1.038, k) * Math.pow(1.085, Math.max(0, k - 35)) * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp : 1);
   },
   // hasard reproductible : une carte donnée produit toujours les mêmes vagues (aperçu fiable, Défi du jour équitable)
   rng(n, salt = 0) { return mulberry32((G.seed ^ Math.imul(n + 1, 2654435761) ^ salt) >>> 0); },
@@ -3007,6 +3066,8 @@ const Waves = {
     const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus * tb.cash), nano = Math.round((1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0)) * G.mut.nano) + tb.nano;
     gain(bonus, null); G.nanites += nano;
     let extra = '';
+    if (G.income) { gain(G.income); extra += ` · revenu +${G.income}`; }
+    if (G.sendStock) G.sendStock = {};
     if (G.mod.interest > 0) {
       const cap = 40 * w.n; let it = 0;
       if (G.wallets) G.wallets.forEach((m, i) => { const v = Math.min(Math.floor(m * G.mod.interest), cap); G.wallets[i] += v; it = Math.max(it, v); });
@@ -3032,7 +3093,8 @@ const Waves = {
     Missions.fill();
     if (w.n % 2 === 0) Cards.offer();   // un protocole toutes les 2 vagues : des choix qui pèsent, sans inflation
     if (Object.keys(G.waves).length === 0 && G.spawnQ.length === 0) {
-      G.phase = 'prep'; G.autoT = 480; Music.intensity = 0;
+      G.phase = 'prep'; G.autoT = G.net === 'versus' ? 900 : 480; Music.intensity = 0;
+      if (G.net === 'versus') UI.buildBar();
       SaveSys.save();
     }
   }
@@ -3244,7 +3306,7 @@ const Skills = {
   },
   // tous les modificateurs de la partie : compétences + Héritage + doctrine + protocoles choisis
   apply() {
-    const r = k => G.skills[k] || 0, pk = Store.data.meta.perks, D = DOCTRINES[G.doctrine] || DOCTRINES.standard;
+    const r = k => G.skills[k] || 0, pk = G.perks || Store.data.meta.perks, D = DOCTRINES[G.doctrine] || DOCTRINES.standard;
     const m = {
       dmg: 1 + .08 * r('a1'), crit: .05 + .04 * r('a2'), range: 1 + .06 * r('a3'), critDmg: 2 + .5 * r('a4'), pierce: .25 * r('a5'),
       cool: 1 + .25 * r('e1'), cost: 1 - .05 * r('e2'), heat: 1 - .2 * r('e3'), refund: .7 + .1 * r('e4'), support: 1 + .4 * r('e5'),
@@ -3438,20 +3500,24 @@ const Cards = {
     if (c.now) c.now();
     Skills.apply(); Towers.recalc();
   },
+  turn() { return G.wallets && Net.coop ? (G.cardN || 0) % 2 : Net.me; },
   pick(i) {
     const id = G.offer && G.offer[i]; if (!id) return;
+    if (G.wallets && G.actor != null && G.actor !== this.turn()) return;
+    if (G.wallets) G.cardN = (G.cardN || 0) + 1;
     const c = CARDS[id];
     this.apply(id);
     G.cardQ = Math.max(0, G.cardQ - 1);
     G.offer = G.cardQ > 0 ? this.roll() : null;
     Sfx.play(c.pact ? 'fuse' : 'upgrade');
     Render.flash(.18, c.pact ? '#ff3d5a' : CARD_RARITY[c.r].c);
-    if (G.offer) UI.renderCards(); else UI.close('ov-cards');
+    if (G.offer && this.turn() === Net.me) UI.openCards(); else UI.close('ov-cards');
     UI.buildBar(); UI.refreshHUD();
     if (UI.sel) UI.renderPanel();
   },
   rerollCost() { return 30 + 10 * G.waveNum; },
   reroll() {
+    if (G.wallets && G.actor != null && G.actor !== this.turn()) return;
     const c = this.rerollCost();
     if (G.money < c) { UI.noMoney(); return; }
     G.money -= c; G.offer = this.roll(); Sfx.play('ui'); UI.renderCards(); UI.refreshHUD();
@@ -3481,9 +3547,452 @@ const Codex = {
   progress() { const K = this.keys(), C = Store.data.codex; return [K.e.filter(k => C.e[k]).length + K.t.filter(k => C.t[k]).length, K.e.length + K.t.length]; }
 };
 
-/* réseau : remplacé plus bas par le vrai module (multijoueur) */
-const Net = { on: false, coop: false, versus: false, me: 0 };
-const Lock = { push() { return false; } };
+/* ============================== RÉSEAU ==============================
+   Pair-à-pair WebRTC : un canal de données fiable et ordonné entre les deux navigateurs.
+   Pour se trouver, deux possibilités :
+   - code court (NEON-ABCD) : le serveur public de PeerJS ne relaie que la poignée de main,
+     ensuite tout passe en direct entre les deux machines ;
+   - connexion manuelle : offre et réponse échangées par copier-coller, sans aucun service extérieur
+     (fonctionne en réseau local sans internet). */
+const NET_ICE = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+const NET_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const NET_PREFIX = 'neonwarfare9x';
+const Net = {
+  on: false, coop: false, versus: false, me: 0, role: null, pc: null, dc: null, ws: null, code: '', peer: null,
+  status: '', err: false, ping: 0, handlers: {}, timers: [], cand: [], hasRemote: false,
+  get connected() { return !!this.dc && this.dc.readyState === 'open'; },
+  supported() { return typeof RTCPeerConnection !== 'undefined' && typeof WebSocket !== 'undefined'; },
+  setStatus(s, err = false) { this.status = s; this.err = err; if (UI.top() === 'ov-mp') UI.renderMP(); },
+  later(fn, ms, every) { const id = every ? setInterval(fn, ms) : setTimeout(fn, ms); this.timers.push([id, every]); return id; },
+
+  /* ----- signalisation via le serveur PeerJS (protocole JSON : OPEN, OFFER, ANSWER, CANDIDATE…) ----- */
+  wsOpen(id, onOpen) {
+    let ws;
+    try { ws = new WebSocket(`wss://0.peerjs.com/peerjs?key=peerjs&id=${encodeURIComponent(id)}&token=${Math.random().toString(36).slice(2)}&version=1.5.4`); }
+    catch (e) { this.setStatus('Serveur de mise en relation injoignable — utilisez la connexion manuelle.', true); return; }
+    this.ws = ws;
+    ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } this.onSignal(m, onOpen); };
+    ws.onerror = () => { if (!this.connected) this.setStatus('Serveur de mise en relation injoignable — utilisez la connexion manuelle.', true); };
+    this.later(() => { if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'HEARTBEAT' })); }, 5000, true);
+  },
+  // le serveur public n'accepte que des messages au format exact de la bibliothèque PeerJS
+  sig(type, dst, payload) {
+    if (!this.ws || this.ws.readyState !== 1) return;
+    payload = Object.assign(payload, { type: 'data', connectionId: this.cid });
+    if (type === 'OFFER') Object.assign(payload, { label: this.cid, reliable: true, serialization: 'binary' });
+    this.ws.send(JSON.stringify({ type, payload, dst }));
+  },
+  onSignal(m, onOpen) {
+    switch (m.type) {
+      case 'OPEN': if (onOpen) onOpen(); break;
+      case 'ID-TAKEN': if (this.role === 'host') { this.closeWs(); this.host(); } else this.setStatus('Identifiant indisponible, réessayez.', true); break;
+      case 'ERROR': this.setStatus('Serveur : ' + ((m.payload && m.payload.msg) || 'erreur inconnue') + '. Essayez la connexion manuelle.', true); break;
+      case 'EXPIRE': if (!this.connected) this.setStatus('Salon introuvable : vérifiez le code (l\'hôte doit garder la fenêtre ouverte).', true); break;
+      case 'OFFER': if (this.role === 'host' && m.payload) this.acceptOffer(m.src, m.payload); break;
+      case 'ANSWER': if (this.pc && m.payload) this.pc.setRemoteDescription(m.payload.sdp).then(() => this.flushCand()).catch(() => this.setStatus('Négociation impossible.', true)); break;
+      case 'CANDIDATE': if (m.payload && m.payload.candidate) this.addCand(m.payload.candidate); break;
+    }
+  },
+  addCand(c) { if (this.pc && this.hasRemote) this.pc.addIceCandidate(c).catch(() => {}); else this.cand.push(c); },
+  flushCand() { this.hasRemote = true; for (const c of this.cand) this.pc.addIceCandidate(c).catch(() => {}); this.cand = []; },
+  makePC(onCand) {
+    const pc = this.pc = new RTCPeerConnection({ iceServers: NET_ICE });
+    pc.onicecandidate = e => { if (e.candidate && onCand) onCand(e.candidate.toJSON ? e.candidate.toJSON() : e.candidate); };
+    pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed') { if (this.on) this.lost(); else this.setStatus('Connexion directe impossible entre vos deux réseaux. En réseau local, essayez la connexion manuelle.', true); } };
+    return pc;
+  },
+  bindDC(dc) {
+    this.dc = dc;
+    dc.onopen = () => this.opened();
+    dc.onclose = () => this.lost();
+    dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } this.recv(m); };
+  },
+
+  /* ----- héberger / rejoindre par code court ----- */
+  host() {
+    this.reset(); this.role = 'host'; this.me = 0;
+    this.code = Array.from({ length: 4 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
+    this.setStatus('Ouverture du salon…');
+    this.wsOpen(NET_PREFIX + this.code, () => this.setStatus('Salon ouvert : donnez ce code à votre ami.'));
+  },
+  acceptOffer(src, p) {
+    if (this.pc) return;   // un seul invité
+    this.peer = src; this.cid = p.connectionId;
+    const pc = this.makePC(c => this.sig('CANDIDATE', src, { candidate: c }));
+    pc.ondatachannel = e => this.bindDC(e.channel);
+    this.setStatus('Un joueur arrive…');
+    pc.setRemoteDescription(p.sdp).then(() => { this.flushCand(); return pc.createAnswer(); })
+      .then(a => pc.setLocalDescription(a)).then(() => this.sig('ANSWER', src, { sdp: pc.localDescription }))
+      .catch(() => this.setStatus('Négociation impossible avec l\'invité.', true));
+  },
+  join(code) {
+    code = String(code || '').toUpperCase().replace(/^NEON-?/, '').replace(/[^A-Z0-9]/g, '');
+    if (code.length !== 4) { this.setStatus('Le code fait 4 caractères (ex. NEON-K7QX).', true); return; }
+    this.reset(); this.role = 'guest'; this.me = 1; this.code = code;
+    this.cid = 'dc_' + Math.random().toString(36).slice(2, 13);
+    const dst = NET_PREFIX + code;
+    this.setStatus('Connexion au serveur…');
+    this.wsOpen('nwc' + Math.random().toString(36).slice(2, 12), () => {
+      this.setStatus(`Recherche du salon NEON-${code}…`);
+      const pc = this.makePC(c => this.sig('CANDIDATE', dst, { candidate: c }));
+      this.bindDC(pc.createDataChannel('nw', { ordered: true }));
+      pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => this.sig('OFFER', dst, { sdp: pc.localDescription }))
+        .catch(() => this.setStatus('Impossible de préparer la connexion.', true));
+      this.later(() => { if (!this.connected && this.role === 'guest') this.setStatus('Pas de réponse : vérifiez le code, ou essayez la connexion manuelle.', true); }, 15000);
+    });
+  },
+
+  /* ----- connexion manuelle : codes longs à copier-coller ----- */
+  async manualHost() {
+    this.reset(); this.role = 'host'; this.me = 0;
+    const pc = this.makePC(null);
+    this.bindDC(pc.createDataChannel('nw', { ordered: true }));
+    await pc.setLocalDescription(await pc.createOffer());
+    await this.gathered(pc);
+    return this.pack(pc.localDescription);
+  },
+  async manualJoin(code) {
+    this.reset(); this.role = 'guest'; this.me = 1;
+    const pc = this.makePC(null);
+    pc.ondatachannel = e => this.bindDC(e.channel);
+    await pc.setRemoteDescription(await this.unpack(code));
+    await pc.setLocalDescription(await pc.createAnswer());
+    await this.gathered(pc);
+    return this.pack(pc.localDescription);
+  },
+  async manualFinish(code) { await this.pc.setRemoteDescription(await this.unpack(code)); },
+  gathered(pc) {
+    return new Promise(res => {
+      if (pc.iceGatheringState === 'complete') return res();
+      const t = setTimeout(res, 4000);
+      pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') { clearTimeout(t); res(); } });
+    });
+  },
+  async pack(desc) {
+    const raw = new TextEncoder().encode(JSON.stringify({ t: desc.type, s: desc.sdp }));
+    let bytes = raw, tag = 'NW0';
+    if (typeof CompressionStream !== 'undefined') {
+      try { bytes = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()); tag = 'NW1'; } catch (e) { bytes = raw; }
+    }
+    let bin = ''; for (const b of bytes) bin += String.fromCharCode(b);
+    return tag + '.' + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  },
+  async unpack(code) {
+    const m = /^(NW[01])\.([A-Za-z0-9_-]+)$/.exec(String(code).trim().replace(/\s+/g, ''));
+    if (!m) throw new Error('code');
+    const b64 = m[2].replace(/-/g, '+').replace(/_/g, '/'), bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
+    let bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+    if (m[1] === 'NW1') bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    const o = JSON.parse(new TextDecoder().decode(bytes));
+    return { type: o.t, sdp: o.s };
+  },
+
+  /* ----- canal ouvert : messages ----- */
+  opened() {
+    this.on = true;
+    this.later(() => this.closeWs(), 1500);
+    this.send({ t: 'hello', name: MP.myName(), v: VERSION });
+    this.later(() => this.send({ t: 'ping', ts: performance.now() }), 2000, true);
+    MP.connected();
+  },
+  send(m) { if (this.connected) { try { this.dc.send(JSON.stringify(m)); } catch (e) { /* canal saturé ou fermé */ } } },
+  recv(m) {
+    if (m.t === 'f') { Lock.onFrame(m); return; }
+    if (m.t === 'ping') { this.send({ t: 'pong', ts: m.ts }); return; }
+    if (m.t === 'pong') { this.ping = Math.round(performance.now() - m.ts); return; }
+    const h = MP.on[m.t]; if (h) { try { h.call(MP, m); } catch (e) { console.error(e); } }
+  },
+  lost() {
+    if (!this.on) return;
+    this.close();
+    MP.onLost();
+  },
+  closeWs() { if (this.ws) { try { this.ws.close(); } catch (e) { /* déjà fermé */ } this.ws = null; } },
+  close() {
+    for (const [id, every] of this.timers) every ? clearInterval(id) : clearTimeout(id);
+    this.timers = [];
+    this.closeWs();
+    if (this.dc) { this.dc.onclose = null; try { this.dc.close(); } catch (e) { /* ignore */ } }
+    if (this.pc) { this.pc.onconnectionstatechange = null; try { this.pc.close(); } catch (e) { /* ignore */ } }
+    this.dc = this.pc = null; this.on = false; this.coop = this.versus = false; this.cand = []; this.hasRemote = false; this.ping = 0;
+    BG.stop();
+  },
+  reset() { this.close(); this.role = null; this.code = ''; this.status = ''; this.err = false; this.me = 0; }
+};
+
+/* ---------- minuterie de secours : un onglet en arrière-plan ne doit pas geler la partie de l'autre joueur ---------- */
+const BG = {
+  w: null, last: 0,
+  start() {
+    if (this.w || typeof Worker === 'undefined') return;
+    try {
+      this.w = new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),16)'], { type: 'text/javascript' })));
+      this.last = performance.now();
+      this.w.onmessage = () => {
+        const now = performance.now(), dt = Math.min(250, now - this.last); this.last = now;
+        if (document.hidden && Net.on && Game.state === 'play' && G) { simStep(dt); MP.tick(now); }
+      };
+    } catch (e) { this.w = null; }
+  },
+  stop() { if (this.w) { this.w.terminate(); this.w = null; } }
+};
+
+/* ---------- lockstep (coopération) : chaque tick n'est calculé qu'une fois connues les actions des deux joueurs ---------- */
+const Lock = {
+  D: 6, sent: -1, remoteMax: -1, local: new Map(), remote: new Map(), out: [], hashes: new Map(), pend: new Map(), stall: 0, hold: false, desync: false,
+  reset(t = 0) {
+    this.sent = t + this.D - 1; this.remoteMax = t + this.D - 1;
+    this.local.clear(); this.remote.clear(); this.out = []; this.hashes.clear(); this.pend.clear(); this.stall = 0; this.hold = false; this.desync = false;
+  },
+  // vérifications locales avant d'envoyer : retour immédiat au joueur (argent, case occupée…)
+  pre(type, a) {
+    if (type === 'build') {
+      if (!Towers.canPlace(a[1], a[2])) { Sfx.play('error'); return false; }
+      if (G.money < Towers.costOf(a[0])) { UI.noMoney(); return false; }
+    } else if (type === 'trap') {
+      if (!Traps.canPlace(a[1], a[2]) || Traps.count(a[0]) >= TRAPS[a[0]].max) { Sfx.play('error'); return false; }
+      if (G.money < Traps.cost(a[0])) { UI.noMoney(); return false; }
+    } else if (type === 'up') {
+      const t = Towers.at(a[0], a[1]);
+      if (!t || t.level >= Towers.maxLevel(t) || Towers.needsSpec(t)) return false;
+      if (G.money < Towers.upCost(t)) { UI.noMoney(); return false; }
+    } else if (type === 'card' || type === 'reroll') {
+      if (Cards.turn() !== Net.me) { Sfx.play('error'); return false; }
+    }
+    return true;
+  },
+  push(type, a) {
+    if (!this.pre(type, a)) return false;
+    this.out.push([type, ...a]);
+    return true;
+  },
+  onFrame(m) { this.remote.set(m.k, m.c); if (m.k > this.remoteMax) this.remoteMax = m.k; },
+  // avant le tick t : publie nos actions pour t+D, puis vérifie que celles du partenaire pour t sont arrivées
+  ready(t) {
+    if (this.hold) return false;
+    const f = t + this.D;
+    while (this.sent < f) {
+      this.sent++;
+      const c = this.sent === f ? this.out.splice(0) : [];
+      this.local.set(this.sent, c);
+      Net.send({ t: 'f', k: this.sent, c });
+    }
+    return this.remoteMax >= t;
+  },
+  exec(t) {
+    const L = this.local.get(t) || [], Rm = this.remote.get(t) || [];
+    this.local.delete(t); this.remote.delete(t);
+    const order = Net.me === 0 ? [[0, L], [1, Rm]] : [[0, Rm], [1, L]];
+    for (const [p, cmds] of order) for (const c of cmds) Act.run(p, c[0], c.slice(1));
+  },
+  // empreinte de l'état : comparée régulièrement pour détecter une désynchronisation
+  hash() {
+    let h = (G.rs ^ Math.imul(G.tick, 2654435761) ^ Math.round(G.lives * 100)) | 0;
+    for (const e of G.enemies) if (e.alive) h = (Math.imul(h, 31) + Math.round(e.hp) + Math.round(e.dist)) | 0;
+    for (const w of G.wallets || []) h = (Math.imul(h, 17) + Math.round(w)) | 0;
+    return (h ^ G.towers.length) >>> 0;
+  },
+  check(t) {
+    if (t % 120 !== 0) return;
+    const v = this.hash();
+    if (Net.me === 0) {
+      this.hashes.set(t, v); if (this.hashes.size > 30) this.hashes.delete(this.hashes.keys().next().value);
+      const pv = this.pend.get(t); if (pv != null) { this.pend.delete(t); if (pv !== v) MP.flagDesync(); }
+    }
+    else Net.send({ t: 'h', k: t, v });
+  }
+};
+
+/* ============================== MULTIJOUEUR : SALON, VERSUS, COOPÉRATION ============================== */
+const MP_COL = ['#00f3ff', '#ffae00'];   // couleur de chaque joueur (hôte, invité)
+// versus : paquets d'ennemis à envoyer chez l'adversaire ; chaque envoi augmente votre revenu par vague
+const SENDS = {
+  swarm:   { n: 'Essaim', type: 'scout', cnt: 10, cost: 45, inc: 3, from: 1 },
+  drones:  { n: 'Drones', type: 'drone', cnt: 12, cost: 60, inc: 4, from: 1 },
+  armor:   { n: 'Blindés', type: 'tank', cnt: 4, cost: 110, inc: 7, from: 3 },
+  fly:     { n: 'Escadrille', type: 'flyer', cnt: 7, cost: 140, inc: 8, from: 4 },
+  ghost:   { n: 'Spectres', type: 'spectre', cnt: 6, cost: 160, inc: 9, from: 6 },
+  medic:   { n: 'Médics', type: 'medic', cnt: 5, cost: 150, inc: 8, from: 6 },
+  carrier: { n: 'Porteurs', type: 'carrier', cnt: 3, cost: 240, inc: 13, from: 8 },
+  titan:   { n: 'Colosse', type: 'colosse', cnt: 1, cost: 1100, inc: 40, from: 10 }
+};
+const SEND_STOCK = 3;
+const EMOTES = ['Bien joué !', 'À l\'aide !', 'Attention, ça arrive !', 'GG', 'Ha ha ha', 'On tient bon !'];
+
+const MP = {
+  mode: 'versus', diff: 'standard', ready: false, peerReady: false, peerName: '', peerVer: '', chat: [], opp: null, stT: 0, cur: null, ended: false, last: null,
+  myName() {
+    if (!Store.s.name) { Store.s.name = 'Commandant-' + Math.floor(1000 + Math.random() * 9000); Store.save(); }
+    return Store.s.name;
+  },
+  connected() {
+    this.ready = false; this.peerReady = false; this.chat = []; this.ended = false;
+    if (Net.role === 'host') this.sendCfg();
+    UI.mpState = 'lobby'; UI.openMP();
+    Sfx.play('mission');
+  },
+  sendCfg() { if (Net.role === 'host') Net.send({ t: 'cfg', mode: this.mode, diff: this.diff }); },
+  setMode(m) { if (Net.role !== 'host') return; this.mode = m; this.peerReady = false; this.sendCfg(); UI.renderMP(); },
+  setDiff(d) { if (Net.role !== 'host') return; this.diff = d; this.peerReady = false; this.sendCfg(); UI.renderMP(); },
+  toggleReady() { this.ready = !this.ready; Net.send({ t: 'ready', v: this.ready }); UI.renderMP(); },
+  say(txt) {
+    txt = String(txt || '').trim().slice(0, 140); if (!txt) return;
+    Net.send({ t: 'chat', s: txt }); this.chat.push([0, txt]); if (this.chat.length > 40) this.chat.shift();
+    UI.renderChat();
+  },
+  emote(i) {
+    if (!EMOTES[i]) return;
+    Net.send({ t: 'emote', i });
+    UI.toast(this.myName(), EMOTES[i], MP_COL[Net.me], 2.5);
+  },
+  // l'hôte lance la partie : graine, carte, difficulté, règles communes
+  launch() {
+    if (Net.role !== 'host' || !Net.connected) return;
+    const coop = this.mode === 'coop';
+    const dk = Store.data.doctrine, docOk = DOCTRINES[dk] && DOCTRINES[dk].lvl <= Store.data.cmd.lvl;
+    const o = {
+      seed: (Math.random() * 2147483647) | 0, diff: this.diff, mode: this.mode, portrait: View.w < View.h * .9,
+      perks: coop ? Object.assign({}, Store.data.meta.perks) : {}, doctrine: coop && docOk ? dk : 'standard',
+      events: Store.s.events !== false, autoWave: coop ? !!Store.s.autoWave : true
+    };
+    Net.send({ t: 'start', o });
+    this.begin(o);
+  },
+  begin(o) {
+    UI.closeAll();
+    this.ended = false; this.opp = null; this.last = o; this.cur = null;
+    Net.versus = o.mode === 'versus'; Net.coop = o.mode === 'coop';
+    if (Net.coop) Lock.reset(0);
+    Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, mp: o.mode, events: o.events, autoWave: o.autoWave });
+    BG.start();
+    UI.mpHud(true);
+    UI.banner(Net.versus ? 'VERSUS' : 'COOPÉRATION', `${this.myName().toUpperCase()} & ${this.peerName.toUpperCase()}`, MP_COL[Net.me]);
+    if (Net.versus) UI.toast('Versus', 'Même carte, mêmes vagues. Envoyez des ennemis chez l\'adversaire depuis la barre du bas : chaque envoi augmente votre <b>revenu par vague</b>. Le dernier debout gagne !', '#ff2a6d', 8);
+    else UI.toast('Coopération', 'Une seule carte, une intégrité commune, mais <b>chacun ses crédits</b>. Les nanites, compétences et plans sont partagés. Les ennemis sont plus résistants.', '#39ff88', 8);
+  },
+  // appelé par la boucle : statut envoyé à l'adversaire (versus), curseur au partenaire (coop)
+  tick(now) {
+    if (!Net.on || !G || Game.state !== 'play') return;
+    if (now - this.stT > 700) {
+      this.stT = now;
+      if (Net.versus) Net.send({ t: 'st', lives: Math.ceil(G.lives), max: G.maxLives, wave: G.waveNum, kills: G.stats.kills, inc: G.income || 0, over: G.over });
+    }
+    if (Net.coop && now - (this.curT || 0) > 90) {
+      const h = UI.hover;
+      if (h.inside && (h.wx !== this.cwx || h.wy !== this.cwy || UI.placing !== this.cpl)) {
+        this.curT = now; this.cwx = h.wx; this.cwy = h.wy; this.cpl = UI.placing;
+        Net.send({ t: 'cur', x: Math.round(h.wx), y: Math.round(h.wy), k: UI.placing || '' });
+      }
+    }
+  },
+  // versus : coût d'un envoi, qui grimpe avec la vague de l'envoyeur
+  sendCost(k) { return Math.round(SENDS[k].cost * (1 + .12 * (Math.max(1, G.waveNum) - 1)) / 5) * 5; },
+  canSend(k) { const S = SENDS[k]; return S.from <= Math.max(1, G.waveNum) && (G.sendStock[k] == null ? SEND_STOCK : G.sendStock[k]) > 0; },
+  sendPack(k) {
+    if (!Net.versus || !G || G.over) return;
+    const S = SENDS[k], c = this.sendCost(k);
+    if (S.from > Math.max(1, G.waveNum)) { Sfx.play('error'); UI.toast('Envoi verrouillé', `Disponible à partir de la vague ${S.from}.`, '#9fb0cc', 2.5); return; }
+    if (!this.canSend(k)) { Sfx.play('error'); UI.toast('Stock épuisé', 'Les envois se rechargent à chaque vague repoussée.', '#9fb0cc', 2.5); return; }
+    if (G.money < c) { UI.noMoney(); return; }
+    G.money -= c; G.income += S.inc;
+    G.sendStock[k] = (G.sendStock[k] == null ? SEND_STOCK : G.sendStock[k]) - 1;
+    G.sentTotal = (G.sentTotal || 0) + S.cnt;
+    Net.send({ t: 'send', k, hp: Waves.hpMul(Math.max(1, G.waveNum)) * .85 });
+    UI.toast('Envoi : ' + S.n, `${S.cnt} × ${EDEF(S.type).name} vers ${this.peerName} · revenu <b>+${S.inc}¢</b> par vague (total ${G.income}¢)`, '#ff2a6d', 2.5);
+    Sfx.play('missile'); UI.buildBar(); UI.refreshHUD();
+  },
+  incoming(m) {
+    if (!G || G.over || !Net.versus) return;
+    const S = SENDS[m.k]; if (!S) return;
+    const nP = G.map.P.length;
+    for (let i = 0; i < S.cnt; i++) G.spawnQ.push({ at: G.tick + 45 + i * 16, type: S.type, wave: 0, hpMul: m.hp, pi: i % nP, sent: true });
+    G.spawnQ.sort((a, b) => a.at - b.at);
+    G.recvTotal = (G.recvTotal || 0) + S.cnt;
+    UI.toast(`⚠ ${this.peerName} attaque !`, `${S.cnt} × ${EDEF(S.type).name} arrivent par l'entrée.`, '#ff2a6d', 3);
+    Sfx.play('alarm', .7);
+    for (const P of G.map.P) FX.ring(P.entry[0], P.entry[1], '#ff2a6d', 50, 26, 3);
+  },
+  // fin de partie
+  victory(why) {
+    if (!G || this.ended) return;
+    this.ended = true;
+    G.over = true;
+    const frags = 5 + Math.floor(G.waveNum * G.diff.frag);
+    Store.data.meta.frags += frags; Store.data.mpWins = (Store.data.mpWins || 0) + 1; Store.save();
+    Ach.unlock('mpwin');
+    Music.intensity = 0; Sfx.play('levelup');
+    UI.setPlacing(null); UI.setTargeting(null); UI.deselect();
+    setTimeout(() => UI.mpEnd(true, why, frags), 900);
+  },
+  defeat() {
+    // appelé par Game.gameOver en multijoueur
+    if (this.ended) return;
+    this.ended = true;
+    if (Net.versus) Net.send({ t: 'dead', wave: G.waveNum, kills: G.stats.kills });
+    const frags = Math.max(0, Math.floor((G.waveNum - 1) * G.diff.frag));
+    Store.data.meta.frags += frags; Store.save();
+    if (Net.coop) Ach.unlock('mpcoop');
+    setTimeout(() => UI.mpEnd(false, Net.coop ? 'coop' : 'versus', frags), 1600);
+  },
+  rematch() { if (Net.role === 'host' && Net.connected) this.launch(); },
+  // retour au salon pour les deux joueurs (changer de mode ou de difficulté sans se reconnecter)
+  toLobby(notify = true) {
+    if (notify) Net.send({ t: 'lobby' });
+    Net.coop = Net.versus = false;
+    UI.mpHud(false);
+    if (Game.state === 'play') Game.quit(false);
+    this.ready = false; this.peerReady = false;
+    UI.mpState = Net.on ? 'lobby' : 'home'; UI.openMP();
+  },
+  leave() {
+    Net.send({ t: 'bye' });
+    Net.reset();
+    UI.mpHud(false);
+    if (Game.state === 'play') Game.quit(false);
+    UI.closeAll(); UI.showMenu();
+  },
+  onLost() {
+    UI.mpHud(false);
+    if (Game.state === 'play' && G && !G.over && G.net) {
+      if (G.net === 'versus') { UI.toast('Adversaire déconnecté', 'Victoire par forfait.', '#ffd23f', 5); this.victory('forfait'); }
+      else { UI.toast('Partenaire déconnecté', 'Vous continuez seul : ses tourelles restent en place.', '#ffd23f', 6); }
+      Net.coop = false; Net.versus = false;
+    } else if (UI.top() === 'ov-mp') { UI.mpState = 'home'; Net.setStatus('La connexion a été perdue.', true); }
+  },
+  flagDesync() { if (Lock.desync) return; Lock.desync = true; Net.send({ t: 'desync' }); this.on.desync.call(this); },
+  // messages reçus
+  on: {
+    hello(m) {
+      this.peerName = String(m.name || 'Joueur').slice(0, 24); this.peerVer = m.v || '?';
+      if (m.v !== VERSION) UI.toast('Versions différentes', `Vous avez la ${VERSION}, votre ami la ${m.v}. Mettez à jour vos fichiers pour éviter les surprises.`, '#ffd23f', 6);
+      UI.renderMP();
+    },
+    cfg(m) { this.mode = m.mode; this.diff = m.diff; this.ready = false; UI.renderMP(); },
+    ready(m) { this.peerReady = !!m.v; UI.renderMP(); if (m.v) Sfx.play('ui'); },
+    chat(m) {
+      const s = String(m.s || '').slice(0, 140);
+      this.chat.push([1, s]); if (this.chat.length > 40) this.chat.shift();
+      if (UI.top() === 'ov-mp') UI.renderChat(); else UI.toast(this.peerName, s.replace(/</g, '&lt;'), MP_COL[1 - Net.me], 4);
+      Sfx.play('ui');
+    },
+    emote(m) { if (EMOTES[m.i]) { UI.toast(this.peerName, EMOTES[m.i], MP_COL[1 - Net.me], 3); Sfx.play('mission'); } },
+    start(m) { this.begin(m.o); },
+    lobby() { this.toLobby(false); UI.toast('Multijoueur', `${this.peerName} est revenu au salon.`, '#9fb0cc', 3); },
+    st(m) { this.opp = m; },
+    send(m) { this.incoming(m); },
+    dead(m) { this.opp = Object.assign(this.opp || {}, { lives: 0, wave: m.wave, kills: m.kills, over: true }); this.victory('ko'); },
+    bye() { const ing = Game.state === 'play' && G && !G.over; Net.lost(); if (!ing && UI.top() !== 'ov-mp') UI.toast('Multijoueur', `${this.peerName} a quitté la partie.`, '#9fb0cc', 4); },
+    cur(m) { this.cur = { x: m.x, y: m.y, k: m.k, t: performance.now(), sx: this.cur ? this.cur.sx : m.x, sy: this.cur ? this.cur.sy : m.y }; },
+    h(m) {
+      // l'hôte compare les empreintes d'état
+      const v = Lock.hashes.get(m.k);
+      if (v == null) { Lock.pend.set(m.k, m.v); if (Lock.pend.size > 30) Lock.pend.delete(Lock.pend.keys().next().value); }
+      else if (v !== m.v) this.flagDesync();
+    },
+    desync() { Lock.desync = true; if (G && G.net) G.desync = true; UI.toast('Désynchronisation', 'Vos deux parties ont divergé (navigateurs différents ?). Elles continuent, mais peuvent différer légèrement.', '#ffd23f', 6); }
+  }
+};
+
 
 /* ============================== ÉVÉNEMENTS ALÉATOIRES ==============================
    Tirés à chaque lancement de vague (hasard de simulation : identiques en coopération), ils se déclenchent
@@ -3759,7 +4268,7 @@ const Act = {
   },
   // l'action en cours vient-elle de ce poste ? (pour n'afficher erreurs et sélections qu'à son auteur)
   mine() { return !Net.coop || G.actor == null || G.actor === Net.me; },
-  owns(t) { return !Net.coop || t.owner == null || G.actor == null || t.owner === G.actor; }
+  owns(t, p = G.actor != null ? G.actor : Net.me) { return !Net.coop || t.owner == null || t.owner === p; }
 };
 
 const Ach = {
@@ -3774,7 +4283,7 @@ const Ach = {
 /* ============================== SAUVEGARDE ============================== */
 const SaveSys = {
   save() {
-    if (!G || G.over || G.demo) return;
+    if (!G || G.over || G.demo || G.net) return;
     const M = G.map;
     Store.data.save = {
       v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
@@ -3813,13 +4322,17 @@ const Game = {
   },
   newGame(diffKey, opts = {}) {
     Demo.stop();
-    const pk = Store.data.meta.perks, diff = DIFFS[diffKey];
+    const pk = opts.perks || Store.data.meta.perks, diff = DIFFS[diffKey];
     const daily = opts.daily ? dailyInfo() : null;
     const seed = daily ? daily.seed : opts.seed != null ? opts.seed : (Math.random() * 2147483647) | 0;
     const portrait = opts.portrait != null ? opts.portrait : View.w < View.h * .9;
     this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
+    G.perks = pk; G.net = opts.mp || null;
+    if (opts.events != null) G.events = opts.events;
+    if (opts.autoWave != null) G.autoWave = opts.autoWave;
     if (daily) { G.daily = daily.date; G.mutKeys = daily.mutKeys; G.mut = makeMut(daily.mutKeys); }
-    const dk = Store.data.doctrine, D = DOCTRINES[dk] && DOCTRINES[dk].lvl <= Store.data.cmd.lvl ? DOCTRINES[dk] : DOCTRINES.standard;
+    const dk = opts.doctrine != null ? opts.doctrine : Store.data.doctrine;
+    const D = opts.doctrine != null ? DOCTRINES[dk] || DOCTRINES.standard : DOCTRINES[dk] && DOCTRINES[dk].lvl <= Store.data.cmd.lvl ? DOCTRINES[dk] : DOCTRINES.standard;
     G.doctrine = D === DOCTRINES.standard ? 'standard' : dk;
     G.money = Math.round((diff.money + 40 * (pk.h_money || 0)) * G.mut.money);
     G.maxLives = G.lives = Math.max(5, Math.round((diff.lives + 15 * (pk.h_lives || 0) + (D.lives || 0)) * G.mut.lives));
@@ -3830,6 +4343,15 @@ const Game = {
       if (c.length) G.unlocked.add(spick(c).r);
     }
     G.cmdStart = Object.assign({}, Store.data.cmd);
+    if (G.net === 'coop') {
+      // un portefeuille par joueur : G.money désigne celui de l'auteur de l'action (ou du joueur local)
+      const m = Math.round(G.money * COOP.start);
+      G.wallets = [m, m]; delete G.money;
+      Object.defineProperty(G, 'money', {
+        get() { return this.wallets[this.actor != null ? this.actor : Net.me]; },
+        set(v) { this.wallets[this.actor != null ? this.actor : Net.me] = v; }, enumerable: true, configurable: true
+      });
+    } else if (G.net === 'versus') { G.income = 0; G.sendStock = {}; G.autoWave = true; G.autoT = 1500; }
     Skills.apply();
     G.preview = Waves.plan(1);
     Missions.fill();
@@ -3901,6 +4423,13 @@ const Game = {
     if (!G || G.over) return;
     G.over = true; G.lives = 0;
     if (G.demo) { Demo.pending = true; return; }
+    if (G.net) {
+      Music.intensity = 0; UI.setPlacing(null); UI.setTargeting(null); UI.deselect();
+      const [ex, ey] = G.map.exit;
+      for (let i = 0; i < 4; i++) FX.ring(ex, ey, i & 1 ? '#ffffff' : '#ff2a6d', 60 + i * 45, 40 + i * 8, 4);
+      FX.spark(ex, ey, '#ff2a6d', 80, 7, 60, 3); Render.flash(.6, '#ff2a6d'); Render.shake(25); Sfx.play('boom'); Sfx.play('leak');
+      MP.defeat(); return;
+    }
     const frags = Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1)));
     Store.data.meta.frags += frags;
     let best, prev;
@@ -4110,6 +4639,8 @@ const Render = {
     Spr.setK(View.scale * View.dpr);
     $('bossbar').style.top = (View.top + 8) + 'px';
     $('missions').style.top = (View.top + 8) + 'px';
+    $('evchip').style.top = (View.top + 8) + 'px';
+    $('mp').style.top = (View.top + (View.w < 640 ? 50 : 8)) + 'px';   // téléphone : sous la ligne des missions
   },
   setTheme(key) {
     if (!THEMES[key]) key = 'theme-cyber';
@@ -4357,6 +4888,7 @@ const Render = {
     this.drawDrops(c);
     this.drawOver(c, now);
     this.drawEventsOver(c, now);
+    if (G.wallets) this.drawCoop(c, now);
     this.drawFloats(c);
     if (G.ev) {
       const col = EVENTS[G.ev.k].c;
@@ -4733,6 +5265,21 @@ const Render = {
       c.fillStyle = 'rgba(159,232,255,.35)'; c.beginPath(); c.arc(T[0], T[1], 20, 0, TAU); c.fill();
     }
   },
+  drawCoop(c, t) {
+    for (const tw of G.towers) if (tw.owner != null) {
+      const x = tw.tx * TILE + 2, y = tw.ty * TILE + 2;
+      c.fillStyle = MP_COL[tw.owner]; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8, y); c.lineTo(x, y + 8); c.closePath(); c.fill();
+    }
+    const u = MP.cur; if (!u || !Net.coop || t - u.t > 2500) return;
+    u.sx += (u.x - u.sx) * .35; u.sy += (u.y - u.sy) * .35;
+    const col = MP_COL[1 - Net.me], tx = Math.floor(u.sx / TILE), ty = Math.floor(u.sy / TILE);
+    if (u.k) { c.strokeStyle = rgba(col, .8); c.lineWidth = 1.5; c.setLineDash([4, 3]); c.strokeRect(tx * TILE + 2, ty * TILE + 2, TILE - 4, TILE - 4); c.setLineDash([]); }
+    c.strokeStyle = col; c.lineWidth = 2;
+    c.beginPath(); c.arc(u.sx, u.sy, 9, 0, TAU); c.moveTo(u.sx - 15, u.sy); c.lineTo(u.sx - 5, u.sy); c.moveTo(u.sx + 5, u.sy); c.lineTo(u.sx + 15, u.sy);
+    c.moveTo(u.sx, u.sy - 15); c.lineTo(u.sx, u.sy - 5); c.moveTo(u.sx, u.sy + 5); c.lineTo(u.sx, u.sy + 15); c.stroke();
+    c.font = '700 11px Bahnschrift,"Segoe UI",sans-serif'; c.textAlign = 'left'; c.textBaseline = 'middle';
+    c.fillStyle = 'rgba(0,0,0,.7)'; c.fillText(MP.peerName, u.sx + 14, u.sy - 13); c.fillStyle = col; c.fillText(MP.peerName, u.sx + 13, u.sy - 14);
+  },
   drawDrops(c) {
     for (const d of G.drops) {
       const bob = d.fly ? 0 : Math.sin(d.ph) * 3;
@@ -4952,6 +5499,7 @@ const UI = {
       if (el && !el.contains(e.relatedTarget)) this.hideTip();
     });
     this.buildAbils();
+    $('mp-emt').onclick = () => { const e = $('mp-em'); e.classList.toggle('on'); $('mp-emt').textContent = e.classList.contains('on') ? 'MESSAGES ▴' : 'MESSAGES ▾'; };
   },
 
   /* ---------- infobulles ---------- */
@@ -5062,6 +5610,7 @@ const UI = {
     }
   },
   exitGame() {
+    this.mpHud(false); $('mp-wait').style.display = 'none';
     $('hud').classList.add('hidden'); $('dock').classList.add('hidden'); $('missions').classList.add('hidden');
     $('tpanel').classList.remove('show'); $('bossbar').style.display = 'none';
     this.sel = null; this.selDebris = null; this.placing = null; this.targeting = null; this.hover.inside = false;
@@ -5089,6 +5638,8 @@ const UI = {
     if (this.missionFlash) { const m = $('missions'); m.classList.remove('flash'); void m.offsetWidth; m.classList.add('flash'); this.missionFlash = 0; }
     const h = this.hover;
     if (h.inside && !h.touch && G.drops.length && !G.over) Drops.near(h.wx, h.wy, 40);
+    if (f % 20 === 0 && G.net) this.refreshMP();
+    if (f % 10 === 0) { const w = Net.coop && Lock.stall > 600; if (w !== this.last.wait) { this.last.wait = w; $('mp-wait').style.display = w ? 'block' : 'none'; if (w) $('mp-wait').textContent = `EN ATTENTE DE ${(MP.peerName || 'VOTRE PARTENAIRE').toUpperCase()}…`; } }
   },
   refreshHUD() {
     const L = this.last, lives = Math.max(0, Math.ceil(G.lives)), money = Math.floor(this.holdMoney != null ? this.holdMoney : G.money);
@@ -5160,6 +5711,7 @@ const UI = {
     b.classList.toggle('on', Game.speed > 1);
   },
   toggleAuto() {
+    if (G && G.net === 'versus') { Sfx.play('error'); this.toast('Vagues automatiques', 'En versus, les vagues s\'enchaînent automatiquement pour les deux joueurs (vous pouvez les appeler plus tôt).', '#9fb0cc', 3); return; }
     const on = !(G ? G.autoWave : Store.s.autoWave);
     Store.s.autoWave = on; Store.save();
     if (G) Act.do('auto', on);
@@ -5213,6 +5765,7 @@ const UI = {
   /* ---------- protocoles ---------- */
   openCards() {
     if (!G || !G.offer || !G.offer.length) { if (G) { G.offer = null; G.cardQ = 0; } return; }
+    if (G.wallets && Net.coop && Cards.turn() !== Net.me) { this.toast('Protocole', `${MP.peerName} choisit le protocole de cette vague.`, '#ff2bd6', 3); return; }
     this.setPlacing(null, true); this.setTargeting(null); this.deselect();
     this.renderCards(); this.open('ov-cards'); Sfx.play('card');
   },
@@ -5302,14 +5855,29 @@ const UI = {
       i++;
     }
     if (!sep) traps();
+    if (G.net === 'versus') {
+      sepEl();
+      for (const k in SENDS) {
+        const S = SENDS[k], key = 'send:' + k, el = document.createElement('div'), col = EDEF(S.type).color;
+        el.className = 'bcard send'; el.style.setProperty('--tc', '#ff2a6d');
+        el.innerHTML = `<span class="hk"></span><span class="tr">×${S.cnt}</span><canvas></canvas><span class="pr"></span>`;
+        Spr.enemyIcon(el.querySelector('canvas'), S.type, 44);
+        el.onclick = () => MP.sendPack(k);
+        el.onpointerenter = e => { if (e.pointerType !== 'touch') this.showTipAt(`<h4>ENVOI · ${S.n.toUpperCase()}</h4><div class="d">${S.cnt} × <b style="color:${col}">${EDEF(S.type).name}</b> apparaissent chez l'adversaire, à la puissance de votre vague actuelle.</div><div class="d" style="margin-top:4px;color:var(--gold)">Revenu +${S.inc}¢ à chaque vague repoussée.</div><div class="d" style="margin-top:4px">${SEND_STOCK} envois par vague${S.from > 1 ? ` · dès la vague ${S.from}` : ''}.</div>`, el.getBoundingClientRect(), '#ff2a6d'); };
+        el.onpointerleave = () => this.hideTip();
+        bar.appendChild(el);
+        this.cards[key] = { el, pr: el.querySelector('.pr'), hk: el.querySelector('.hk'), cost: -1, off: null, send: k };
+      }
+    }
     this.refreshBar();
     if (G.freshBp && this.cards[G.freshBp]) { const el = this.cards[G.freshBp].el; bar.scrollLeft = el.offsetLeft - bar.offsetLeft - bar.clientWidth / 2; }
   },
   refreshBar() {
     for (const k in this.cards) {
-      const c = this.cards[k], cost = c.trap ? Traps.cost(c.trap) : Towers.costOf(k);
+      const c = this.cards[k], cost = c.send ? MP.sendCost(c.send) : c.trap ? Traps.cost(c.trap) : Towers.costOf(k);
       if (c.cost !== cost) { c.cost = cost; c.pr.textContent = cost; }
-      const off = G.money < cost;
+      if (c.send) { const st = G.sendStock[c.send] == null ? SEND_STOCK : G.sendStock[c.send]; if (c.hk.textContent !== String(st)) c.hk.textContent = SENDS[c.send].from > Math.max(1, G.waveNum) ? 'V' + SENDS[c.send].from : st; }
+      const off = G.money < cost || (c.send && !MP.canSend(c.send));
       if (off !== c.off) { c.off = off; c.el.classList.toggle('off', off); }
       c.el.classList.toggle('sel', this.placing === k);
     }
@@ -5407,7 +5975,7 @@ const UI = {
   escape() {
     if (this.stack.length) {
       const top = this.top();
-      if (top !== 'ov-menu' && top !== 'ov-over' && top !== 'ov-cards') this.close(top);
+      if (top !== 'ov-menu' && top !== 'ov-over' && top !== 'ov-cards' && top !== 'ov-mpend') this.close(top);
       return;
     }
     if (this.targeting || this.placing || this.sel || this.selDebris) { this.cancel(); return; }
@@ -5429,7 +5997,7 @@ const UI = {
   afterAct(type, p) {
     if (this.sel) { if (this.sel.dead) this.deselect(); else if (type !== 'drop') this.renderPanel(); }
     else if (this.selDebris && !this.selDebris.trap && type === 'recycle') this.deselect();
-    if (type === 'card' || type === 'reroll') { if (G.offer && this.top() === 'ov-cards') this.renderCards(); else if (!G.offer) this.close('ov-cards'); }
+    if (type === 'card' || type === 'reroll') { if (G.offer && Cards.turn() === Net.me) { if (this.top() === 'ov-cards') this.renderCards(); else if (p !== Net.me) this.openCards(); } else this.close('ov-cards'); }
     if (type === 'skill' && this.top() === 'ov-tree') { this.renderTree(); this.drawLinks(); }
     if (type === 'research' && this.top() === 'ov-lab') this.renderLab();
     if (type === 'card' || type === 'research' || type === 'skill') this.buildBar();
@@ -5597,6 +6165,7 @@ const UI = {
       const go = () => { this.closeAll(); Game.newGame('standard', { daily: true }); };
       if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par le Défi du jour.', go); else go();
     }]);
+    list.push([`MULTIJOUEUR<small>versus ou coopération, à deux</small>`, 'nano', () => this.openMP()]);
     list.push([`HÉRITAGE<small>${Store.data.meta.frags} fragments</small>`, 'gold', () => this.openMeta()]);
     list.push([`SUCCÈS<small>${Object.keys(Store.data.ach).filter(k => ACH[k]).length} / ${Object.keys(ACH).length}</small>`, '', () => this.openAch()]);
     const cx = Codex.progress();
@@ -5630,6 +6199,19 @@ const UI = {
   openPause() {
     if (!G || G.over) return;
     this.setPlacing(null, true); this.setTargeting(null);
+    if (G.net) {
+      $('pause-info').innerHTML = `${G.net === 'versus' ? 'VERSUS' : 'COOPÉRATION'} avec <b>${MP.peerName.replace(/</g, '&lt;')}</b> · Vague <b>${G.waveNum}</b><br><span style="color:var(--gold)">La partie continue pendant que ce menu est ouvert.</span>`;
+      this.btns($('pause-btns'), [
+        ['REPRENDRE', 'prim', () => this.close('ov-pause')],
+        ['OPTIONS', '', () => this.openOptions()],
+        ['ANALYSE DE COMBAT', '', () => this.openStats()],
+        ['CASINO', '', () => this.openCasino()],
+        ['MANUEL', '', () => this.openHelp()],
+        ...(Net.connected ? [['RETOUR AU SALON', '', () => this.confirm('RETOUR AU SALON ?', "La partie en cours s'arrête pour les deux joueurs.", () => MP.toLobby())]] : []),
+        ['QUITTER LA PARTIE', 'danger', () => this.confirm('QUITTER ?', G.net === 'versus' ? 'Votre adversaire gagnera par forfait.' : 'Votre partenaire continuera seul.', () => MP.leave())]
+      ]);
+      this.open('ov-pause'); Sfx.play('ui'); return;
+    }
     $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · Graine <b>${G.seed}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
       `<br>Doctrine <b>${DOCTRINES[G.doctrine].n}</b> · Commandant niv. <b>${Store.data.cmd.lvl}</b>` +
       (G.daily ? '<br>' + G.mutKeys.map(k => `<b style="color:var(--gold)">${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>') : '');
@@ -5883,6 +6465,159 @@ const UI = {
     }
     this.open('ov-codex');
   },
+  /* ---------- multijoueur : salon ---------- */
+  mpState: 'home', mpManual: null,
+  openMP() {
+    if (!Net.supported()) {
+      this.toast('Multijoueur indisponible', 'Ce navigateur (ou cet aperçu) bloque les connexions directes. Ouvrez le fichier neon-warfare.html directement dans Chrome, Edge ou Firefox.', '#ff2a6d', 7);
+      return;
+    }
+    if (!Net.on && this.mpState === 'lobby') this.mpState = 'home';
+    this.renderMP(); this.open('ov-mp');
+  },
+  renderMP() {
+    const B = $('mp-body'); if (!B) return;
+    const st = Net.status ? `<div class="mp-st${Net.err ? ' err' : ''}">${Net.status}</div>` : '';
+    const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
+    if (this.mpState === 'lobby' && Net.on) {
+      const host = Net.role === 'host', me = MP.myName(), you = MP.peerName || '…';
+      const P = (n, i, tag, ok) => `<div class="mp-pl" style="--pc:${MP_COL[i]}"><i></i><b>${esc(n)}</b><span>${tag}</span>${ok ? '<em>PRÊT</em>' : ''}</div>`;
+      const meIdx = Net.me, ready = host ? MP.peerReady : MP.ready;
+      B.innerHTML = `<div class="mp-pls">${P(me, meIdx, host ? 'HÔTE · VOUS' : 'VOUS', !host && MP.ready)}${P(you, 1 - meIdx, (host ? 'INVITÉ' : 'HÔTE') + (Net.ping ? ` · ${Net.ping} ms` : ''), host && MP.peerReady)}</div>
+        <div class="lbl-s" style="margin:12px 0 6px">MODE ${host ? '' : '<span style="opacity:.6">(choisi par l\'hôte)</span>'}</div>
+        <div class="mp-modes">
+          <button class="mp-mode${MP.mode === 'versus' ? ' on' : ''}" data-m="versus" style="--mc:#ff2a6d"><b>VERSUS</b><span>Chacun sa carte, mêmes vagues. Envoyez des ennemis chez l'adversaire pour augmenter votre revenu. Le dernier debout gagne.</span></button>
+          <button class="mp-mode${MP.mode === 'coop' ? ' on' : ''}" data-m="coop" style="--mc:#39ff88"><b>COOPÉRATION</b><span>Une carte partagée, intégrité commune, chacun ses crédits. Ennemis plus résistants : il faut s'organiser.</span></button>
+        </div>
+        <div class="lbl-s" style="margin:12px 0 6px">MENACE</div>
+        <div class="seg" id="mp-diff">${Object.keys(DIFFS).map(k => `<button data-d="${k}" class="${MP.diff === k ? 'on' : ''}" style="--tc:${DIFFS[k].color}">${DIFFS[k].name.toUpperCase()}</button>`).join('')}</div>
+        <div class="mp-chat"><div class="mp-log" id="mp-log"></div><form id="mp-form"><input id="mp-msg" maxlength="140" placeholder="Message…" autocomplete="off"><button class="btn">ENVOYER</button></form></div>
+        <div class="row" style="gap:10px;margin-top:12px">
+          <button class="btn danger" id="mp-quit">QUITTER LE SALON</button>
+          ${host ? `<button class="btn prim big" id="mp-go" style="flex:1" ${ready ? '' : 'disabled'}>${ready ? 'LANCER LA PARTIE' : 'EN ATTENTE DE L\'INVITÉ…'}</button>`
+            : `<button class="btn ${MP.ready ? 'gold' : 'prim'} big" id="mp-ready" style="flex:1">${MP.ready ? 'PRÊT ✓ (ANNULER)' : 'JE SUIS PRÊT'}</button>`}
+        </div>`;
+      B.querySelectorAll('.mp-mode').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setMode(b.dataset.m); });
+      B.querySelectorAll('#mp-diff button').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setDiff(b.dataset.d); });
+      $('mp-quit').onclick = () => MP.leave();
+      if (host) $('mp-go').onclick = () => MP.launch(); else $('mp-ready').onclick = () => { Sfx.play('ui'); MP.toggleReady(); };
+      $('mp-form').onsubmit = e => { e.preventDefault(); const i = $('mp-msg'); MP.say(i.value); i.value = ''; };
+      this.renderChat();
+      return;
+    }
+    if (this.mpState === 'manual') { this.renderManual(B, st); return; }
+    if (this.mpState === 'host') {
+      B.innerHTML = `<div class="mp-code"><span>CODE DU SALON</span><b>${Net.code ? 'NEON-' + Net.code : '…'}</b><button class="btn" id="mp-copy" ${Net.code ? '' : 'disabled'}>COPIER</button></div>${st}
+        <div class="note" style="text-align:center">Votre ami ouvre <b>Multijoueur → Rejoindre</b> et tape ce code. Gardez cette fenêtre ouverte.</div>
+        <div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="mp-back">ANNULER</button></div>`;
+      if (Net.code) $('mp-copy').onclick = () => this.copy('NEON-' + Net.code);
+      $('mp-back').onclick = () => { Net.reset(); this.mpState = 'home'; this.renderMP(); };
+      return;
+    }
+    if (this.mpState === 'join') {
+      B.innerHTML = `${st}<div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="mp-back">ANNULER</button></div>`;
+      $('mp-back').onclick = () => { Net.reset(); this.mpState = 'home'; this.renderMP(); };
+      return;
+    }
+    B.innerHTML = `<div class="opt" style="border:0;padding-top:0"><span>Votre nom<small>Visible par l'autre joueur</small></span><input id="mp-name" class="mp-in" maxlength="24" value="${esc(MP.myName())}"></div>
+      <div class="mp-two">
+        <div class="mp-box"><h3>HÉBERGER</h3><p>Créez un salon et donnez son code à votre ami.</p><button class="btn prim big" id="mp-host">CRÉER UN SALON</button></div>
+        <div class="mp-box"><h3>REJOINDRE</h3><p>Entrez le code reçu de l'hôte.</p><input id="mp-code" class="mp-in big" maxlength="9" placeholder="NEON-XXXX" autocomplete="off"><button class="btn prim big" id="mp-join">REJOINDRE</button></div>
+      </div>${st}
+      <div class="note" style="margin-top:12px">Le code court passe par un service public gratuit de mise en relation (PeerJS) : seule la poignée de main y transite, la partie se joue ensuite en direct entre vos deux navigateurs.
+        Pas d'internet, ou ça ne passe pas ? <a href="#" id="mp-man">Connexion manuelle (réseau local)</a>.</div>`;
+    const nm = $('mp-name');
+    nm.onchange = () => { Store.s.name = nm.value.trim().slice(0, 24) || MP.myName(); Store.save(); };
+    $('mp-host').onclick = () => { nm.onchange(); this.mpState = 'host'; Net.host(); this.renderMP(); };
+    $('mp-join').onclick = () => { nm.onchange(); this.mpState = 'join'; Net.join($('mp-code').value); if (Net.err) this.mpState = 'home'; this.renderMP(); };
+    $('mp-code').onkeydown = e => { if (e.key === 'Enter') $('mp-join').click(); };
+    $('mp-man').onclick = e => { e.preventDefault(); nm.onchange(); this.mpState = 'manual'; this.mpManual = null; Net.reset(); this.renderMP(); };
+  },
+  renderManual(B, st) {
+    const M = this.mpManual;
+    if (!M) {
+      B.innerHTML = `<div class="note" style="margin-bottom:12px">Sans aucun serveur : chacun copie un code et l'envoie à l'autre (message, mail, clé USB…). Fonctionne entre deux ordinateurs du même réseau, même sans internet.</div>
+        <div class="mp-two"><div class="mp-box"><h3>JE CRÉE</h3><p>Génère un code d'invitation.</p><button class="btn prim big" id="mm-h">CRÉER L'INVITATION</button></div>
+        <div class="mp-box"><h3>J'AI REÇU UNE INVITATION</h3><p>Collez-la pour générer votre réponse.</p><textarea id="mm-in" class="mp-ta" placeholder="NW1.…"></textarea><button class="btn prim big" id="mm-j">GÉNÉRER LA RÉPONSE</button></div></div>${st}
+        <div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="mp-back">RETOUR</button></div>`;
+      $('mm-h').onclick = async () => {
+        this.mpManual = { step: 'hwait' }; Net.setStatus('Préparation de l\'invitation…');
+        try { this.mpManual.code = await Net.manualHost(); Net.setStatus(''); } catch (e) { Net.setStatus('Impossible de créer l\'invitation.', true); }
+        this.renderMP();
+      };
+      $('mm-j').onclick = async () => {
+        const v = $('mm-in').value; this.mpManual = { step: 'jwait' }; Net.setStatus('Préparation de la réponse…');
+        try { this.mpManual.code = await Net.manualJoin(v); Net.setStatus('Envoyez cette réponse à l\'hôte, puis patientez.'); } catch (e) { this.mpManual = null; Net.setStatus('Invitation illisible : copiez-la en entier.', true); }
+        this.renderMP();
+      };
+    } else if (M.step === 'hwait' || M.step === 'jwait') {
+      const host = M.step === 'hwait';
+      B.innerHTML = `<div class="lbl-s">${host ? '1. ENVOYEZ CETTE INVITATION' : 'ENVOYEZ CETTE RÉPONSE À L\'HÔTE'}</div>
+        <textarea class="mp-ta" readonly id="mm-out">${M.code || '…'}</textarea><button class="btn" id="mm-copy">COPIER</button>
+        ${host ? `<div class="lbl-s" style="margin-top:12px">2. COLLEZ LA RÉPONSE DE VOTRE AMI</div><textarea id="mm-ans" class="mp-ta" placeholder="NW1.…"></textarea><button class="btn prim big" id="mm-fin" style="width:100%">SE CONNECTER</button>` : ''}
+        ${st}<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="mp-back">ANNULER</button></div>`;
+      $('mm-copy').onclick = () => this.copy(M.code || '', $('mm-out'));
+      if (host) $('mm-fin').onclick = async () => { try { await Net.manualFinish($('mm-ans').value); Net.setStatus('Connexion…'); } catch (e) { Net.setStatus('Réponse illisible : copiez-la en entier.', true); } };
+    }
+    $('mp-back').onclick = () => { Net.reset(); this.mpManual = null; this.mpState = M ? 'manual' : 'home'; this.renderMP(); };
+  },
+  copy(txt, sel) {
+    const done = () => this.toast('Copié', 'Collez-le dans votre message.', '#39ff88', 2);
+    try { navigator.clipboard.writeText(txt).then(done, () => { if (sel) { sel.select(); } }); } catch (e) { if (sel) sel.select(); }
+  },
+  renderChat() {
+    const L = $('mp-log'); if (!L) return;
+    const esc = s => String(s).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
+    L.innerHTML = MP.chat.length ? MP.chat.map(([who, s]) => `<div><b style="color:${MP_COL[who ? 1 - Net.me : Net.me]}">${esc(who ? MP.peerName : MP.myName())}</b> ${esc(s)}</div>`).join('')
+      : '<div style="opacity:.5">Discutez ici avant de lancer la partie.</div>';
+    L.scrollTop = L.scrollHeight;
+  },
+  /* ---------- multijoueur : en partie ---------- */
+  mpHud(on) {
+    const el = $('mp');
+    el.classList.toggle('hidden', !on);
+    if (!on) return;
+    el.style.setProperty('--pc', MP_COL[1 - Net.me]);
+    $('mp-em').innerHTML = EMOTES.map((e, i) => `<button data-i="${i}">${e}</button>`).join('');
+    $('mp-em').querySelectorAll('button').forEach(b => b.onclick = () => { MP.emote(+b.dataset.i); });
+    this.refreshMP(true);
+  },
+  refreshMP(force) {
+    const el = $('mp'); if (el.classList.contains('hidden') || !G) return;
+    const o = MP.opp, n = MP.peerName || '…';
+    let h = `<div class="mp-h"><i></i><b>${Net.versus ? 'VS ' : 'AVEC '}${n.replace(/</g, '&lt;')}</b><span>${Net.on ? (Net.ping ? Net.ping + ' ms' : '') : 'DÉCONNECTÉ'}</span></div>`;
+    if (Net.versus || G.net === 'versus') {
+      const p = o ? Math.max(0, o.lives / (o.max || 1)) : 1;
+      h += `<div class="mp-bar"><s style="width:${(p * 100).toFixed(1)}%"></s></div>
+        <div class="mp-row"><span>Intégrité</span><b>${o ? o.lives : '?'}</b><span>Vague</span><b>${o ? o.wave : '?'}</b></div>
+        <div class="mp-row"><span>Votre revenu</span><b style="color:var(--gold)">+${G.income || 0}¢</b><span>Envoyés</span><b>${G.sentTotal || 0}</b></div>
+        <button class="btn danger" id="mp-sendgo" style="width:100%;margin-top:5px;padding:5px">ENVOYER DES ENNEMIS ▸</button>`;
+    } else if (G.wallets) {
+      h += `<div class="mp-row"><span>Ses crédits</span><b style="color:var(--gold)">${fmt(G.wallets[1 - Net.me])}¢</b><span>Ses tourelles</span><b>${G.towers.filter(t => t.owner === 1 - Net.me).length}</b></div>`;
+    }
+    $('mp-info').innerHTML = h;
+    const sg = $('mp-sendgo');
+    if (sg) sg.onclick = () => { const c = this.cards['send:swarm']; if (c) { const bar = $('bar'); bar.scrollLeft = c.el.offsetLeft - bar.offsetLeft - 20; c.el.classList.add('fresh'); setTimeout(() => c.el.classList.remove('fresh'), 1500); } };
+  },
+  mpEnd(win, why, frags) {
+    if (!G) return;
+    const s = G.stats, o = MP.opp, host = Net.role === 'host' && Net.connected;
+    const title = Net.coop || why === 'coop' ? 'DÉFAITE COMMUNE' : win ? 'VICTOIRE !' : 'DÉFAITE';
+    const col = win ? 'var(--gold)' : 'var(--dang)';
+    const sub = why === 'forfait' ? `${MP.peerName} a quitté la partie.` : why === 'ko' ? `Le noyau de ${MP.peerName} a cédé à la vague ${o ? o.wave : '?'}.`
+      : why === 'coop' ? `Votre défense commune est tombée à la vague ${G.waveNum}.` : `Votre noyau a cédé à la vague ${G.waveNum}.`;
+    $('mpend-body').innerHTML = `<h2 style="color:${col};text-shadow:0 0 18px ${col}">${title}</h2><div class="sub">${sub}</div>
+      <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
+      ${G.net === 'versus' ? `<div>Ennemis envoyés <b>${G.sentTotal || 0}</b></div><div>Ennemis reçus <b>${G.recvTotal || 0}</b></div>` : `<div>Tourelles <b>${G.towers.length}</b></div><div>Boss vaincus <b>${s.bosses}</b></div>`}</div>
+      <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span></div>
+      <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="mpe-quit">QUITTER</button>${Net.connected ? '<button class="btn" id="mpe-lobby">SALON</button>' : ''}<button class="btn" id="mpe-stats">STATS</button>
+      ${host ? '<button class="btn prim big" id="mpe-again">REVANCHE !</button>' : Net.connected ? '<span class="note" style="align-self:center">L\'hôte peut relancer une partie…</span>' : ''}</div>`;
+    $('mpe-quit').onclick = () => MP.leave();
+    if ($('mpe-lobby')) $('mpe-lobby').onclick = () => MP.toLobby();
+    $('mpe-stats').onclick = () => this.openStats();
+    if (host) $('mpe-again').onclick = () => MP.rematch();
+    this.open('ov-mpend');
+  },
   /* ---------- casino ---------- */
   csTab: 'slot', csLvl: 0, csBet: null, csPct: 0, spinning: false, holdMoney: null,
   openCasino(tab) {
@@ -6131,6 +6866,11 @@ const UI = {
         <li><b>Héritage</b> : les fragments gagnés à chaque fin de partie achètent des bonus permanents.</li>
         <li><b>Analyse de combat</b> (<kbd>G</kbd>) : graphiques de la partie en cours — dégâts, éliminations, tirs et rentabilité de chaque tourelle, et dégâts par vague. Le <b>Codex</b> réunit les fiches de tout ce que vous avez rencontré.</li>
         <li>La partie est <b>sauvegardée automatiquement</b> entre les vagues.</li></ul>
+      <h3>MULTIJOUEUR</h3><ul>
+        <li><b>Menu → Multijoueur</b> : l'hôte crée un salon et donne son code (NEON-XXXX), l'autre joueur le saisit. Sans internet, la <b>connexion manuelle</b> échange deux codes par copier-coller (réseau local).</li>
+        <li><b style="color:#ff2a6d">Versus</b> : même carte et mêmes vagues, chacun chez soi. La barre du bas propose des <b>envois</b> d'ennemis chez l'adversaire : ils coûtent des crédits mais augmentent votre <b>revenu par vague</b>. Vitesse 1x, vagues automatiques. Le dernier debout gagne.</li>
+        <li><b style="color:#39ff88">Coopération</b> : une seule carte, une intégrité commune, mais chacun ses crédits (60 % des primes chacun). Nanites, compétences, plans et capacités sont partagés ; les protocoles se choisissent à tour de rôle. Seul le constructeur d'une tourelle peut la vendre. Le curseur de votre partenaire est visible sur la carte.</li>
+        <li>En multijoueur, les menus ne mettent pas la partie en pause.</li></ul>
       <h3>CASINO NÉON</h3><ul>
         <li>Entre les vagues (<kbd>C</kbd>), <b>3 jetons</b> de <b>machine à sous</b> : trois mises possibles, des gains en crédits, nanites, protocoles, capacités ou intégrité… et un <b>jackpot progressif</b> qui grossit à chaque mise perdue. Trois crânes : malédiction !</li>
         <li><b>Paris sur la vague</b> : sans fuite, éclair (vague nettoyée en un temps record), carnage (combo à atteindre) ou chasseur de boss. La mise est prélevée tout de suite, le gain vaut mise × cote.</li></ul>
@@ -6180,6 +6920,29 @@ const Perf = {
    Simulation à pas fixe (60 ticks/s) indépendante de la fréquence de l'écran,
    rendu interpolé pour rester fluide sur les écrans 120/144 Hz. */
 let lastT = 0;
+// avance la simulation de dt millisecondes (appelée par l'affichage, ou par la minuterie de secours en arrière-plan)
+function simStep(dt) {
+  if (G.over || (UI.blocking() && !Net.on)) { Render.alpha = 1; if (G.over) FX.update(); return; }
+  let sm = 1;
+  if (Game.slowT > 0) { Game.slowT -= dt; sm = .28; }
+  Game.acc += dt * Game.speed * sm;
+  const t0 = performance.now();
+  let steps = 0;
+  while (Game.acc >= TICK_MS && steps < 12) {
+    if (Net.coop) {
+      if (!Lock.ready(G.tick)) { Lock.stall += TICK_MS; Game.acc = Math.min(Game.acc, TICK_MS * 4); break; }
+      Lock.stall = 0; Lock.exec(G.tick);
+      if (!G || G.over) break;
+    }
+    Game.update();
+    if (Net.coop) Lock.check(G.tick);
+    Game.acc -= TICK_MS; steps++;
+    if (G.over || (UI.blocking() && !Net.on)) break;
+  }
+  if (steps >= 12) Game.acc = 0;
+  if (steps) Perf.simMs = Perf.simMs * .9 + (performance.now() - t0) / steps * .1;
+  Render.alpha = clamp(Game.acc / TICK_MS, 0, 1);
+}
 function loop(now) {
   requestAnimationFrame(loop);
   const w0 = performance.now();
@@ -6188,22 +6951,8 @@ function loop(now) {
   Perf.frame(dt);
   // filet de sécurité : certains navigateurs mobiles ratent l'événement resize (rotation, barre d'adresse)
   if ((UI.frameN & 31) === 0 && (window.innerWidth !== View.w || window.innerHeight !== View.h)) Render.resize();
-  if (Game.state === 'play' && G) {
-    if (!G.over && !UI.blocking()) {
-      let sm = 1;
-      if (Game.slowT > 0) { Game.slowT -= dt; sm = .28; }
-      Game.acc += dt * Game.speed * sm;
-      const t0 = performance.now();
-      let steps = 0;
-      while (Game.acc >= TICK_MS && steps < 12) { Game.update(); Game.acc -= TICK_MS; steps++; if (G.over || UI.blocking()) break; }
-      if (steps >= 12) Game.acc = 0;
-      if (steps) Perf.simMs = Perf.simMs * .9 + (performance.now() - t0) / steps * .1;
-      Render.alpha = clamp(Game.acc / TICK_MS, 0, 1);
-    } else {
-      Render.alpha = 1;
-      if (G.over) FX.update();
-    }
-  } else if (Game.state === 'menu' && G && G.demo) Demo.frame(dt);
+  if (Game.state === 'play' && G) { simStep(dt); MP.tick(now); }
+  else if (Game.state === 'menu' && G && G.demo) Demo.frame(dt);
   Render.frame(now);
   UI.frame();
   Perf.workMs = Perf.workMs * .95 + (performance.now() - w0) * .05;
@@ -6224,7 +6973,7 @@ function boot() {
   } catch (e) { /* API indisponible */ }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      if (Game.state === 'play' && G && !G.over && !UI.blocking()) UI.openPause();
+      if (Game.state === 'play' && G && !G.over && !UI.blocking() && !Net.on) UI.openPause();
       if (Sfx.ctx && Sfx.ctx.state === 'running') Sfx.ctx.suspend();
     } else if (Sfx.ctx && Sfx.ctx.state === 'suspended') Sfx.ctx.resume();
   });
