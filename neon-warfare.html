@@ -619,6 +619,18 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const rndi = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+/* hasard de la SIMULATION : son état vit dans G.rs, si bien que deux machines (coop) ou une sauvegarde
+   recalculent exactement la même partie. Le hasard purement visuel (particules, sons) reste sur Math.random. */
+function sr() {
+  if (!G) return Math.random();
+  let t = G.rs = (G.rs + 0x6D2B79F5) | 0;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const srnd = (a, b) => a + sr() * (b - a);
+const srndi = (a, b) => Math.floor(a + sr() * (b - a + 1));
+const spick = arr => arr[Math.floor(sr() * arr.length)];
 const d2 = (ax, ay, bx, by) => { const dx = ax - bx, dy = ay - by; return dx * dx + dy * dy; };
 const angDiff = (a, b) => { let d = (a - b) % TAU; if (d > Math.PI) d -= TAU; else if (d < -Math.PI) d += TAU; return d; };
 const turnTo = (a, b, k) => a - angDiff(a, b) * k;
@@ -1375,7 +1387,7 @@ const MISSIONS = [
 /* ---------- Protocoles : une carte à choisir parmi 3 après chaque vague ----------
    r : rareté (0 standard, 1 rare, 2 pacte) — mod : multiplicateurs cumulés — add : bonus additifs — now : effet immédiat */
 const CARDS = {
-  cash:     { r: 0, i: '¢', n: 'Subvention', d: () => `+${50 + 10 * G.waveNum} crédits immédiatement.`, now: () => { G.money += 50 + 10 * G.waveNum; } },
+  cash:     { r: 0, i: '¢', n: 'Subvention', d: () => `+${50 + 10 * G.waveNum} crédits immédiatement.`, now: () => { gain(50 + 10 * G.waveNum); } },
   nano:     { r: 0, i: '◈', n: 'Cache de nanites', d: () => '+2 nanites immédiatement.', now: () => { G.nanites += 2; } },
   repair:   { r: 0, i: '♥', n: 'Réparations', d: () => '+15 intégrité (dans la limite du maximum).', need: () => G.lives < G.maxLives, now: () => { G.lives = Math.min(G.maxLives, G.lives + 15); } },
   recharge: { r: 0, i: '☄', n: 'Recharge express', d: () => 'Toutes les capacités sont rechargées.', need: () => Abil.keys.some(k => G.abil[k] > 0), now: () => { for (const k of Abil.keys) G.abil[k] = 0; } },
@@ -1395,7 +1407,7 @@ const CARDS = {
   chain:    { r: 2, i: '⚡', n: 'Supraconducteurs', d: () => 'Arcs électriques : +1 rebond.', add: { chain: 1 }, max: 3, need: () => G.towers.some(t => t.d.chain) },
   pierce:   { r: 2, i: '⟟', n: 'Ogives à uranium', d: () => 'Toutes les tourelles ignorent 15% du blindage.', add: { pierce: .15 }, max: 3 },
   gift:     { r: 2, i: '✧', n: 'Plan offert', d: () => 'Un plan de fusion T2 aléatoire, gratuitement.', need: () => RECIPES.some(r => TOWERS[r.r].tier === 2 && Fusion.canResearch(r)),
-    now: () => { const c = RECIPES.filter(r => TOWERS[r.r].tier === 2 && Fusion.canResearch(r)); const r = pick(c); G.unlocked.add(r.r); if (!G.demo) G.freshBp = r.r; UI.toast('Plan offert : ' + TOWERS[r.r].name, 'Constructible dès maintenant.', TOWERS[r.r].color, 4); } },
+    now: () => { const c = RECIPES.filter(r => TOWERS[r.r].tier === 2 && Fusion.canResearch(r)); const r = spick(c); G.unlocked.add(r.r); if (!G.demo) G.freshBp = r.r; UI.toast('Plan offert : ' + TOWERS[r.r].name, 'Constructible dès maintenant.', TOWERS[r.r].color, 4); } },
   greed:    { r: 2, pact: true, i: '☍', n: 'Pacte de cupidité', d: () => '+20% de crédits par élimination, mais ennemis 15% plus rapides et 10% plus résistants.', mod: { bounty: 1.2, espd: 1.15, ehp: 1.1 }, max: 1 },
   glass:    { r: 2, pact: true, i: '◬', n: 'Canon de verre', d: () => '+20% de dégâts, mais -25% d\'intégrité maximale.', mod: { dmg: 1.2 }, max: 1,
     now: () => { G.maxLives = Math.max(5, Math.round(G.maxLives * .75)); G.lives = Math.min(G.lives, G.maxLives); } },
@@ -2068,6 +2080,17 @@ const Status = {
   }
 };
 
+/* crédits : un seul portefeuille en solo ; en coopération chaque joueur a le sien (G.wallets).
+   gain(v, p) : p = joueur bénéficiaire ; null = revenu commun, partagé entre les joueurs. */
+const COOP = { share: .6, hp: 1.75, start: .75 };
+function gain(v, p = G.actor) {
+  if (G.wallets) {
+    if (p != null) G.wallets[p] += v;
+    else for (let i = 0; i < G.wallets.length; i++) G.wallets[i] += Math.round(v * COOP.share);
+  } else G.money += v;
+  G.stats.gold += v;
+}
+
 /* statistiques de la partie : par type de tourelle (vendues comprises) et par vague */
 const Stats = {
   type(k) { return G.tstats[k] || (G.tstats[k] = { dealt: 0, kills: 0, shots: 0, spent: 0 }); },
@@ -2127,8 +2150,8 @@ const Enemies = {
       armor: ((d.armor || 0) + mu.armorAdd) * mu.armor * Math.sqrt(o.hpMul || 1), spd: d.spd * mu.spd * G.mod.espd, r: d.r * (elite ? 1.25 : 1),
       dist: o.dist || 0, seg: 0, x: 0, y: 0, px: 0, py: 0, ang: 0, pi: G.map.P[o.pi] ? o.pi : 0, rem: 0,
       slowT: 0, slowF: 1, burnT: 0, burnDps: 0, burnSrc: null, freezeT: 0, revealT: 0, markT: 0, markV: 0, hitT: 0, shCd: 0,
-      wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: Math.random() * TAU,
-      tA: d.summon ? d.summon.every : d.heal ? 60 : rndi(90, 200), tB: rndi(120, 240), sumLeft: d.summon ? d.summon.max : 0,
+      wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: sr() * TAU,
+      tA: d.summon ? d.summon.every : d.heal ? 60 : srndi(90, 200), tB: srndi(120, 240), sumLeft: d.summon ? d.summon.max : 0,
       tC: d.aura ? 90 : 0, tD: d.leap ? d.leap.every : 0, leapTo: 0
     };
     Path.place(e); e.px = e.x; e.py = e.y;
@@ -2161,7 +2184,7 @@ const Enemies = {
         else if (e.shield < e.maxShield) e.shield = Math.min(e.maxShield, e.shield + e.maxShield * .004);
       }
       if (d.heal && --e.tA <= 0) { e.tA = 60; this.heal(e); }
-      if (d.blink && --e.tA <= 0) { e.tA = rndi(160, 230); this.blink(e); }
+      if (d.blink && --e.tA <= 0) { e.tA = srndi(160, 230); this.blink(e); }
       if (d.jam && --e.tB <= 0) { e.tB = d.boss ? 300 : 240; this.jam(e, d.jamR || 110); }
       if (d.summon && e.sumLeft > 0 && --e.tA <= 0) {
         e.tA = d.summon.every; e.sumLeft--;
@@ -2249,7 +2272,7 @@ const Enemies = {
     }
     const cm = 1 + Math.min(1, Math.floor(G.combo / 10) * .1);
     const bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * G.mut.bounty * (1 + .02 * (G.waveNum - 1))));
-    G.money += bounty; G.stats.gold += bounty;
+    gain(bounty, null);
     if (UI.dmgNums || e.boss) FX.float(e.x, e.y - 8, '+' + bounty, '#ffd23f', e.boss ? 18 : 10);
     if (e.d.spawn) {
       const s = e.d.spawn;
@@ -2269,7 +2292,7 @@ const Enemies = {
       for (let i = 0; i < 4; i++) FX.ring(e.x, e.y, i & 1 ? '#ffffff' : e.d.color, 50 + i * 30, 26 + i * 6, 3);
       Drops.spawn(e.x - 10, e.y, 'gold'); Drops.spawn(e.x + 10, e.y, 'gold');
     } else {
-      const r = Math.random();
+      const r = sr();
       if (r < (e.elite ? .35 : .03) * dm) Drops.spawn(e.x, e.y, 'nano');
       else if (r < (e.elite ? .6 : .09) * dm) Drops.spawn(e.x, e.y, 'gold');
       else if (r < (e.elite ? .65 : .105) * dm) Drops.spawn(e.x, e.y, 'repair');
@@ -2311,9 +2334,9 @@ const Towers = {
     const d = TOWERS[key];
     const t = {
       id: G.nextId++, key, d, tx, ty, cx: (tx + .5) * TILE, cy: (ty + .5) * TILE, level, invested: 0, kills: 0, dealt: 0,
-      strat: 0, oc: false, heat: 0, over: false, stun: 0, cd: rnd(0, 10), ang: -Math.PI / 2, target: null, aimT: 0,
+      strat: 0, oc: false, heat: 0, over: false, stun: 0, cd: srnd(0, 10), ang: -Math.PI / 2, target: null, aimT: 0,
       recoil: 0, flash: 0, ramp: 0, beam: null, fresh: G.phase === 'prep', bDmg: 0, bCool: 0, bRange: 0, dmg: 0, range: 0, rate: 1,
-      spin: Math.random() * TAU, dead: false, born: performance.now(), spec: null, sm: {}, pierce: 0, shots: 0
+      spin: Math.random() * TAU, dead: false, born: performance.now(), spec: null, sm: {}, pierce: 0, shots: 0, owner: G.actor
     };
     t.ts = Stats.type(key); t.bornTick = G.tick;
     G.towers.push(t); G.tgrid[ty * G.map.C + tx] = t;
@@ -2341,10 +2364,10 @@ const Towers = {
   sellValue(t) { return t.fresh ? t.invested : Math.floor(t.invested * G.mod.refund); },
   sell(t) {
     const v = this.sellValue(t);
-    G.money += v;
+    gain(v, t.owner != null ? t.owner : G.actor); G.stats.gold -= v;
     FX.float(t.cx, t.cy - 12, '+' + v, '#ffd23f', 14); FX.spark(t.cx, t.cy, '#ffd23f', 10, 2.5); FX.ring(t.cx, t.cy, t.d.color, 26, 16, 2);
     Sfx.play('sell');
-    this.remove(t); this.recalc(); UI.deselect();
+    this.remove(t); this.recalc(); if (UI.sel === t) UI.deselect();
   },
   specs(t) { return SPECS[t.d.kind] || null; },
   specLvl(t) { return t.d.kind === 'support' ? SPEC_LVL_SUPPORT : SPEC_LVL; },
@@ -2473,7 +2496,7 @@ const Towers = {
   fire(t, e, od) {
     const d = t.d;
     if (t.oc && !od) { t.heat += d.heat * 1.5 * G.mod.heat; if (t.heat >= 100) this.overheat(t); }
-    const crit = Math.random() < G.mod.crit + (t.sm.crit || 0);
+    const crit = sr() < G.mod.crit + (t.sm.crit || 0);
     const dmg = this.effDmg(t) * (crit ? G.mod.critDmg * (t.sm.critMul || 1) : 1);
     t.shots++; t.ts.shots++;
     if (crit) Sfx.play('crit', .5);
@@ -2589,13 +2612,13 @@ const Towers = {
   orbital(t, e, dmg) {
     const d = t.d, r2 = t.range * t.range, cand = this._hit; cand.length = 0;
     for (const o of G.enemies) if (o.alive && o !== e && !(o.stealth && o.revealT <= 0) && d2(o.x, o.y, t.cx, t.cy) <= r2) cand.push(o);
-    const targets = [e], ns = d.strikes + (t.sm.strikes || 0), sr = d.sr * (t.sm.sr || 1);
-    for (let k = 1; k < ns; k++) targets.push(cand.length ? cand[Math.floor(Math.random() * cand.length)] : e);
+    const targets = [e], ns = d.strikes + (t.sm.strikes || 0), rad = d.sr * (t.sm.sr || 1);
+    for (let k = 1; k < ns; k++) targets.push(cand.length ? cand[Math.floor(sr() * cand.length)] : e);
     for (const o of targets) {
       const sp = o.freezeT > 0 ? 0 : o.spd * (o.slowT > 0 ? o.slowF : 1);
       Path.posAt(o.dist + sp * 28, _pt, o.pi);
       const x = o.air ? o.x : _pt.x, y = o.air ? o.y : _pt.y;
-      Strikes.add(x + rnd(-6, 6), y + rnd(-6, 6), sr, dmg, t, d.color, 28, false);
+      Strikes.add(x + srnd(-6, 6), y + srnd(-6, 6), rad, dmg, t, d.color, 28, false);
     }
     FX.ring(t.cx, t.cy, d.color, 40, 20, 3);
     Sfx.play('nuke', .5);
@@ -2636,7 +2659,7 @@ const Shots = {
       const p = this.pool.get(); if (!p) return;
       const tg = list[i % Math.min(list.length, n)];
       this.init(p, 2, t, x, y, tg, dmg, crit);
-      const a = t.ang + (i - (n - 1) / 2) * .7 + rnd(-.2, .2);
+      const a = t.ang + (i - (n - 1) / 2) * .7 + srnd(-.2, .2);
       p.vx = Math.cos(a) * 2.5; p.vy = Math.sin(a) * 2.5; p.spd = 2.5; p.life = 140; p.sz = 2.6;
     }
   },
@@ -2816,7 +2839,7 @@ const Waves = {
     if (!this.canLaunch()) return;
     const early = G.phase === 'combat', P = G.preview, n = P.n;
     G.waveNum = n;
-    const w = { n, left: 0, leaks: 0, hpMul: P.hpMul };
+    const w = { n, left: 0, leaks: 0, hpMul: P.hpMul, t0: G.tick };
     G.waves[n] = w;
     const base = G.tick + 40, gap = Math.max(11, 30 - n * .35) * P.gapMul, R = this.rng(n, 0x5eed);
     const eliteP = n >= (G.mut.elite > 1 ? 4 : 8) ? Math.min(.15, .03 + n * .002) * G.mut.elite : 0;
@@ -2837,7 +2860,7 @@ const Waves = {
     G.phase = 'combat';
     if (early) {
       const eb = this.earlyBonus(n);
-      G.money += eb; G.stats.gold += eb;
+      gain(eb);
       UI.toast('Appel anticipé', `+${eb} crédits de prime de risque.`, '#ffd23f', 2.5);
       Missions.on('early');
     }
@@ -2860,17 +2883,19 @@ const Waves = {
       Enemies.spawn(s.type, { hpMul: s.hpMul, elite: s.elite, wave: s.wave, pi: s.pi || 0 });
     }
     for (const k in G.waves) { const w = G.waves[k]; if (w.left <= 0) this.cleared(w); }
-    if (G.phase === 'prep' && Store.s.autoWave && !G.over && --G.autoT <= 0) this.launch();
+    if (G.phase === 'prep' && G.autoWave && !G.over && --G.autoT <= 0) this.launch();
   },
   cleared(w) {
     delete G.waves[w.n];
     const tb = Cards.tick();
     const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus * tb.cash), nano = Math.round((1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0)) * G.mut.nano) + tb.nano;
-    G.money += bonus; G.stats.gold += bonus; G.nanites += nano;
+    gain(bonus, null); G.nanites += nano;
     let extra = '';
     if (G.mod.interest > 0) {
-      const it = Math.min(Math.floor(G.money * G.mod.interest), 40 * w.n);
-      if (it > 0) { G.money += it; G.stats.gold += it; extra += ` · intérêts +${it}`; }
+      const cap = 40 * w.n; let it = 0;
+      if (G.wallets) G.wallets.forEach((m, i) => { const v = Math.min(Math.floor(m * G.mod.interest), cap); G.wallets[i] += v; it = Math.max(it, v); });
+      else { it = Math.min(Math.floor(G.money * G.mod.interest), cap); G.money += it; }
+      if (it > 0) { G.stats.gold += it; extra += ` · intérêts +${it}`; }
     }
     if (G.mod.regen > 0 && G.lives < G.maxLives) {
       const r = Math.min(G.mod.regen, G.maxLives - G.lives);
@@ -2911,7 +2936,7 @@ const Abil = {
     }
     if (G.abil[k] > 0) { Sfx.play('error'); return; }
     if (ABILS[k].targeted) { UI.setTargeting(UI.targeting === k ? null : k); return; }
-    this.use(k);
+    Act.do('abil', k);
   },
   use(k, x, y) {
     G.abil[k] = this.cdMax(k);
@@ -2943,9 +2968,9 @@ const Abil = {
 /* ============================== BUTIN & RECYCLAGE ============================== */
 const Drops = {
   col: { gold: '#ffd23f', nano: '#00ffaa', repair: '#ff2a6d' },
-  spawn(x, y, type) { if (G.drops.length < 40) G.drops.push({ x, y, type, life: 600, ph: Math.random() * TAU, fly: 0, tx: 0, ty: 0 }); },
+  spawn(x, y, type) { if (G.drops.length < 40) G.drops.push({ id: G.nextId++, x, y, type, life: 600, ph: sr() * TAU, fly: 0, tx: 0, ty: 0, by: null }); },
   update() {
-    const D = G.drops, h = UI.hover;
+    const D = G.drops;
     for (let i = D.length - 1; i >= 0; i--) {
       const d = D[i];
       d.ph += .1;
@@ -2955,17 +2980,20 @@ const Drops = {
         continue;
       }
       if (--d.life <= 0) { D.splice(i, 1); continue; }
-      if ((G.mod.magnet && d.life < 560) || (h.inside && !h.touch && d2(h.wx, h.wy, d.x, d.y) < 40 * 40)) this.collect(d);
+      if (G.mod.magnet && d.life < 560) this.collect(d);
     }
   },
-  collect(d) { if (d.fly) return; d.fly = 1; d.tx = d.x; d.ty = d.y - 26; Sfx.play('coin'); },
-  tap(x, y) {
+  collect(d) { if (d.fly) return; d.fly = 1; d.by = G.actor; d.tx = d.x; d.ty = d.y - 26; Sfx.play('coin'); },
+  grab(id) { const d = G.drops.find(x => x.id === id); if (d) this.collect(d); },
+  // côté interface : survol (souris) ou toucher → action « ramasser », envoyée une seule fois par objet
+  near(x, y, r) {
     let any = false;
-    for (const d of G.drops) if (!d.fly && d2(x, y, d.x, d.y) < 46 * 46) { this.collect(d); any = true; }
+    for (const d of G.drops) if (!d.fly && !d.req && d2(x, y, d.x, d.y) < r * r) { d.req = true; Act.do('drop', d.id); any = true; }
     return any;
   },
+  tap(x, y) { return this.near(x, y, 46); },
   give(d) {
-    if (d.type === 'gold') { const v = Math.round(20 + G.waveNum * 4); G.money += v; G.stats.gold += v; FX.float(d.x, d.y, '+' + v, '#ffd23f', 14); }
+    if (d.type === 'gold') { const v = Math.round(20 + G.waveNum * 4); gain(v, d.by); FX.float(d.x, d.y, '+' + v, '#ffd23f', 14); }
     else if (d.type === 'nano') { G.nanites++; FX.float(d.x, d.y, '+1 ◈', '#00ffaa', 14); }
     else { const v = Math.min(5, G.maxLives - G.lives); G.lives += v; FX.float(d.x, d.y, '+' + v + ' ♥', '#ff2a6d', 14); }
     FX.spark(d.x, d.y, this.col[d.type], 10, 2.6);
@@ -2976,8 +3004,8 @@ const Recycle = {
   start(tx, ty) {
     if (G.recycling) { UI.toast('Recyclage', 'Un recyclage est déjà en cours.', '#9fb0cc', 2); return; }
     if (G.recycle <= 0) { Sfx.play('error'); UI.toast('Recyclage', 'Aucune charge disponible (+1 toutes les 5 vagues).', '#ff2a6d', 2.5); return; }
-    G.recycle--; G.recycling = { tx, ty, t: 60 };
-    Sfx.play('ui'); UI.deselect();
+    G.recycle--; G.recycling = { tx, ty, t: 60, by: G.actor };
+    Sfx.play('ui'); if (Act.mine()) UI.deselect();
   },
   update() {
     const r = G.recycling; if (!r) return;
@@ -2986,8 +3014,8 @@ const Recycle = {
     if (--r.t > 0) return;
     G.map.cells[r.ty * G.map.C + r.tx] = 0; G.recycling = null; Render.dirtyMap = true;
     const m = G.mod.recycleMul;
-    if (Math.random() < .3) { G.nanites += m; FX.float(x, y, `+${m} ◈`, '#00ffaa', 14); }
-    else { const v = Math.round((25 + Math.random() * 35 + G.waveNum * 2) * m); G.money += v; G.stats.gold += v; FX.float(x, y, '+' + v, '#ffd23f', 14); }
+    if (sr() < .3) { G.nanites += m; FX.float(x, y, `+${m} ◈`, '#00ffaa', 14); }
+    else { const v = Math.round((25 + sr() * 35 + G.waveNum * 2) * m); gain(v, r.by); FX.float(x, y, '+' + v, '#ffd23f', 14); }
     FX.ring(x, y, '#ffffff', 26, 18, 2); FX.spark(x, y, '#cfd8e8', 14, 3); Sfx.play('coin');
     Store.data.stats.recycled++;
     if (Store.data.stats.recycled >= 10) Ach.unlock('recycler');
@@ -3026,7 +3054,7 @@ const Traps = {
   },
   remove(tr, refund) {
     const i = G.traps.indexOf(tr); if (i >= 0) G.traps.splice(i, 1);
-    if (refund) { const v = Math.floor(tr.cost * .5); G.money += v; FX.float(tr.x, tr.y - 12, '+' + v, '#ffd23f', 12); Sfx.play('sell'); }
+    if (refund) { const v = Math.floor(tr.cost * .5); gain(v); G.stats.gold -= v; FX.float(tr.x, tr.y - 12, '+' + v, '#ffd23f', 12); Sfx.play('sell'); }
   },
   update() {
     for (let i = G.traps.length - 1; i >= 0; i--) {
@@ -3183,14 +3211,13 @@ const Fusion = {
     Sfx.play('fuse'); UI.banner('FUSION', R.name.toUpperCase(), R.color);
     Ach.unlock('field'); if (r.r === 'apocalypse') Ach.unlock('apoc');
     Missions.on('fuse'); Missions.on('level', t.level);
-    if (!G.demo) UI.select(t);
+    if (!G.demo && Act.mine()) UI.select(t);
   }
 };
 
 /* ============================== MISSIONS ============================== */
 const MDEF = Object.fromEntries(MISSIONS.map(m => [m.id, m]));
 const Missions = {
-  lastId: null,
   target(m) {
     const w = Math.max(1, G.waveNum);
     if (m.id === 'level') return Math.min(10, 5 + Math.floor(w / 8));
@@ -3199,7 +3226,7 @@ const Missions = {
     return n >= 1000 ? Math.round(n / 100) * 100 : n >= 20 ? Math.round(n / 5) * 5 : Math.round(n);
   },
   avail(m) {
-    if (G.missions.some(x => x.id === m.id) || m.id === this.lastId) return false;
+    if (G.missions.some(x => x.id === m.id) || m.id === G.mLast) return false;
     if (m.from && G.waveNum + 1 < m.from) return false;
     if (m.near && 5 - (G.waveNum % 5) > 3) return false;
     if (m.need && !m.need()) return false;
@@ -3210,7 +3237,7 @@ const Missions = {
     while (G.missions.length < 3) {
       const pool = MISSIONS.filter(m => this.avail(m));
       if (!pool.length) break;
-      const m = pick(pool), nano = Math.random() < .35;
+      const m = spick(pool), nano = sr() < .35;
       G.missions.push({
         id: m.id, n: this.target(m), p: 0, xp: 25 + Math.round(Math.min(30, G.waveNum * 1.2)),
         nano: nano ? 2 + (G.waveNum >= 15 ? 1 : 0) : 0, cash: nano ? 0 : Math.round((60 + 15 * G.waveNum) / 10) * 10
@@ -3232,13 +3259,13 @@ const Missions = {
   },
   complete(i) {
     const s = G.missions.splice(i, 1)[0], m = MDEF[s.id];
-    G.money += s.cash; G.stats.gold += s.cash; G.nanites += s.nano; G.stats.missions++;
+    gain(s.cash, null); G.nanites += s.nano; G.stats.missions++;
     Store.data.meta.frags += 1;
     const xp = Math.round(s.xp * Cmd.mult());
     UI.toast('Mission accomplie', `${m.d(s.n)}<br><b style="color:${s.nano ? 'var(--nano)' : 'var(--gold)'}">${s.nano ? '+' + s.nano + ' ◈' : '+' + s.cash + '¢'}</b> · <b style="color:var(--gold)">+${xp} XP</b> · <span class="frags">+1 ✦</span>`, '#39ff88', 3.5);
     Sfx.play('mission');
     UI.missionFlash = performance.now();
-    this.lastId = s.id;
+    G.mLast = s.id;
     Cmd.gain(xp);
     this.fill();
   }
@@ -3278,7 +3305,7 @@ const Cards = {
   },
   roll() {
     const w = G.waveNum, pool = Object.keys(CARDS).filter(id => this.ok(id)), out = [], rw = [55, 32 + w * .5, 10 + w * .4];
-    while (out.length < 3 && pool.length) out.push(pool.splice(weightedIndex(pool.map(id => rw[CARDS[id].r])), 1)[0]);
+    while (out.length < 3 && pool.length) out.push(pool.splice(weightedIndex(pool.map(id => rw[CARDS[id].r]), sr), 1)[0]);
     return out;
   },
   offer() {
@@ -3337,6 +3364,57 @@ const Codex = {
   progress() { const K = this.keys(), C = Store.data.codex; return [K.e.filter(k => C.e[k]).length + K.t.filter(k => C.t[k]).length, K.e.length + K.t.length]; }
 };
 
+/* réseau : remplacé plus bas par le vrai module (multijoueur) */
+const Net = { on: false, coop: false, versus: false, me: 0 };
+const Lock = { push() { return false; } };
+
+/* ============================== ACTIONS DU JOUEUR ==============================
+   Tout ce qui modifie la partie à l'initiative d'un joueur passe par ici. En solo l'action s'exécute aussitôt ;
+   en coopération elle est horodatée et exécutée au même tick sur les deux machines (lockstep).
+   Les arguments sont de simples valeurs (coordonnées, identifiants) : ils voyagent sur le réseau. */
+const Act = {
+  H: {
+    build: (k, x, y) => Towers.build(k, x, y),
+    trap: (k, x, y) => Traps.build(k, x, y),
+    untrap: (x, y) => { const tr = Traps.at(x, y); if (tr) Traps.remove(tr, true); },
+    up: (x, y) => { const t = Towers.at(x, y); return !!t && Towers.upgrade(t); },
+    sell: (x, y) => { const t = Towers.at(x, y); if (t && Act.owns(t)) Towers.sell(t); },
+    spec: (x, y, i) => { const t = Towers.at(x, y); if (t) Towers.setSpec(t, i); },
+    strat: (x, y, i) => { const t = Towers.at(x, y); if (t) { t.strat = i; t.aimT = 0; } },
+    oc: (x, y, on) => {
+      const t = Towers.at(x, y); if (!t || t.d.kind === 'support' || t.d.kind === 'radar') return;
+      t.oc = !!on; FX.float(t.cx, t.cy - 20, t.oc ? 'SURCADENCE' : 'NORMAL', t.oc ? '#ff3355' : '#cfe3ff', 11);
+    },
+    fuse: (x, y, x2, y2) => {
+      const a = Towers.at(x, y), b = Towers.at(x2, y2); if (!a || !b) return;
+      const r = Fusion.recipeFor(a.key, b.key); if (r) Fusion.fieldFuse(a, b, r);
+    },
+    research: id => { const r = RECIPES.find(x => x.r === id); return !!r && Fusion.research(r); },
+    skill: id => Skills.buy(id),
+    abil: (k, x, y) => { if (G.abil[k] <= 0 && Abil.unlocked(k)) Abil.use(k, x, y); },
+    wave: () => Waves.launch(),
+    recycle: (x, y) => Recycle.start(x, y),
+    card: i => Cards.pick(i),
+    reroll: () => Cards.reroll(),
+    drop: id => Drops.grab(id),
+    speed: v => Game.setSpeed(v),
+    auto: on => { G.autoWave = !!on; if (G.phase === 'prep') G.autoT = 480; UI.refreshAuto(); }
+  },
+  do(type, ...a) {
+    if (!G || G.over) return false;
+    if (Net.coop) return Lock.push(type, a);
+    return this.run(null, type, a);
+  },
+  run(p, type, a) {
+    const h = this.H[type]; if (!h) return false;
+    const prev = G.actor; G.actor = p;
+    try { return h(...a); } finally { G.actor = prev; if (Net.coop) UI.afterAct(type, p); }
+  },
+  // l'action en cours vient-elle de ce poste ? (pour n'afficher erreurs et sélections qu'à son auteur)
+  mine() { return !Net.coop || G.actor == null || G.actor === Net.me; },
+  owns(t) { return !Net.coop || t.owner == null || G.actor == null || t.owner === G.actor; }
+};
+
 const Ach = {
   unlock(id) {
     if (!ACH[id] || Store.data.ach[id] || (G && G.demo)) return;
@@ -3355,7 +3433,7 @@ const SaveSys = {
       v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
       doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
-      nanites: G.nanites, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
+      rs: G.rs, nanites: G.nanites, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
       tstats: Object.fromEntries(Object.entries(G.tstats).map(([k, s]) => [k, [Math.round(s.dealt), s.kills, s.shots, s.spent]])),
       waveDmg: Object.fromEntries(Object.entries(G.waveDmg).map(([k, v]) => [k, Math.round(v)])),
       map: { C: M.C, R: M.R, cells: Array.from(M.cells).join(''), paths: M.paths },
@@ -3372,13 +3450,13 @@ const Game = {
   state: 'menu', speed: 1, acc: 0, slowT: 0,
   makeState(diffKey, map, seed) {
     G = {
-      diffKey, diff: DIFFS[diffKey], seed, map, towers: [], tgrid: new Array(map.C * map.R).fill(null), enemies: [], drops: [],
+      diffKey, diff: DIFFS[diffKey], seed, rs: seed ^ 0x5bd1e995, map, towers: [], tgrid: new Array(map.C * map.R).fill(null), enemies: [], drops: [],
       strikes: [], vortices: [], spawnQ: [], waves: {}, money: 0, lives: 0, maxLives: 0, nanites: 0, recycle: 0, waveNum: 0,
       phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
       doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null, traps: [],
-      tstats: {}, waveDmg: {},
+      tstats: {}, waveDmg: {}, mLast: null, actor: null, autoWave: !!Store.s.autoWave, wallets: null, net: null,
       stats: { kills: 0, gold: 0, maxCombo: 0, leaks: 0, bosses: 0, built: 0, fusions: 0, clean: 0, missions: 0 }
     };
     Path.build(map);
@@ -3388,8 +3466,8 @@ const Game = {
     Demo.stop();
     const pk = Store.data.meta.perks, diff = DIFFS[diffKey];
     const daily = opts.daily ? dailyInfo() : null;
-    const seed = daily ? daily.seed : (Math.random() * 2147483647) | 0;
-    const portrait = View.w < View.h * .9;
+    const seed = daily ? daily.seed : opts.seed != null ? opts.seed : (Math.random() * 2147483647) | 0;
+    const portrait = opts.portrait != null ? opts.portrait : View.w < View.h * .9;
     this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
     if (daily) { G.daily = daily.date; G.mutKeys = daily.mutKeys; G.mut = makeMut(daily.mutKeys); }
     const dk = Store.data.doctrine, D = DOCTRINES[dk] && DOCTRINES[dk].lvl <= Store.data.cmd.lvl ? DOCTRINES[dk] : DOCTRINES.standard;
@@ -3400,7 +3478,7 @@ const Game = {
     G.recycle = 2 + (pk.h_recycle || 0);
     for (let i = 0; i < (pk.h_bp || 0); i++) {
       const c = RECIPES.filter(r => TOWERS[r.r].tier === 2 && !G.unlocked.has(r.r));
-      if (c.length) G.unlocked.add(pick(c).r);
+      if (c.length) G.unlocked.add(spick(c).r);
     }
     G.cmdStart = Object.assign({}, Store.data.cmd);
     Skills.apply();
@@ -3424,6 +3502,7 @@ const Game = {
         cmdStart: s.cmdStart || Object.assign({}, Store.data.cmd), waveDmg: s.waveDmg || {} });
       for (const k in s.tstats || {}) if (TOWERS[k]) { const a = s.tstats[k]; G.tstats[k] = { dealt: a[0], kills: a[1], shots: a[2], spent: a[3] }; }
       Object.assign(G.abil, s.abil || {});
+      if (s.rs != null) G.rs = s.rs;
       Object.assign(G.stats, s.stats || {});
       G.unlocked = new Set(s.unlocked || []);
       Skills.apply();
@@ -3495,7 +3574,8 @@ const Game = {
     Render.flash(.6, '#ff2a6d'); Render.shake(25); Sfx.play('boom'); Sfx.play('leak');
     setTimeout(() => { if (G && G.over) UI.gameOver(frags, best, prev); }, 1600);
   },
-  cycleSpeed() { this.speed = this.speed >= 3 ? 1 : this.speed + 1; UI.refreshSpeed(); Sfx.play('ui'); },
+  cycleSpeed() { if (Net.versus) { Sfx.play('error'); UI.toast('Vitesse', 'En versus, la vitesse reste à 1x pour les deux joueurs.', '#9fb0cc', 2.5); return; } Act.do('speed', this.speed >= 3 ? 1 : this.speed + 1); },
+  setSpeed(v) { this.speed = clamp(v | 0, 1, 3); UI.refreshSpeed(); Sfx.play('ui'); },
   quit(save = true) {
     if (save && G && !G.over && G.phase === 'prep') SaveSys.save();
     G = null; this.state = 'menu'; Music.intensity = 0;
@@ -4341,7 +4421,7 @@ const Input = {
     const h = UI.hover, M = G.map;
     if (UI.targeting) {
       const k = UI.targeting; UI.setTargeting(null);
-      if (G.abil[k] <= 0) Abil.use(k, clamp(h.wx, 0, M.C * TILE), clamp(h.wy, 0, M.R * TILE));
+      if (G.abil[k] <= 0) Act.do('abil', k, Math.round(clamp(h.wx, 0, M.C * TILE)), Math.round(clamp(h.wy, 0, M.R * TILE)));
       return;
     }
     if (Drops.tap(h.wx, h.wy)) return;
@@ -4358,7 +4438,7 @@ const Input = {
         return;
       }
       UI.pend = null;
-      const t = UI.placing.startsWith('trap:') ? Traps.build(UI.placing.slice(5), h.tx, h.ty) : Towers.build(UI.placing, h.tx, h.ty);
+      const t = UI.placing.startsWith('trap:') ? Act.do('trap', UI.placing.slice(5), h.tx, h.ty) : Act.do('build', UI.placing, h.tx, h.ty);
       if (t && !e.shiftKey) UI.setPlacing(null, true);
       return;
     }
@@ -4377,14 +4457,14 @@ const Input = {
     if (code === 'F3' || code === 'Backquote') { e.preventDefault(); UI.toggleFps(); return; }
     if (UI.stack.length) {
       const top = UI.top();
-      if (top === 'ov-cards') { const m = /^(Digit|Numpad)([1-3])$/.exec(code); if (m) Cards.pick(+m[2] - 1); return; }
+      if (top === 'ov-cards') { const m = /^(Digit|Numpad)([1-3])$/.exec(code); if (m) Act.do('card', +m[2] - 1); return; }
       if (top === 'ov-over' && (code === 'Enter' || code === 'NumpadEnter' || code === 'Space')) { e.preventDefault(); const b = $('go-again'); if (b) b.click(); return; }
       if ((code === 'KeyP' && top === 'ov-pause') || (code === 'KeyK' && top === 'ov-tree') || (code === 'KeyL' && top === 'ov-lab') || (code === 'KeyH' && top === 'ov-help' && G) || (code === 'KeyG' && top === 'ov-stats')) UI.close(top);
       return;
     }
     if (Game.state !== 'play' || !G || G.over || e.repeat) return;
     switch (code) {
-      case 'Space': case 'Enter': case 'NumpadEnter': e.preventDefault(); Waves.launch(); break;
+      case 'Space': case 'Enter': case 'NumpadEnter': e.preventDefault(); Act.do('wave'); break;
       case 'KeyP': UI.openPause(); break;
       case 'KeyF': Game.cycleSpeed(); break;
       case 'KeyK': UI.openTree(); break;
@@ -4394,11 +4474,11 @@ const Input = {
       case 'KeyQ': Abil.trigger('orbital'); break;
       case 'KeyW': Abil.trigger('emp'); break;
       case 'KeyE': Abil.trigger('overdrive'); break;
-      case 'KeyU': if (UI.sel && Towers.upgrade(UI.sel)) UI.renderPanel(); break;
-      case 'KeyX': case 'Delete': case 'Backspace': if (UI.sel) { e.preventDefault(); Towers.sell(UI.sel); } break;
+      case 'KeyU': if (UI.sel && Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); break;
+      case 'KeyX': case 'Delete': case 'Backspace': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;
       case 'KeyT': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % 4); break;
       case 'KeyO': if (UI.sel) UI.toggleOC(); break;
-      case 'KeyR': if (UI.selDebris) Recycle.start(UI.selDebris.tx, UI.selDebris.ty); break;
+      case 'KeyR': if (UI.selDebris && !UI.selDebris.trap) Act.do('recycle', UI.selDebris.tx, UI.selDebris.ty); break;
       default: {
         const m = /^(Digit|Numpad)(\d)$/.exec(code);
         if (m) { const i = m[2] === '0' ? 9 : +m[2] - 1, k = UI.hotkeys[i]; if (k) UI.setPlacing(UI.placing === k ? null : k); }
@@ -4420,7 +4500,7 @@ const UI = {
     $('b-stats').onclick = () => this.openStats();
     $('b-speed').onclick = () => Game.cycleSpeed();
     $('b-pause').onclick = () => this.openPause();
-    $('b-wave').onclick = () => Waves.launch();
+    $('b-wave').onclick = () => Act.do('wave');
     $('b-auto').onclick = () => this.toggleAuto();
     $('cf-no').onclick = () => this.close('ov-confirm');
     $('mh').onclick = () => { Store.s.mMin = !$('missions').classList.contains('min'); Store.save(); this.applyMissionsMin(); Sfx.play('ui'); };
@@ -4526,7 +4606,7 @@ const UI = {
     box.appendChild(d);
     setTimeout(() => d.remove(), life * 1000 + 500);
   },
-  noMoney() { Sfx.play('error'); this.anim($('h-money'), 'bad'); },
+  noMoney() { if (!Act.mine()) return; Sfx.play('error'); this.anim($('h-money'), 'bad'); },
   anim(el, cls) { el.classList.remove('bump', 'bad'); void el.offsetWidth; el.classList.add(cls); },
 
   /* ---------- entrée / sortie de partie ---------- */
@@ -4572,6 +4652,8 @@ const UI = {
     if (f % 30 === 0) this.refreshBadges();
     if (this.missionsDirty && f % 5 === 0) { this.missionsDirty = false; this.renderMissions(); }
     if (this.missionFlash) { const m = $('missions'); m.classList.remove('flash'); void m.offsetWidth; m.classList.add('flash'); this.missionFlash = 0; }
+    const h = this.hover;
+    if (h.inside && !h.touch && G.drops.length && !G.over) Drops.near(h.wx, h.wy, 40);
   },
   refreshHUD() {
     const L = this.last, lives = Math.max(0, Math.ceil(G.lives)), money = Math.floor(G.money);
@@ -4591,7 +4673,7 @@ const UI = {
     const b = $('b-wave');
     let txt, cls = '', dis = false;
     if (G.over) { txt = 'NOYAU DÉTRUIT'; dis = true; cls = 'busy'; }
-    else if (G.phase === 'prep') { const n = G.waveNum + 1; txt = Store.s.autoWave ? `VAGUE ${n} · ${Math.ceil(G.autoT / 60)}s` : `LANCER VAGUE ${n}`; }
+    else if (G.phase === 'prep') { const n = G.waveNum + 1; txt = G.autoWave ? `VAGUE ${n} · ${Math.ceil(G.autoT / 60)}s` : `LANCER VAGUE ${n}`; }
     else if (G.spawnQ.length) { txt = `VAGUE ${G.waveNum} EN COURS`; cls = 'busy'; dis = true; }
     else { txt = `VAGUE ${G.waveNum + 1} ⏩ +${Waves.earlyBonus(G.waveNum + 1)}¢`; cls = 'early'; }
     const key = txt + cls + dis;
@@ -4631,14 +4713,15 @@ const UI = {
     b.classList.toggle('on', Game.speed > 1);
   },
   toggleAuto() {
-    Store.s.autoWave = !Store.s.autoWave; Store.save();
-    if (G && G.phase === 'prep') G.autoT = 480;
+    const on = !(G ? G.autoWave : Store.s.autoWave);
+    Store.s.autoWave = on; Store.save();
+    if (G) Act.do('auto', on);
     this.refreshAuto(); Sfx.play('ui');
   },
   refreshAuto() {
-    const b = $('b-auto');
-    b.textContent = 'AUTO : ' + (Store.s.autoWave ? 'ON' : 'OFF');
-    b.classList.toggle('on', Store.s.autoWave);
+    const b = $('b-auto'), on = G ? G.autoWave : Store.s.autoWave;
+    b.textContent = 'AUTO : ' + (on ? 'ON' : 'OFF');
+    b.classList.toggle('on', on);
     this.last.wbtn = null;
   },
   onPreview() {
@@ -4696,12 +4779,12 @@ const UI = {
       const el = document.createElement('div');
       el.className = 'pcard' + (c.pact ? ' pact' : ''); el.tabIndex = 0; el.style.setProperty('--rc', col);
       el.innerHTML = `<span class="hk">${i + 1}</span><div class="ci">${TXT(c.i)}</div><div class="ct"><div class="rr">${c.pact ? 'PACTE' : CARD_RARITY[c.r].n}</div><h3>${c.n}</h3><p>${c.d()}</p><div class="st">${st}</div></div>`;
-      el.onclick = () => Cards.pick(i);
-      el.onkeydown = e => { if (e.key === 'Enter') Cards.pick(i); };
+      el.onclick = () => Act.do('card', i);
+      el.onkeydown = e => { if (e.key === 'Enter') Act.do('card', i); };
       box.appendChild(el);
     });
     const rb = $('cards-reroll'), rc = Cards.rerollCost();
-    rb.innerHTML = `RELANCER LES CARTES · ${fmt(rc)}¢`; rb.disabled = G.money < rc; rb.onclick = () => Cards.reroll();
+    rb.innerHTML = `RELANCER LES CARTES · ${fmt(rc)}¢`; rb.disabled = G.money < rc; rb.onclick = () => Act.do('reroll');
   },
 
   /* ---------- doctrines ---------- */
@@ -4865,7 +4948,7 @@ const UI = {
       <div class="sgrid" style="margin-top:8px">${tr.type === 'mine' ? `<div style="grid-column:1/3">DÉGÂTS <b>${fmt(tr.dmg)}</b></div>` : `<div style="grid-column:1/3">RÉSISTANCE <b>${fmt(Math.max(0, tr.hp))} / ${fmt(tr.max)}</b></div>`}</div>
       <div class="pbtns"><button class="btn danger" id="tp-rm">RETIRER · +${fmt(Math.floor(tr.cost * .5))}¢</button></div>`;
     $('tp-x').onclick = () => this.deselect();
-    $('tp-rm').onclick = () => { Traps.remove(tr, true); this.deselect(); };
+    $('tp-rm').onclick = () => { Act.do('untrap', tr.tx, tr.ty); this.deselect(); };
     P.classList.add('show'); this.placePanel(); Sfx.play('ui');
   },
   deselect() { this.sel = null; this.selDebris = null; $('tpanel').classList.remove('show'); },
@@ -4883,13 +4966,27 @@ const UI = {
     if (this.targeting || this.placing || this.sel || this.selDebris) { this.cancel(); return; }
     if (Game.state === 'play' && G && !G.over) this.openPause();
   },
-  setStrat(i) { const t = this.sel; if (!t) return; t.strat = i; t.aimT = 0; Sfx.play('ui'); this.renderPanel(); },
+  setStrat(i) { const t = this.sel; if (!t) return; Act.do('strat', t.tx, t.ty, i); Sfx.play('ui'); this.renderPanel(); },
   toggleOC() {
     const t = this.sel;
     if (!t || t.d.kind === 'support' || t.d.kind === 'radar') return;
-    t.oc = !t.oc;
-    FX.float(t.cx, t.cy - 20, t.oc ? 'SURCADENCE' : 'NORMAL', t.oc ? '#ff3355' : '#cfe3ff', 11);
+    Act.do('oc', t.tx, t.ty, !t.oc);
     Sfx.play('ui'); this.renderPanel();
+  },
+  sellSel() {
+    const t = this.sel; if (!t) return;
+    if (!Act.owns(t)) { Sfx.play('error'); this.toast('Vente', "Seul le joueur qui l'a construite peut vendre cette tourelle.", '#9fb0cc', 2.5); return; }
+    this.hideTip(); Act.do('sell', t.tx, t.ty);
+  },
+  // coopération : une action (locale ou du partenaire) vient d'être exécutée → l'interface se remet à jour
+  afterAct(type, p) {
+    if (this.sel) { if (this.sel.dead) this.deselect(); else if (type !== 'drop') this.renderPanel(); }
+    else if (this.selDebris && !this.selDebris.trap && type === 'recycle') this.deselect();
+    if (type === 'card' || type === 'reroll') { if (G.offer && this.top() === 'ov-cards') this.renderCards(); else if (!G.offer) this.close('ov-cards'); }
+    if (type === 'skill' && this.top() === 'ov-tree') { this.renderTree(); this.drawLinks(); }
+    if (type === 'research' && this.top() === 'ov-lab') this.renderLab();
+    if (type === 'card' || type === 'research' || type === 'skill') this.buildBar();
+    this.refreshHUD();
   },
   nextStats(t) {
     const d = t.d, L = t.level;
@@ -4951,16 +5048,16 @@ const UI = {
       <div class="pbtns"><button class="btn prim" id="tp-up">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE · ${fmt(Towers.sellValue(t))}¢ <span class="k">X</span></button></div>`;
     Spr.icon($('tp-ic'), t.key, 42);
     $('tp-x').onclick = () => this.deselect();
-    $('tp-up').onclick = () => { if (Towers.upgrade(t)) this.renderPanel(); };
-    P.querySelectorAll('.spec').forEach(b => { b.onclick = () => { Towers.setSpec(t, +b.dataset.sp); this.renderPanel(); }; });
-    $('tp-sell').onclick = () => { this.hideTip(); Towers.sell(t); };
+    $('tp-up').onclick = () => { if (Act.do('up', t.tx, t.ty)) this.renderPanel(); };
+    P.querySelectorAll('.spec').forEach(b => { b.onclick = () => { Act.do('spec', t.tx, t.ty, +b.dataset.sp); this.renderPanel(); }; });
+    $('tp-sell').onclick = () => this.sellSel();
     const st = $('tp-strat'); if (st) st.onclick = e => { const b = e.target.closest('button'); if (b) this.setStrat(+b.dataset.s); };
     const oc = $('tp-oc'); if (oc) oc.onclick = () => this.toggleOC();
     P.querySelectorAll('.fuse-opt').forEach(el => {
       const o = G.towers.find(x => x.id === +el.dataset.o); if (!o) return;
       const r = Fusion.recipeFor(t.key, o.key);
       Spr.icon(el.querySelector('canvas'), r.r, 26);
-      el.onclick = () => Fusion.fieldFuse(t, o, r);
+      el.onclick = () => Act.do('fuse', t.tx, t.ty, o.tx, o.ty);
       el.onpointerenter = () => this.showTipAt(this.towerTipHtml(r.r) + (G.unlocked.has(r.r) ? `<div class="d" style="margin-top:4px;color:#fff">Coût de fusion : ${Fusion.fieldCost(t, o, r)}¢ (80% de la valeur des deux tourelles est déduite). Niveau conservé : ${Math.min(10, Math.max(1, Math.floor((t.level + o.level) / 2)))}.</div>` : '<div class="d" style="margin-top:4px;color:var(--dang)">Plan non acquis : rendez-vous au Labo de fusion.</div>'), el.getBoundingClientRect(), TOWERS[r.r].color);
       el.onpointerleave = () => this.hideTip();
     });
@@ -4994,7 +5091,7 @@ const UI = {
       <div class="note">+1 charge toutes les 5 vagues.</div>
       <div class="row" style="margin-top:9px"><button class="btn nano" id="tp-rec" style="flex:1" ${c > 0 && !busy ? '' : 'disabled'}>${busy ? 'RECYCLAGE EN COURS…' : 'RECYCLER'} <span class="k">R</span></button></div>`;
     $('tp-x').onclick = () => this.deselect();
-    $('tp-rec').onclick = () => { if (this.selDebris) Recycle.start(this.selDebris.tx, this.selDebris.ty); };
+    $('tp-rec').onclick = () => { if (this.selDebris) Act.do('recycle', this.selDebris.tx, this.selDebris.ty); };
     P.classList.add('show');
     this.placePanel();
   },
@@ -5183,7 +5280,7 @@ const UI = {
     el.className = cls; el.dataset.id = id;
     el.innerHTML = `<div class="ic"><span>${TXT(s.i)}</span><span class="rk">${r}/${s.max}</span></div><div class="nm">${s.n}</div>`;
     el.onclick = () => {
-      if (Skills.buy(id)) {
+      if (Act.do('skill', id)) {
         this.renderTree(); this.drawLinks();
         const n = $('tree').querySelector(`.snode[data-id="${id}"]`); if (n) this.skillTip(id, n);
       } else Sfx.play('error');
@@ -5247,7 +5344,7 @@ const UI = {
         const cvs = el.querySelectorAll('canvas');
         Spr.icon(cvs[0], r.a, 36); Spr.icon(cvs[1], r.b, 36); Spr.icon(cvs[2], r.r, 48);
         const btn = el.querySelector('button');
-        if (btn) btn.onclick = () => { if (Fusion.research(r)) this.renderLab(); };
+        if (btn) btn.onclick = () => { if (Act.do('research', r.r)) this.renderLab(); };
         grid.appendChild(el);
       }
       Lb.appendChild(grid);
