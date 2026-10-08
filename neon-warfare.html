@@ -226,6 +226,15 @@ body.no-crt #crt{display:none}
 #bossintro b{display:block;font-size:22px;letter-spacing:.25em;color:var(--bc);text-shadow:0 0 12px var(--bc)}
 #bossintro p{margin:2px 0 0;font-size:12px;color:#c6d3e8;line-height:1.4}
 .gm-seg{margin:0 0 6px}
+.seedrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
+.seedrow .mp-in{width:170px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.hist{display:grid;gap:6px}
+.hrow{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:8px 12px}
+.hrow b{font-size:20px;font-family:var(--mono);color:var(--txt);grid-row:1/3}
+.hrow .t{font-size:12px;color:var(--txt);letter-spacing:.05em}
+.hrow .m{font-size:10.5px;color:var(--dim)}
+.hrow .c{grid-row:1/3;font:11px var(--mono);color:var(--dim);text-align:right;cursor:pointer}
+.hrow .c:hover{color:var(--accent)}
 #evchip{position:absolute;left:50%;transform:translateX(-50%);top:66px;z-index:25;display:none;align-items:center;gap:8px;pointer-events:none;
   padding:5px 12px;border-radius:20px;border:1px solid var(--ec,#fff);background:rgba(3,6,12,.85);box-shadow:0 0 14px var(--ec,#fff);font-size:11px;font-weight:800;letter-spacing:.2em;color:#fff;white-space:nowrap}
 #evchip.low{margin-top:38px}
@@ -683,7 +692,8 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   <div class="lbl-s">DOCTRINE</div><div class="docs" id="doc-row"></div><div class="doc-desc" id="doc-desc"></div>
   <div class="lbl-s" style="margin-bottom:6px">MODE</div><div class="seg gm-seg" id="gm-row"></div><div class="doc-desc" id="gm-desc"></div>
   <div class="lbl-s" style="margin-bottom:8px">MENACE</div>
-  <div class="dgrid" id="diff-grid"></div></div></div>
+  <div class="dgrid" id="diff-grid"></div>
+  <div class="seedrow"><span class="lbl-s">CODE DE CARTE <span style="opacity:.6">(facultatif : rejouer le défi d'un ami)</span></span><input id="seed-in" class="mp-in" maxlength="20" placeholder="ex. 1A2B3C-L-S" autocomplete="off"><span id="seed-ok" class="note"></span></div></div></div>
 <div class="ov" id="ov-cards"><div class="modal cmodal" style="width:900px">
   <h2 id="cards-t">PROTOCOLE</h2><div class="sub" id="cards-sub"></div>
   <div class="cgrid" id="cards"></div>
@@ -699,7 +709,8 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <div class="ov" id="ov-meta"><div class="modal" style="width:880px"><button class="mclose" data-close>✕</button>
   <h2>HÉRITAGE</h2><div class="sub" id="meta-sub"></div><div class="plist" id="meta-list"></div></div></div>
 <div class="ov" id="ov-ach"><div class="modal" style="width:800px"><button class="mclose" data-close>✕</button>
-  <h2>SUCCÈS</h2><div class="sub" id="ach-sub"></div><div class="plist" id="ach-list"></div></div></div>
+  <h2>PALMARÈS</h2><div class="seg" id="ach-tabs" style="max-width:360px;margin-bottom:12px"><button data-k="ach" class="on">SUCCÈS</button><button data-k="hist">HISTORIQUE</button></div>
+  <div class="sub" id="ach-sub"></div><div class="plist" id="ach-list"></div></div></div>
 <div class="ov" id="ov-codex"><div class="modal" style="width:960px"><button class="mclose" data-close>✕</button>
   <h2>CODEX</h2><div class="sub" id="codex-sub"></div>
   <div class="seg" id="codex-tabs" style="max-width:340px;margin-bottom:14px"><button data-k="e" class="on">ENNEMIS</button><button data-k="t">TOURELLES</button></div>
@@ -3955,6 +3966,7 @@ const MP = {
     if (!G || this.ended) return;
     this.ended = true;
     G.over = true;
+    Hist.add({ win: true, vs: this.peerName });
     const frags = 5 + Math.floor(G.waveNum * G.diff.frag);
     Store.data.meta.frags += frags; Store.data.mpWins = (Store.data.mpWins || 0) + 1; Store.save();
     Ach.unlock('mpwin');
@@ -3966,6 +3978,7 @@ const MP = {
     // appelé par Game.gameOver en multijoueur
     if (this.ended) return;
     this.ended = true;
+    Hist.add({ win: false, vs: this.peerName });
     if (Net.versus) Net.send({ t: 'dead', wave: G.waveNum, kills: G.stats.kills });
     const frags = Math.max(0, Math.floor((G.waveNum - 1) * G.diff.frag));
     Store.data.meta.frags += frags; Store.save();
@@ -4356,6 +4369,26 @@ const Act = {
   owns(t, p = G.actor != null ? G.actor : Net.me) { return !Net.coop || t.owner == null || t.owner === p; }
 };
 
+/* historique des dernières parties (menu Palmarès) */
+const Hist = {
+  add(extra = {}) {
+    if (!G || G.demo) return;
+    let mvp = null; for (const k in G.tstats) if (G.tstats[k].dealt > 0 && (!mvp || G.tstats[k].dealt > G.tstats[mvp].dealt)) mvp = k;
+    const H = Store.data.hist || (Store.data.hist = []);
+    H.unshift(Object.assign({ d: Date.now(), gm: G.gm, diff: G.diffKey, w: G.waveNum, k: G.stats.kills, mvp, net: G.net || '', daily: G.daily || '', code: Hist.code() }, extra));
+    if (H.length > 30) H.length = 30;
+    Store.save();
+  },
+  // code de défi : graine + orientation + difficulté + mode → même carte et mêmes vagues pour un ami
+  code(g = G) { return `${g.seed.toString(36).toUpperCase()}-${g.portrait ? 'P' : 'L'}-${g.diffKey[0].toUpperCase()}${g.gm !== 'classic' ? '-' + g.gm[0].toUpperCase() : ''}`; },
+  parse(c) {
+    const m = /^([0-9A-Z]+)-([PL])(?:-([RSHC]))?(?:-([CRS]))?$/i.exec(String(c || '').trim().toUpperCase());
+    if (!m) return null;
+    const diffs = { R: 'recrue', S: 'standard', H: 'hardcore', C: 'cauchemar' }, gms = { C: 'chaos', R: 'rush', S: 'sandbox' };
+    return { seed: parseInt(m[1], 36) | 0, portrait: m[2] === 'P', diff: diffs[m[3]] || null, gm: gms[m[4]] || 'classic' };
+  }
+};
+
 const Ach = {
   unlock(id) {
     if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.gm === 'sandbox'))) return;
@@ -4375,7 +4408,7 @@ const SaveSys = {
   pack() {
     const M = G.map;
     return {
-      v: 8, gm: G.gm, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
+      v: 8, gm: G.gm, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
       doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       rs: G.rs, nanites: G.nanites, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
@@ -4415,7 +4448,7 @@ const Game = {
     const seed = daily ? daily.seed : opts.seed != null ? opts.seed : (Math.random() * 2147483647) | 0;
     const portrait = opts.portrait != null ? opts.portrait : View.w < View.h * .9;
     this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
-    G.perks = pk; G.net = opts.mp || null;
+    G.perks = pk; G.net = opts.mp || null; G.portrait = !!portrait;
     G.gm = GMODES[opts.gm] && !opts.daily ? opts.gm : 'classic';
     if (G.gm === 'chaos') { G.mutKeys = ['chaos']; G.mut = makeMut(G.mutKeys); }
     if (opts.events != null) G.events = opts.events;
@@ -4468,6 +4501,7 @@ const Game = {
       const map = { C: s.map.C, R: s.map.R, cells: Uint8Array.from(s.map.cells, ch => +ch), paths: s.map.paths || [s.map.path] };
       this.makeState(s.diffKey, map, s.seed);
       if (s.daily) { G.daily = s.daily; G.mutKeys = s.mutKeys || []; G.mut = makeMut(G.mutKeys); }
+      G.portrait = !!s.portrait;
       if (s.gm && GMODES[s.gm]) { G.gm = s.gm; if (G.gm === 'chaos' && !s.daily) { G.mutKeys = ['chaos']; G.mut = makeMut(G.mutKeys); } }
       Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, recycle: s.recycle,
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
@@ -4541,6 +4575,7 @@ const Game = {
       if (best) Store.data.records[rk] = G.waveNum;
     }
     Store.data.stats.kills += G.stats.kills;
+    Hist.add({ best });
     Store.data.save = null;
     Store.save();
     Music.intensity = 0;
@@ -6280,7 +6315,7 @@ const UI = {
     }]);
     list.push([`MULTIJOUEUR<small>versus ou coopération, à deux</small>`, 'nano', () => this.openMP()]);
     list.push([`HÉRITAGE<small>${Store.data.meta.frags} fragments</small>`, 'gold', () => this.openMeta()]);
-    list.push([`SUCCÈS<small>${Object.keys(Store.data.ach).filter(k => ACH[k]).length} / ${Object.keys(ACH).length}</small>`, '', () => this.openAch()]);
+    list.push([`PALMARÈS<small>${Object.keys(Store.data.ach).filter(k => ACH[k]).length} / ${Object.keys(ACH).length} succès · historique</small>`, '', () => this.openAch()]);
     const cx = Codex.progress();
     list.push([`CODEX<small>${cx[0]} / ${cx[1]} fiches</small>`, '', () => this.openCodex()]);
     list.push(['OPTIONS', '', () => this.openOptions()]);
@@ -6305,12 +6340,19 @@ const UI = {
       el.className = 'dcard'; el.style.setProperty('--dc', d.color);
       el.innerHTML = `<h3>${d.name}</h3><p>${d.desc}</p><div class="st">PV ennemis <b>x${d.hp}</b><br>Intégrité <b>${d.lives}</b> · Crédits <b>${d.money}</b><br>Fragments <b>x${d.frag}</b><br>Record : <b>${rec ? 'vague ' + rec : '—'}</b></div>`;
       el.onclick = () => {
-        const go = () => { this.closeAll(); Game.newGame(k, { gm }); };
+        const go = () => {
+          const sd = Hist.parse($('seed-in').value);
+          this.closeAll();
+          if (sd) Game.newGame(sd.diff || k, { gm: sd.gm, seed: sd.seed, portrait: sd.portrait }); else Game.newGame(k, { gm });
+        };
         if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par la nouvelle.', go);
         else go();
       };
       g.appendChild(el);
     }
+    const si = $('seed-in'), so = $('seed-ok');
+    si.oninput = () => { const sd = Hist.parse(si.value); so.innerHTML = !si.value.trim() ? '' : sd ? `<b style="color:var(--ok)">Code valide</b> · ${sd.diff ? DIFFS[sd.diff].name : 'menace au choix'} · ${GMODES[sd.gm].n} — cliquez une menace pour lancer.` : '<span style="color:var(--dang)">Code invalide</span>'; };
+    si.oninput();
     this.open('ov-new');
   },
   openPause() {
@@ -6526,13 +6568,18 @@ const UI = {
       <div>Protocoles <b>${Object.values(G.cards).reduce((a, b) => a + b, 0)}</b></div><div>Temps de jeu <b>${mins} min</b></div></div>
       ${mvp ? `<div class="mvp" style="--tc:${mvp.d.color}"><canvas id="go-mvp"></canvas><div style="text-align:left"><div class="lbl-s">TOURELLE MVP</div><b style="color:${mvp.d.color};letter-spacing:1px">${mvp.d.name.toUpperCase()} · NIV ${mvp.level}</b><div class="note">${fmt(mvp.dealt)} dégâts · ${fmt(mvp.kills)} éliminations</div></div></div>` : ''}
       <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span> (total ${Store.data.meta.frags})</div>
-      <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="go-menu">MENU</button><button class="btn gold" id="go-meta">HÉRITAGE</button><button class="btn" id="go-stats">STATS</button><button class="btn prim big" id="go-again">${daily ? 'RETENTER LE DÉFI' : 'ENCORE UNE !'} <span class="k">ENTRÉE</span></button></div>`;
+      <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="go-menu">MENU</button><button class="btn gold" id="go-meta">HÉRITAGE</button><button class="btn" id="go-stats">STATS</button><button class="btn sec" id="go-dare">DÉFIER UN AMI</button><button class="btn prim big" id="go-again">${daily ? 'RETENTER LE DÉFI' : 'ENCORE UNE !'} <span class="k">ENTRÉE</span></button></div>`;
     if (mvp) Spr.icon($('go-mvp'), mvp.key, 44);
     requestAnimationFrame(() => requestAnimationFrame(() => { const x = $('go-xp'); if (x) x.style.width = endW.toFixed(1) + '%'; }));
     if (best && G.waveNum > 1) Sfx.play('levelup');
     $('go-menu').onclick = () => Game.quit(false);
     $('go-meta').onclick = () => { Game.quit(false); this.openMeta(); };
     $('go-stats').onclick = () => this.openStats();
+    $('go-dare').onclick = () => {
+      const code = Hist.code();
+      this.copy(`Neon Warfare ${VERSION} : j'ai tenu jusqu'à la vague ${G.waveNum} en ${G.diff.name}${G.gm !== 'classic' ? ' (' + GMODES[G.gm].n + ')' : ''} ! Même carte, mêmes vagues : Nouvelle partie → code de carte ${code}`);
+      this.toast('Défi copié', `Envoyez-le à un ami : il saisira le code <b>${code}</b> dans Nouvelle partie.`, '#ff2bd6', 5);
+    };
     $('go-again').onclick = () => { this.closeAll(); Game.newGame(dk, { daily }); };
     this.open('ov-over');
     $('go-again').focus();
@@ -6947,7 +6994,22 @@ const UI = {
     });
     box.innerHTML = `<div class="st-wv"><div class="st-y">${ys}</div><div class="st-plot">${gl}<div class="st-cols">${cols}</div></div><div class="st-x">${xs}</div></div>`;
   },
-  openAch() {
+  openAch(tab = 'ach') {
+    $('ach-tabs').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.k === tab); b.onclick = () => { Sfx.play('ui'); this.openAch(b.dataset.k); }; });
+    if (tab === 'hist') {
+      const H = Store.data.hist || [];
+      $('ach-sub').innerHTML = H.length ? `Vos <b>${H.length}</b> dernières parties. Cliquez un code de carte pour le copier et défier un ami.` : 'Aucune partie terminée pour l\'instant.';
+      const L = $('ach-list'); L.className = 'hist';
+      L.innerHTML = H.map((h, i) => {
+        const dt = new Date(h.d), mode = h.net ? (h.net === 'versus' ? `Versus contre ${String(h.vs || '?').replace(/</g, '&lt;')} · ${h.win ? '<b style="color:var(--gold)">VICTOIRE</b>' : 'défaite'}` : 'Coopération') : (h.daily ? 'Défi du jour' : (GMODES[h.gm] || GMODES.classic).n);
+        return `<div class="hrow"><b>${h.w}</b><span class="t">${DIFFS[h.diff] ? DIFFS[h.diff].name : '?'} · ${mode}${h.best ? ' · <span style="color:var(--gold)">record</span>' : ''}</span>
+          <span class="c" data-i="${i}" title="Copier le code de carte">${h.code || ''}</span>
+          <span class="m">${dt.toLocaleDateString('fr-FR')} ${dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · ${fmt(h.k)} éliminations${h.mvp && TOWERS[h.mvp] ? ' · MVP ' + TOWERS[h.mvp].name : ''}</span></div>`;
+      }).join('');
+      L.querySelectorAll('.c').forEach(el => el.onclick = () => { const h = H[+el.dataset.i]; if (h && h.code) this.copy(h.code); });
+      this.open('ov-ach'); return;
+    }
+    $('ach-list').className = 'plist';
     const A = Store.data.ach, n = Object.keys(ACH).filter(k => A[k]).length;
     $('ach-sub').innerHTML = `<b>${n} / ${Object.keys(ACH).length}</b> débloqués — chaque succès rapporte <span class="frags">3 ✦</span> fragments d'Héritage.`;
     $('ach-list').innerHTML = Object.entries(ACH).map(([k, a]) => `<div class="ach${A[k] ? ' on' : ''}"><div class="ai">${TXT(a.i)}</div><div><h4>${a.n}</h4><p>${a.d}</p></div></div>`).join('');
@@ -6981,6 +7043,7 @@ const UI = {
       <h3>PROGRESSION</h3><ul>
         <li><b>Arbre de compétences</b> (<kbd>K</kbd>) : 18 compétences en 3 branches, payées en nanites, pour la partie en cours. Les nœuds finaux débloquent la <b>Cryo-Bombe</b> et la <b>Surcharge</b>.</li>
         <li><b>Héritage</b> : les fragments gagnés à chaque fin de partie achètent des bonus permanents.</li>
+        <li><b>Défier un ami</b> : à la fin d'une partie, copiez son <b>code de carte</b> (ex. 1A2B3C-L-S). Saisi dans Nouvelle partie, il redonne exactement la même carte et les mêmes vagues. Le <b>Palmarès</b> garde l'historique de vos 30 dernières parties.</li>
         <li><b>Analyse de combat</b> (<kbd>G</kbd>) : graphiques de la partie en cours — dégâts, éliminations, tirs et rentabilité de chaque tourelle, et dégâts par vague. Le <b>Codex</b> réunit les fiches de tout ce que vous avez rencontré.</li>
         <li>La partie est <b>sauvegardée automatiquement</b> entre les vagues.</li></ul>
       <h3>MULTIJOUEUR</h3><ul>

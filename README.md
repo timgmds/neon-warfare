@@ -46,6 +46,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Casino néon** | entre les vagues : **machine à sous** (3 jetons, jackpot progressif, malédiction aux trois crânes) et **paris** sur la vague suivante |
 | **Modes** | Classique, **Boss Rush** (un boss par vague), **Chaos** (événements en rafale), **Bac à sable** (ressources illimitées) |
 | **Défi du jour** | même carte et mêmes 2 mutateurs pour tout le monde ce jour-là, record journalier |
+| **Défier un ami** | chaque partie a un **code de carte** (ex. `1A2B3C-L-S`) : saisi dans Nouvelle partie, il redonne la même carte et les mêmes vagues ; historique des 30 dernières parties dans le Palmarès |
 | **Missions & protocoles** | 3 objectifs courts toujours actifs ; toutes les 2 vagues, 1 carte à choisir parmi 3 |
 | **Progression** | Héritage (bonus permanents), niveau de Commandant et 7 doctrines, 25 succès, Codex de 42 fiches |
 | **Analyse de combat** | graphiques de la partie : dégâts, éliminations, tirs et rentabilité par tourelle, dégâts par vague |
