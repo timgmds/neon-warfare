@@ -39,7 +39,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Fusion des canons** | plans achetés au Labo avec des nanites, puis **fusion sur le terrain** de deux tourelles adjacentes |
 | **Arbre de compétences** | 18 compétences en 3 branches, dont 2 qui débloquent des capacités |
 | **Capacités** | Frappe Orbitale (ciblée), Cryo-Bombe, Surcharge |
-| **Ennemis** | 10 types, élites et **6 boss** à mécanique (Colosse, Hydre, Overlord, Scission, Sentinelle, Sauteur), présentés à leur arrivée |
+| **Ennemis** | 22 types (dont régénérateurs, ruches, déphaseurs, nécromants, mastodontes, voileurs…), élites et **6 boss** à mécanique (Colosse, Hydre, Overlord, Scission, Sentinelle, Sauteur), présentés à leur arrivée |
 | **Cartes** | procédurales (portrait/paysage), dont la moitié avec **deux chemins** qui se rejoignent |
 | **Pièges** | **mines** et **barricades** à poser sur le chemin |
 | **Événements aléatoires** | pluie d'astéroïdes, capsule de ravitaillement, ruée vers l'or, surtension, tempête solaire, lune de sang, comète, faille dimensionnelle, orage IEM |
@@ -48,7 +48,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Défi du jour** | même carte et mêmes 2 mutateurs pour tout le monde ce jour-là, record journalier |
 | **Défier un ami** | chaque partie a un **code de carte** (ex. `1A2B3C-L-S`) : saisi dans Nouvelle partie, il redonne la même carte et les mêmes vagues ; historique des 30 dernières parties dans le Palmarès |
 | **Missions & protocoles** | 3 objectifs courts toujours actifs ; toutes les 2 vagues, 1 carte à choisir parmi 3 |
-| **Progression** | Héritage (bonus permanents), niveau de Commandant et 7 doctrines, 25 succès, Codex de 42 fiches |
+| **Progression** | Héritage (bonus permanents), niveau de Commandant et 7 doctrines, 25 succès, Codex de 54 fiches |
 | **Analyse de combat** | graphiques de la partie : dégâts, éliminations, tirs et rentabilité par tourelle, dégâts par vague |
 | **Musique** | générée en direct : **Arena 80s** (synth-rock, solo saturé sur les boss), Ambiance ou Synthwave |
 | **Divers** | annonces de combo et de multi-éliminations, 5 thèmes visuels, démo IA en fond de menu |
