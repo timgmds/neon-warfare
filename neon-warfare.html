@@ -1258,7 +1258,7 @@ const TOWERS = {
   // ----- FUSIONS T3 -----
   nova:     { name: 'Nova', tier: 3, cost: 950, range: 180, dmg: 240, rate: 120, color: '#4dfff3', kind: 'proj', head: 'nova', spd: 6, psz: 7, splash: 95, heat: 60, cool: .5,
     desc: 'Sphère d\'énergie dévastatrice avec une énorme zone d\'explosion.' },
-  singularity: { name: 'Singularité', tier: 3, cost: 1300, range: 190, dmg: 80, rate: 220, color: '#9b4dff', kind: 'vortex', head: 'void', spinHead: .09, vr: 72, dur: 150, pull: 1.7, heat: 50, cool: .4,
+  singularity: { name: 'Singularité', tier: 3, cost: 1400, range: 180, dmg: 60, rate: 270, color: '#9b4dff', kind: 'vortex', head: 'void', spinHead: .09, vr: 64, dur: 120, pull: 1.0, heat: 60, cool: .4,
     desc: 'Crée un trou noir qui aspire les ennemis en arrière et les broie.' },
   storm:    { name: 'Tempête', tier: 3, cost: 1200, range: 160, dmg: 40, rate: 22, color: '#7db4ff', kind: 'chain', head: 'coil', chain: { n: 6, f: .85, r: 110 }, slow: { f: .6, t: 40 }, heat: 12, cool: .8, sfx: 'zap',
     desc: 'Orage ionique : chaîne de 6 rebonds qui ralentit.' },
@@ -1307,7 +1307,19 @@ const ENEMIES = {
   flyer:   { name: 'Volant', hp: 42, spd: 1.65, bounty: 8, leak: 3, r: 9, color: '#ff7ad9', shape: 'wing', rot: true, air: true, w: 2, from: 7 },
   glitch:  { name: 'Glitch', hp: 55, spd: 1.4, bounty: 9, leak: 3, r: 9, color: '#00ffd5', shape: 'glitch', blink: true, w: 2, from: 8 },
   jammer:  { name: 'Brouilleur', hp: 100, spd: 1.0, bounty: 13, leak: 4, r: 11, color: '#fff35c', shape: 'jammer', jam: true, w: 4, from: 9 },
-  carrier: { name: 'Porteur', hp: 210, armor: 2, spd: .72, bounty: 15, leak: 6, r: 13, color: '#b05cff', shape: 'hex', rot: true, spawn: { type: 'scout', n: 4 }, w: 5, from: 11 }
+  carrier: { name: 'Porteur', hp: 210, armor: 2, spd: .72, bounty: 15, leak: 6, r: 13, color: '#b05cff', shape: 'hex', rot: true, spawn: { type: 'scout', n: 4 }, w: 5, from: 11 },
+  regen:   { name: 'Régénérateur', hp: 95, spd: 1.05, bounty: 11, leak: 3, r: 10, color: '#7dff4d', shape: 'regen', regen: .025, w: 3, from: 7 },
+  sapper:  { name: 'Sapeur', hp: 85, armor: 1, spd: 1.25, bounty: 10, leak: 3, r: 9, color: '#c8a26b', shape: 'sapper', rot: true, sapper: true, w: 2, from: 8 },
+  hive:    { name: 'Ruche', hp: 150, spd: .85, bounty: 12, leak: 4, r: 12, color: '#ffb000', shape: 'hive', spawn: { type: 'mite', n: 7, hp: .9 }, w: 4, from: 10 },
+  phase:   { name: 'Déphaseur', hp: 80, spd: 1.35, bounty: 11, leak: 3, r: 9, color: '#b4a0ff', shape: 'phase', phase: { every: 240, dur: 80 }, w: 3, from: 12 },
+  nullifier: { name: 'Annulateur', hp: 170, armor: 1, spd: 1.0, bounty: 13, leak: 4, r: 11, color: '#e8e8f0', shape: 'null', noSlow: true, w: 3, from: 13 },
+  ram:     { name: 'Bélier', hp: 230, armor: 4, spd: .7, bounty: 16, leak: 6, r: 12, color: '#ff4d4d', shape: 'ram', rot: true, accel: true, heavy: true, w: 5, from: 14 },
+  necro:   { name: 'Nécromant', hp: 160, spd: .8, bounty: 16, leak: 5, r: 11, color: '#7a4dff', shape: 'necro', summon: { type: 'wraith', every: 230, n: 1, max: 4 }, w: 5, from: 16 },
+  frigate: { name: 'Frégate', hp: 260, armor: 2, shield: 120, spd: .9, bounty: 18, leak: 6, r: 13, color: '#ff9ad5', shape: 'frigate', rot: true, air: true, w: 5, from: 18 },
+  juggernaut: { name: 'Mastodonte', hp: 900, armor: 7, spd: .42, bounty: 40, leak: 14, r: 16, color: '#9aa4b8', shape: 'jugg', rot: true, heavy: true, noSlow: true, w: 12, from: 20 },
+  veil:    { name: 'Voileur', hp: 140, spd: 1.05, bounty: 15, leak: 4, r: 11, color: '#6de0ff', shape: 'veil', veil: { every: 280, r: 120 }, w: 4, from: 22 },
+  mite:    { name: 'Mite', hp: 14, spd: 2.2, bounty: 2, leak: 1, r: 5, color: '#ffd46b', shape: 'mite', rot: true, w: 1, from: 999 },
+  wraith:  { name: 'Revenant', hp: 70, spd: 1.55, bounty: 4, leak: 2, r: 8, color: '#a98bff', shape: 'wraith', w: 1, from: 999 }
 };
 const BOSSES = {
   colosse:  { name: 'COLOSSE', hp: 1500, armor: 3, spd: .5, bounty: 160, leak: 20, r: 22, color: '#ff3d3d', shape: 'boss1', rot: true, boss: true },
@@ -1338,6 +1350,18 @@ const LORE = {
   jammer: 'Son impulsion IEM neutralise les tourelles proches pendant 1,5 s.',
   carrier: 'Transporte quatre éclaireurs qu\'il libère à sa destruction.',
   shard: 'Moitié de Scission. Se brise à son tour en deux éclats.',
+  regen: 'Ses tissus se reconstituent sans cesse : 2,5 % de ses PV par seconde. Il faut l\'abattre d\'un trait.',
+  sapper: 'Désamorce les mines qu\'il croise et démolit les barricades dix fois plus vite.',
+  hive: 'Une ruche ambulante : abattue, elle libère sept mites rapides.',
+  phase: 'Bascule régulièrement hors de la réalité : intouchable et invisible pendant plus d\'une seconde.',
+  nullifier: 'Insensible aux ralentissements, au gel et à la Cryo-Bombe.',
+  ram: 'Accélère sans cesse en avançant, jusqu\'à doubler sa vitesse. Résiste aux trous noirs.',
+  necro: 'Relève les morts : invoque des revenants tant qu\'il est en vie.',
+  frigate: 'Navire volant blindé et protégé par un bouclier. Seul l\'anti-air en vient à bout.',
+  juggernaut: 'Forteresse de sept points de blindage, insensible au gel et aux trous noirs. Lente, mais elle encaisse tout.',
+  veil: 'Projette un voile qui rend les ennemis proches invisibles pendant 3 s. Un Radar perce le voile.',
+  mite: 'Essaim libéré par une Ruche. Rapide, fragile, nombreux.',
+  wraith: 'Mort revenu à la vie par un Nécromant.',
   shardlet: 'Dernier éclat d\'une Scission. Rapide, mais fragile.',
   colosse: 'Forteresse ambulante au blindage massif. Lent, mais il encaisse tout.',
   hydre: 'Invoque des drones en avançant et libère six éclaireurs en mourant.',
@@ -1366,7 +1390,12 @@ const WTHEMES = [
   { id: 'air', name: 'Raid aérien', w: 1.5, from: 8, mod: { flyer: 6 } },
   { id: 'stealth', name: 'Opération furtive', w: 1.2, from: 6, mod: { spectre: 5 } },
   { id: 'tech', name: 'Guerre électronique', w: 1, from: 10, mod: { jammer: 3, glitch: 3 } },
-  { id: 'rush', name: 'Ruée', w: 1.2, from: 4, mod: { scout: 5 }, gapMul: .55 }
+  { id: 'rush', name: 'Ruée', w: 1.2, from: 4, mod: { scout: 5 }, gapMul: .55 },
+  { id: 'hive', name: 'Nid', w: 1.2, from: 11, mod: { hive: 5, regen: 2 } },
+  { id: 'heavy', name: 'Bulldozers', w: 1, from: 15, mod: { ram: 4, juggernaut: 3, tank: 2 }, countMul: .85 },
+  { id: 'necro', name: 'Nécropole', w: 1, from: 17, mod: { necro: 4, regen: 2 } },
+  { id: 'ghost', name: 'Brouillard', w: 1, from: 22, mod: { veil: 3, phase: 3, spectre: 3 } },
+  { id: 'fleet', name: 'Armada', w: 1, from: 19, mod: { frigate: 4, flyer: 4 } }
 ];
 
 const DIFFS = {
@@ -1884,6 +1913,54 @@ function drawEnemyShape(x, d, elite) {
       x.restore(); x.fillStyle = g; circ(x, 0, 0, r * .85); x.fill(); x.stroke();
       x.shadowBlur = 0; x.fillStyle = 'rgba(0,0,0,.65)'; circ(x, 0, 0, r * .35); x.fill();
       break;
+    case 'regen':
+      circ(x, 0, 0, r); x.fill(); x.stroke(); x.shadowBlur = 0; x.strokeStyle = 'rgba(255,255,255,.7)'; x.lineWidth = 1.5;
+      x.beginPath(); x.arc(0, 0, r * .62, 0, Math.PI * 1.5); x.stroke(); x.fillStyle = '#fff'; x.fillRect(-r * .12, -r * .45, r * .24, r * .9); x.fillRect(-r * .45, -r * .12, r * .9, r * .24);
+      break;
+    case 'sapper':
+      x.beginPath(); x.moveTo(r * 1.2, 0); x.lineTo(r * .2, r * .9); x.lineTo(-r, r * .7); x.lineTo(-r, -r * .7); x.lineTo(r * .2, -r * .9); x.closePath(); x.fill(); x.stroke();
+      x.shadowBlur = 0; x.strokeStyle = 'rgba(0,0,0,.6)'; x.lineWidth = 2; x.beginPath(); x.moveTo(r * .3, -r * .5); x.lineTo(r * 1.3, -r * 1.1); x.stroke();
+      break;
+    case 'hive':
+      polyPath(x, 6, r, Math.PI / 6); x.fill(); x.stroke(); x.shadowBlur = 0; x.fillStyle = 'rgba(60,30,0,.55)';
+      for (let i = 0; i < 6; i++) { const a = i * TAU / 6; circ(x, Math.cos(a) * r * .5, Math.sin(a) * r * .5, r * .16); x.fill(); }
+      circ(x, 0, 0, r * .18); x.fill();
+      break;
+    case 'phase':
+      x.globalAlpha = .85; polyPath(x, 3, r * 1.2, 0); x.fill(); x.stroke(); x.rotate(Math.PI); x.globalAlpha = .45; polyPath(x, 3, r * 1.2, 0); x.fill(); x.globalAlpha = 1;
+      eye(0, r * .3);
+      break;
+    case 'null':
+      circ(x, 0, 0, r); x.fill(); x.stroke(); x.shadowBlur = 0; x.strokeStyle = '#333'; x.lineWidth = 2.2;
+      x.beginPath(); x.arc(0, 0, r * .55, 0, TAU); x.moveTo(-r * .4, r * .4); x.lineTo(r * .4, -r * .4); x.stroke();
+      break;
+    case 'ram':
+      x.beginPath(); x.moveTo(r * 1.3, 0); x.lineTo(r * .4, r); x.lineTo(-r, r * .8); x.lineTo(-r, -r * .8); x.lineTo(r * .4, -r); x.closePath(); x.fill(); x.stroke();
+      x.shadowBlur = 0; x.fillStyle = 'rgba(255,255,255,.7)'; x.beginPath(); x.moveTo(r * 1.3, 0); x.lineTo(r * .6, r * .35); x.lineTo(r * .6, -r * .35); x.closePath(); x.fill();
+      break;
+    case 'necro':
+      polyPath(x, 5, r * 1.1, -Math.PI / 2); x.fill(); x.stroke(); x.shadowBlur = 0; x.fillStyle = 'rgba(0,0,0,.65)';
+      circ(x, -r * .3, -r * .1, r * .18); x.fill(); circ(x, r * .3, -r * .1, r * .18); x.fill(); x.fillRect(-r * .3, r * .3, r * .6, r * .15);
+      break;
+    case 'frigate':
+      x.beginPath(); x.moveTo(r * 1.35, 0); x.lineTo(-r * .2, r * 1.1); x.lineTo(-r * 1.1, r * .5); x.lineTo(-r * .7, 0); x.lineTo(-r * 1.1, -r * .5); x.lineTo(-r * .2, -r * 1.1); x.closePath(); x.fill(); x.stroke();
+      x.shadowBlur = 0; x.fillStyle = 'rgba(0,0,0,.45)'; x.fillRect(-r * .5, -r * .18, r * 1.2, r * .36);
+      break;
+    case 'jugg':
+      polyPath(x, 8, r, Math.PI / 8); x.fill(); x.stroke(); x.shadowBlur = 0; x.strokeStyle = 'rgba(0,0,0,.55)'; x.lineWidth = 2.5;
+      roundRect(x, -r * .6, -r * .6, r * 1.2, r * 1.2, r * .15); x.stroke(); x.fillStyle = '#ff3d3d'; circ(x, r * .3, 0, r * .16); x.fill();
+      break;
+    case 'veil':
+      circ(x, 0, 0, r); x.globalAlpha = .7; x.fill(); x.globalAlpha = 1; x.stroke(); x.shadowBlur = 0; x.strokeStyle = 'rgba(255,255,255,.6)'; x.lineWidth = 1.2;
+      for (let i = 1; i <= 2; i++) { x.beginPath(); x.arc(0, 0, r * (.3 + i * .25), -.8, .8); x.stroke(); x.beginPath(); x.arc(0, 0, r * (.3 + i * .25), Math.PI - .8, Math.PI + .8); x.stroke(); }
+      break;
+    case 'mite':
+      x.beginPath(); x.moveTo(r * 1.3, 0); x.lineTo(-r, r); x.lineTo(-r * .4, 0); x.lineTo(-r, -r); x.closePath(); x.fill(); x.stroke();
+      break;
+    case 'wraith':
+      x.globalAlpha = .75; x.beginPath(); x.arc(0, -r * .1, r, Math.PI, 0); x.lineTo(r, r); x.lineTo(r * .4, r * .6); x.lineTo(0, r); x.lineTo(-r * .4, r * .6); x.lineTo(-r, r); x.closePath(); x.fill(); x.globalAlpha = 1; x.stroke();
+      eye(-r * .25, r * .2); eye(r * .25, r * .2);
+      break;
     case 'hex':
       polyPath(x, 6, r * 1.1, 0); x.fill(); x.stroke();
       x.shadowBlur = 0; polyPath(x, 6, r * .55, 0); x.fillStyle = 'rgba(20,0,40,.6)'; x.fill(); x.strokeStyle = 'rgba(255,255,255,.5)'; x.stroke();
@@ -2263,8 +2340,11 @@ const FX = {
 };
 
 /* ============================== STATUTS & DÉGÂTS ============================== */
+// ennemi invisible ou hors d'atteinte (furtif non révélé, sous un voile, déphasé)
+const hid = e => e.phased || ((e.stealth || e.veilT > 0) && e.revealT <= 0);
 const Status = {
   slow(e, f, t) {
+    if (e.d.noSlow) return;
     if (e.boss) t *= .5;
     if (e.slowT <= 0 || f < e.slowF) e.slowF = f;
     if (t > e.slowT) e.slowT = t;
@@ -2304,7 +2384,7 @@ const Stats = {
 
 const Combat = {
   hit(e, dmg, src, crit = false, pierce = 0, dot = false) {
-    if (!e.alive) return 0;
+    if (!e.alive || e.phased) return 0;
     if (src && e.air && src.d.airMult) dmg *= src.d.airMult;
     if (e.markT > 0) dmg *= 1 + e.markV;
     if (e.shield > 0) {
@@ -2349,12 +2429,13 @@ const Enemies = {
     const e = {
       id: G.nextId++, type, d, alive: true, boss: !!d.boss, air: !!d.air, stealth: !!d.stealth, elite,
       hp: d.hp * hm, maxHp: d.hp * hm, shield: (d.shield || 0) * hm, maxShield: (d.shield || 0) * hm,
-      armor: ((d.armor || 0) + mu.armorAdd) * mu.armor * Math.sqrt(o.hpMul || 1), spd: d.spd * mu.spd * G.mod.espd, r: d.r * (elite ? 1.25 : 1),
+      armor: ((d.armor || 0) + mu.armorAdd) * mu.armor * Math.sqrt(o.hpMul || 1), spd: d.spd * mu.spd * G.mod.espd * (1 + Math.min(.35, Math.max(0, (o.wave || G.waveNum) - 25) * .01)), r: d.r * (elite ? 1.25 : 1),
       dist: o.dist || 0, seg: 0, x: 0, y: 0, px: 0, py: 0, ang: 0, pi: G.map.P[o.pi] ? o.pi : 0, rem: 0,
       slowT: 0, slowF: 1, burnT: 0, burnDps: 0, burnSrc: null, freezeT: 0, revealT: 0, markT: 0, markV: 0, hitT: 0, shCd: 0,
       wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: sr() * TAU,
       tA: d.summon ? d.summon.every : d.heal ? 60 : srndi(90, 200), tB: srndi(120, 240), sumLeft: d.summon ? d.summon.max : 0,
-      tC: d.aura ? 90 : 0, tD: d.leap ? d.leap.every : 0, leapTo: 0, t0: G.tick
+      tC: d.aura ? 90 : d.veil ? d.veil.every : 0, tD: d.leap ? d.leap.every : 0, leapTo: 0, t0: G.tick,
+      tP: d.phase ? srndi(60, d.phase.every) : 0, phased: false, veilT: 0, pulled: 0, acc: 1
     };
     Path.place(e); e.px = e.x; e.py = e.y;
     G.enemies.push(e);
@@ -2399,6 +2480,18 @@ const Enemies = {
         FX.ring(e.x, e.y, d.color, 50, 20, 2);
       }
       if (d.aura && --e.tC <= 0) { e.tC = d.aura.every; this.aura(e, d.aura); }
+      if (e.veilT > 0) e.veilT--;
+      if (d.regen && e.hp < e.maxHp) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * d.regen / 60);
+      if (d.phase && --e.tP <= 0) {
+        e.phased = !e.phased; e.tP = e.phased ? d.phase.dur : d.phase.every;
+        FX.ring(e.x, e.y, d.color, 26, 14, 2);
+      }
+      if (d.veil && --e.tC <= 0) {
+        e.tC = d.veil.every; const r2 = d.veil.r * d.veil.r;
+        for (const o of G.enemies) if (o.alive && !o.boss && d2(o.x, o.y, e.x, e.y) <= r2) o.veilT = 180;
+        FX.ring(e.x, e.y, d.color, d.veil.r, 30, 2);
+      }
+      if (d.accel && e.acc < 2) e.acc = Math.min(2, e.acc + .0012);
       if (d.leap && --e.tD <= 0) {
         if (!e.leapTo) {   // annonce : marqueur au point d'atterrissage pendant 1 s
           e.leapTo = Math.min(M.P[e.pi].total - 40, e.dist + d.leap.dist); e.tD = 60;
@@ -2409,7 +2502,7 @@ const Enemies = {
           FX.ring(e.x, e.y, d.color, 70, 26, 4); FX.spark(e.x, e.y, d.color, 24, 4.5); Render.shake(9); Sfx.play('boom', .6);
         }
       }
-      let sp = e.spd * G.evSpd;
+      let sp = e.spd * G.evSpd * e.acc;
       if (e.leapTo) sp = 0;   // se ramasse avant de bondir
       if (e.freezeT > 0) { e.freezeT--; sp = 0; }
       else if (e.slowT > 0) { e.slowT--; sp *= e.slowF; if (e.slowT === 0) e.slowF = 1; }
@@ -2484,14 +2577,14 @@ const Enemies = {
       UI.comboBurst = performance.now();
     }
     const cm = 1 + Math.min(1, Math.floor(G.combo / 10) * .1);
-    const bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * G.mut.bounty * (G.gm === 'rush' ? 1.3 : 1) * (1 + .02 * (G.waveNum - 1))));
+    const bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * G.mut.bounty * (G.gm === 'rush' ? 1.3 : 1) * (1 + .015 * (G.waveNum - 1))));
     gain(bounty, null);
     if (UI.dmgNums || e.boss) FX.float(e.x, e.y - 8, '+' + bounty, '#ffd23f', e.boss ? 18 : 10);
     if (e.d.spawn) {
       const s = e.d.spawn;
       for (let k = 0; k < s.n; k++)
         this.spawn(s.type, { dist: Math.max(0, e.dist - k * 14), hpMul: (w ? w.hpMul : 1) * (s.hp || .5) * (e.elite ? 1.5 : 1), wave: e.wave, child: true, pi: e.pi });
-      FX.float(e.x, e.y - 20, s.type === 'scout' ? 'BRÈCHE' : 'SCISSION', e.d.color, 12);
+      FX.float(e.x, e.y - 20, s.type === 'scout' ? 'BRÈCHE' : s.type === 'mite' ? 'ESSAIM' : 'SCISSION', e.d.color, 12);
     }
     const dm = G.mod.drop;
     if (e.boss) {
@@ -2647,7 +2740,7 @@ const Towers = {
     }
   },
   valid(t, e) {
-    return !!e && e.alive && !(t.d.ground && e.air) && (t.d.reveal || !(e.stealth && e.revealT <= 0)) &&
+    return !!e && e.alive && !e.phased && !(t.d.ground && e.air) && (t.d.reveal || !hid(e)) &&
       d2(e.x, e.y, t.cx, t.cy) <= t.range * t.range;
   },
   find(t) {
@@ -2655,7 +2748,7 @@ const Towers = {
     let best = null, bv = -Infinity;
     for (let i = 0, n = arr.length; i < n; i++) {
       const e = arr[i];
-      if (!e.alive || (d.ground && e.air) || (!seeAll && e.stealth && e.revealT <= 0)) continue;
+      if (!e.alive || e.phased || (d.ground && e.air) || (!seeAll && hid(e))) continue;
       const dd = d2(e.x, e.y, t.cx, t.cy);
       if (dd > r2) continue;
       const v = s === 0 ? -e.rem : s === 1 ? e.hp + e.shield : s === 2 ? -(e.hp + e.shield) : -dd;
@@ -2765,7 +2858,7 @@ const Towers = {
       dm *= f;
       let best = null, bd = ch.r * ch.r;
       for (const o of G.enemies) {
-        if (!o.alive || hit.includes(o) || (o.stealth && o.revealT <= 0)) continue;
+        if (!o.alive || hit.includes(o) || hid(o)) continue;
         const dd = d2(o.x, o.y, px, py);
         if (dd < bd) { bd = dd; best = o; }
       }
@@ -2824,7 +2917,7 @@ const Towers = {
   },
   orbital(t, e, dmg) {
     const d = t.d, r2 = t.range * t.range, cand = this._hit; cand.length = 0;
-    for (const o of G.enemies) if (o.alive && o !== e && !(o.stealth && o.revealT <= 0) && d2(o.x, o.y, t.cx, t.cy) <= r2) cand.push(o);
+    for (const o of G.enemies) if (o.alive && o !== e && !hid(o) && d2(o.x, o.y, t.cx, t.cy) <= r2) cand.push(o);
     const targets = [e], ns = d.strikes + (t.sm.strikes || 0), rad = d.sr * (t.sm.sr || 1);
     for (let k = 1; k < ns; k++) targets.push(cand.length ? cand[Math.floor(sr() * cand.length)] : e);
     for (const o of targets) {
@@ -2865,7 +2958,7 @@ const Shots = {
   missiles(t, x, y, e, dmg, crit) {
     const n = t.d.count + (t.sm.missiles || 0), list = Towers._hit, r2 = t.range * t.range;
     list.length = 0;
-    for (const o of G.enemies) if (o.alive && o !== e && !(o.stealth && o.revealT <= 0) && d2(o.x, o.y, t.cx, t.cy) <= r2) list.push(o);
+    for (const o of G.enemies) if (o.alive && o !== e && !hid(o) && d2(o.x, o.y, t.cx, t.cy) <= r2) list.push(o);
     list.sort((a, b) => d2(a.x, a.y, e.x, e.y) - d2(b.x, b.y, e.x, e.y));
     list.unshift(e);
     for (let i = 0; i < n; i++) {
@@ -2927,7 +3020,7 @@ const Shots = {
   nearest(x, y, r, excl, ground) {
     let best = null, bd = r * r;
     for (const o of G.enemies) {
-      if (!o.alive || o === excl || (ground && o.air) || (o.stealth && o.revealT <= 0)) continue;
+      if (!o.alive || o === excl || (ground && o.air) || hid(o)) continue;
       const dd = d2(o.x, o.y, x, y);
       if (dd < bd) { bd = dd; best = o; }
     }
@@ -2973,7 +3066,11 @@ const Shots = {
       const r2 = v.r * v.r;
       for (const o of G.enemies) {
         if (!o.alive || d2(o.x, o.y, v.x, v.y) > r2) continue;
-        o.dist = Math.max(0, o.dist - v.pull * (o.boss ? .3 : 1));
+        // aspiration limitée : une fois par tick, et au plus 160 px par ennemi sur toute sa vie
+        if (o.pullT !== G.tick && o.pulled < 160) {
+          const f = o.boss ? .25 : o.d.heavy ? .2 : o.elite ? .6 : 1, pv = Math.min(v.pull * f, 160 - o.pulled);
+          o.pullT = G.tick; o.pulled += pv; o.dist = Math.max(0, o.dist - pv);
+        }
         Combat.hit(o, v.dps / 60, v.src, false, 0, true);
       }
       if (Render.hq && (G.tick & 1)) {
@@ -3015,7 +3112,7 @@ const Waves = {
   // croissance polynomiale douce, puis exponentielle au-delà de la vague 40 (l'infini doit finir par céder)
   hpMul(n) {
     const k = n - 1, fork = G.map.P && G.map.P.length > 1 ? .9 : 1;   // deux chemins à couvrir : ennemis un peu moins robustes
-    return (1 + .2 * k + .016 * k * k) * Math.pow(1.038, k) * Math.pow(1.085, Math.max(0, k - 35)) * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp : 1);
+    return (1 + .22 * k + .02 * k * k) * Math.pow(1.045, k) * Math.pow(1.075, Math.max(0, k - 22)) * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp : 1);
   },
   // hasard reproductible : une carte donnée produit toujours les mêmes vagues (aperçu fiable, Défi du jour équitable)
   rng(n, salt = 0) { return mulberry32((G.seed ^ Math.imul(n + 1, 2654435761) ^ salt) >>> 0); },
@@ -3024,7 +3121,7 @@ const Waves = {
     let th = WTHEMES[0];
     if (boss) th = { id: 'boss', name: 'Alerte Boss', countMul: .65 };
     else if (n > 3) { const pool = WTHEMES.filter(t => (t.from || 1) <= n); th = pool[weightedIndex(pool.map(t => t.w), R)]; }
-    const budget = (8 + n * 3.2 + n * n * .06) * (th.countMul || 1) * G.mut.count;
+    const budget = (8 + n * 3.6 + n * n * .08) * (th.countMul || 1) * G.mut.count;
     const avail = Object.keys(ENEMIES).filter(k => ENEMIES[k].from <= n);
     const wts = avail.map(k => (k === 'drone' ? 2.2 : 1) * ((th.mod && th.mod[k]) || 1) * (ENEMIES[k].from === n ? .6 : 1));
     const list = []; let spent = 0;
@@ -3057,7 +3154,7 @@ const Waves = {
     const w = { n, left: 0, leaks: 0, hpMul: hpm, t0: G.tick };
     G.waves[n] = w;
     const base = G.tick + 40, gap = Math.max(11, 30 - n * .35) * P.gapMul, R = this.rng(n, 0x5eed);
-    const eliteP = n >= (G.mut.elite > 1 ? 4 : 8) ? Math.min(.15, .03 + n * .002) * G.mut.elite : 0;
+    const eliteP = n >= (G.mut.elite > 1 ? 4 : 6) ? Math.min(.25, .04 + n * .003) * G.mut.elite : 0;
     let t = base, pi = 0;
     const nP = G.map.P.length;
     for (let i = 0; i < P.list.length; i++) {
@@ -3170,7 +3267,7 @@ const Abil = {
       Strikes.add(x, y, ABILS.orbital.radius, this.orbDmg(), null, ABILS.orbital.color, 45, true);
       Sfx.play('nuke');
     } else if (k === 'emp') {
-      for (const e of G.enemies) { if (!e.alive) continue; e.freezeT = e.boss ? 90 : 180; FX.spark(e.x, e.y, '#bff4ff', 4, 1.5); }
+      for (const e of G.enemies) { if (!e.alive || e.d.noSlow) continue; e.freezeT = e.boss ? 90 : 180; FX.spark(e.x, e.y, '#bff4ff', 4, 1.5); }
       const M = G.map;
       FX.ring(M.C * TILE / 2, M.R * TILE / 2, '#3ad7ff', Math.max(M.C, M.R) * TILE * .7, 40, 6, 20);
       Render.flash(.45, '#3ad7ff'); Sfx.play('freeze');
@@ -3286,8 +3383,11 @@ const Traps = {
       if (tr.hitT > 0) tr.hitT--;
       if (tr.type !== 'mine') continue;
       for (const e of G.enemies) {
-        if (!e.alive || e.air || d2(e.x, e.y, tr.x, tr.y) > (14 + e.r) * (14 + e.r)) continue;
-        G.traps.splice(i, 1); this.explode(tr); break;
+        if (!e.alive || e.air || e.phased || d2(e.x, e.y, tr.x, tr.y) > (14 + e.r) * (14 + e.r)) continue;
+        G.traps.splice(i, 1);
+        if (e.d.sapper) { FX.float(tr.x, tr.y - 14, 'DÉSAMORCÉE', '#c8a26b', 11); FX.spark(tr.x, tr.y, '#c8a26b', 10, 2); Sfx.play('error', .5); }
+        else this.explode(tr);
+        break;
       }
     }
   },
@@ -3310,7 +3410,7 @@ const Traps = {
       if (e.dist <= stop + 2 && nd > stop && stop < lim) { lim = stop; hit = tr; }
     }
     if (hit) {
-      hit.hp -= e.maxHp * .003 * (e.boss ? 1.5 : 1); hit.hitT = 3;
+      hit.hp -= e.maxHp * .003 * (e.boss ? 1.5 : 1) * (e.d.sapper ? 10 : 1); hit.hitT = 3;
       if (hit.hp <= 0) {
         this.remove(hit, false);
         FX.ring(hit.x, hit.y, '#ffae00', 40, 22, 3); FX.spark(hit.x, hit.y, '#ffae00', 20, 4); FX.float(hit.x, hit.y - 16, 'BARRICADE DÉTRUITE', '#ffae00', 11);
@@ -3600,7 +3700,7 @@ const Codex = {
      ensuite tout passe en direct entre les deux machines ;
    - connexion manuelle : offre et réponse échangées par copier-coller, sans aucun service extérieur
      (fonctionne en réseau local sans internet). */
-const NET_ICE = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+const NET_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }, { urls: 'stun:global.stun.twilio.com:3478' }];
 const NET_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const NET_PREFIX = 'neonwarfare9x';
 const Net = {
@@ -3637,8 +3737,8 @@ const Net = {
       case 'ERROR': this.setStatus('Serveur : ' + ((m.payload && m.payload.msg) || 'erreur inconnue') + '. Essayez la connexion manuelle.', true); break;
       case 'EXPIRE': if (!this.connected) this.setStatus('Salon introuvable : vérifiez le code (l\'hôte doit garder la fenêtre ouverte).', true); break;
       case 'OFFER': if (this.role === 'host' && m.payload) this.acceptOffer(m.src, m.payload); break;
-      case 'ANSWER': if (this.pc && m.payload) this.pc.setRemoteDescription(m.payload.sdp).then(() => this.flushCand()).catch(() => this.setStatus('Négociation impossible.', true)); break;
-      case 'CANDIDATE': if (m.payload && m.payload.candidate) this.addCand(m.payload.candidate); break;
+      case 'ANSWER': if (this.pc && m.payload && (!m.payload.connectionId || m.payload.connectionId === this.cid)) this.pc.setRemoteDescription(m.payload.sdp).then(() => this.flushCand()).catch(() => this.setStatus('Négociation impossible.', true)); break;
+      case 'CANDIDATE': if (m.payload && m.payload.candidate && (!m.payload.connectionId || m.payload.connectionId === this.cid)) this.addCand(m.payload.candidate); break;
     }
   },
   addCand(c) { if (this.pc && this.hasRemote) this.pc.addIceCandidate(c).catch(() => {}); else this.cand.push(c); },
@@ -3652,7 +3752,7 @@ const Net = {
   bindDC(dc) {
     this.dc = dc;
     dc.onopen = () => this.opened();
-    dc.onclose = () => this.lost();
+    dc.onclose = () => { if (dc === this.dc) this.lost(); };
     dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } this.recv(m); };
   },
 
@@ -3664,7 +3764,12 @@ const Net = {
     this.wsOpen(NET_PREFIX + this.code, () => this.setStatus('Salon ouvert : donnez ce code à votre ami.'));
   },
   acceptOffer(src, p) {
-    if (this.pc) return;   // un seul invité
+    if (this.connected) return;   // un seul invité
+    if (this.pc) {   // tentative précédente ratée (ou relance de l'invité) : on repart de zéro
+      if (this.dc) { this.dc.onclose = null; try { this.dc.close(); } catch (e) { /* ignore */ } }
+      this.pc.onconnectionstatechange = null; try { this.pc.close(); } catch (e) { /* ignore */ }
+      this.pc = this.dc = null; this.cand = []; this.hasRemote = false;
+    }
     this.peer = src; this.cid = p.connectionId;
     const pc = this.makePC(c => this.sig('CANDIDATE', src, { candidate: c }));
     pc.ondatachannel = e => this.bindDC(e.channel);
@@ -3680,14 +3785,26 @@ const Net = {
     this.cid = 'dc_' + Math.random().toString(36).slice(2, 13);
     const dst = NET_PREFIX + code;
     this.setStatus('Connexion au serveur…');
-    this.wsOpen('nwc' + Math.random().toString(36).slice(2, 12), () => {
-      this.setStatus(`Recherche du salon NEON-${code}…`);
-      const pc = this.makePC(c => this.sig('CANDIDATE', dst, { candidate: c }));
-      this.bindDC(pc.createDataChannel('nw', { ordered: true }));
-      pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => this.sig('OFFER', dst, { sdp: pc.localDescription }))
-        .catch(() => this.setStatus('Impossible de préparer la connexion.', true));
-      this.later(() => { if (!this.connected && this.role === 'guest') this.setStatus('Pas de réponse : vérifiez le code, ou essayez la connexion manuelle.', true); }, 15000);
-    });
+    this.wsOpen('nwc' + Math.random().toString(36).slice(2, 12), () => this.attempt(dst, 1));
+  },
+  // une tentative de connexion de l'invité ; jusqu'à 4 essais automatiques avant de proposer le mode manuel
+  attempt(dst, n) {
+    if (this.connected || this.role !== 'guest') return;
+    if (this.pc) { if (this.dc) { this.dc.onclose = null; try { this.dc.close(); } catch (e) { /* ignore */ } } this.pc.onconnectionstatechange = null; try { this.pc.close(); } catch (e) { /* ignore */ } this.pc = this.dc = null; }
+    this.cand = []; this.hasRemote = false; this.cid = 'dc_' + Math.random().toString(36).slice(2, 13);
+    this.setStatus(n === 1 ? `Recherche du salon NEON-${this.code}…` : `Nouvelle tentative (${n}/4)…`);
+    const pc = this.makePC(c => this.sig('CANDIDATE', dst, { candidate: c }));
+    pc.onconnectionstatechange = () => { if (pc !== this.pc || pc.connectionState !== 'failed') return; if (this.on) this.lost(); else retry(); };
+    this.bindDC(pc.createDataChannel('nw', { ordered: true }));
+    let done = false;
+    const retry = () => {
+      if (done || this.connected || this.role !== 'guest') return; done = true;
+      if (n < 4) this.attempt(dst, n + 1);
+      else this.setStatus('Connexion impossible : vérifiez le code. Sur certains réseaux (4G, entreprise), utilisez la connexion manuelle.', true);
+    };
+    pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => this.sig('OFFER', dst, { sdp: pc.localDescription }))
+      .catch(() => retry());
+    this.later(retry, 7000 + n * 2000);
   },
 
   /* ----- connexion manuelle : codes longs à copier-coller ----- */
@@ -3738,7 +3855,7 @@ const Net = {
   /* ----- canal ouvert : messages ----- */
   opened() {
     this.on = true;
-    this.later(() => this.closeWs(), 1500);
+    if (this.role === 'guest') this.later(() => this.closeWs(), 1500);
     this.send({ t: 'hello', name: MP.myName(), v: VERSION });
     this.later(() => this.send({ t: 'ping', ts: performance.now() }), 2000, true);
     MP.connected();
@@ -5215,7 +5332,7 @@ const Render = {
       if (!e.alive || e.air !== air) continue;
       const x = e.px + (e.x - e.px) * al, y = e.py + (e.y - e.py) * al;
       const spr = Spr.enemy(e.type, e.elite), sz = spr.width / Spr.k, hs = sz / 2;
-      const hidden = e.stealth && e.revealT <= 0, ga = hidden ? .22 : 1;
+      const hidden = hid(e), ga = e.phased ? .12 : hidden ? .22 : 1;
       c.globalAlpha = ga;
       if (e.d.rot) { c.save(); c.translate(x, y); c.rotate(e.ang); c.drawImage(spr, -hs, -hs, sz, sz); c.restore(); }
       else c.drawImage(spr, x - hs, y - hs, sz, sz);
@@ -5697,8 +5814,10 @@ const UI = {
     const p = [`PV ${fmt(d.hp * hpMul)}`];
     if (d.armor) p.push('blindé'); if (d.shield) p.push('bouclier'); if (d.air) p.push('volant'); if (d.stealth) p.push('furtif');
     if (d.spd >= 2) p.push('rapide'); if (d.heal) p.push('soigneur'); if (d.jam) p.push('IEM'); if (d.blink) p.push('téléportation');
-    if (d.spawn) p.push(d.spawn.type === 'scout' ? 'libère des unités' : 'se divise'); if (d.summon) p.push('invoque des drones');
+    if (d.spawn) p.push(d.spawn.type === 'scout' || d.spawn.type === 'mite' ? 'libère des unités' : 'se divise'); if (d.summon) p.push(d.summon.type === 'wraith' ? 'relève les morts' : 'invoque des drones');
     if (d.aura) p.push('protège ses alliés'); if (d.leap) p.push('bondit en avant');
+    if (d.regen) p.push('régénère'); if (d.sapper) p.push('désamorce les pièges'); if (d.phase) p.push('déphasage'); if (d.noSlow) p.push('insensible au gel');
+    if (d.accel) p.push('accélère'); if (d.veil) p.push('rend ses alliés invisibles'); if (d.heavy) p.push('résiste aux trous noirs');
     return p.join(' · ');
   },
 
