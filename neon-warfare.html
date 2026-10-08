@@ -6025,7 +6025,7 @@ const UI = {
       const c = this.cards[k], cost = c.send ? MP.sendCost(c.send) : c.trap ? Traps.cost(c.trap) : Towers.costOf(k);
       if (c.cost !== cost) { c.cost = cost; c.pr.textContent = cost; }
       if (c.send) { const st = G.sendStock[c.send] == null ? SEND_STOCK : G.sendStock[c.send]; if (c.hk.textContent !== String(st)) c.hk.textContent = SENDS[c.send].from > Math.max(1, G.waveNum) ? 'V' + SENDS[c.send].from : st; }
-      const off = G.money < cost || (c.send && !MP.canSend(c.send));
+      const off = G.money < cost || (!!c.send && !MP.canSend(c.send));   // toujours un booléen : toggle(x, undefined) inverserait la classe
       if (off !== c.off) { c.off = off; c.el.classList.toggle('off', off); }
       c.el.classList.toggle('sel', this.placing === k);
     }
