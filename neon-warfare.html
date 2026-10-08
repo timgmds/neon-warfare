@@ -227,7 +227,7 @@ body.no-crt #crt{display:none}
 #bossintro p{margin:2px 0 0;font-size:12px;color:#c6d3e8;line-height:1.4}
 .gm-seg{margin:0 0 6px}
 .seedrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
-.seedrow .mp-in{width:170px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.seedrow .mp-in{width:220px;max-width:100%;font-family:var(--mono);letter-spacing:.04em}
 .hist{display:grid;gap:6px}
 .hrow{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:8px 12px}
 .hrow b{font-size:20px;font-family:var(--mono);color:var(--txt);grid-row:1/3}
@@ -693,7 +693,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   <div class="lbl-s" style="margin-bottom:6px">MODE</div><div class="seg gm-seg" id="gm-row"></div><div class="doc-desc" id="gm-desc"></div>
   <div class="lbl-s" style="margin-bottom:8px">MENACE</div>
   <div class="dgrid" id="diff-grid"></div>
-  <div class="seedrow"><span class="lbl-s">CODE DE CARTE <span style="opacity:.6">(facultatif : rejouer le défi d'un ami)</span></span><input id="seed-in" class="mp-in" maxlength="20" placeholder="ex. 1A2B3C-L-S" autocomplete="off"><span id="seed-ok" class="note"></span></div></div></div>
+  <div class="seedrow"><span class="lbl-s">GRAINE / CODE DE CARTE <span style="opacity:.6">(facultatif : un nombre, un mot, ou le code d'un ami)</span></span><input id="seed-in" class="mp-in" maxlength="32" placeholder="ex. 42, neon, 1A2B3C-L-S" autocomplete="off"><span id="seed-ok" class="note"></span></div></div></div>
 <div class="ov" id="ov-cards"><div class="modal cmodal" style="width:900px">
   <h2 id="cards-t">PROTOCOLE</h2><div class="sub" id="cards-sub"></div>
   <div class="cgrid" id="cards"></div>
@@ -4499,8 +4499,10 @@ const Hist = {
   // code de défi : graine + orientation + difficulté + mode → même carte et mêmes vagues pour un ami
   code(g = G) { return `${g.seed.toString(36).toUpperCase()}-${g.portrait ? 'P' : 'L'}-${g.diffKey[0].toUpperCase()}${g.gm !== 'classic' ? '-' + g.gm[0].toUpperCase() : ''}`; },
   parse(c) {
-    const m = /^([0-9A-Z]+)-([PL])(?:-([RSHC]))?(?:-([CRS]))?$/i.exec(String(c || '').trim().toUpperCase());
-    if (!m) return null;
+    const raw = String(c || '').trim(), m = /^([0-9A-Z]+)-([PL])(?:-([RSHC]))?(?:-([CRS]))?$/i.exec(raw.toUpperCase());
+    if (!raw) return null;
+    // graine libre : un nombre tel quel, ou n'importe quel mot / phrase (« neon », « Timoti 2026 »…)
+    if (!m) return { seed: /^\d{1,9}$/.test(raw) ? +raw : hashStr(raw.toLowerCase()) | 0, portrait: null, diff: null, gm: null, free: raw };
     const diffs = { R: 'recrue', S: 'standard', H: 'hardcore', C: 'cauchemar' }, gms = { C: 'chaos', R: 'rush', S: 'sandbox' };
     return { seed: parseInt(m[1], 36) | 0, portrait: m[2] === 'P', diff: diffs[m[3]] || null, gm: gms[m[4]] || 'classic' };
   }
@@ -6462,7 +6464,7 @@ const UI = {
         const go = () => {
           const sd = Hist.parse($('seed-in').value);
           this.closeAll();
-          if (sd) Game.newGame(sd.diff || k, { gm: sd.gm, seed: sd.seed, portrait: sd.portrait }); else Game.newGame(k, { gm });
+          if (sd) Game.newGame(sd.diff || k, { gm: sd.gm || gm, seed: sd.seed, portrait: sd.portrait == null ? undefined : sd.portrait }); else Game.newGame(k, { gm });
         };
         if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par la nouvelle.', go);
         else go();
@@ -6470,7 +6472,11 @@ const UI = {
       g.appendChild(el);
     }
     const si = $('seed-in'), so = $('seed-ok');
-    si.oninput = () => { const sd = Hist.parse(si.value); so.innerHTML = !si.value.trim() ? '' : sd ? `<b style="color:var(--ok)">Code valide</b> · ${sd.diff ? DIFFS[sd.diff].name : 'menace au choix'} · ${GMODES[sd.gm].n} — cliquez une menace pour lancer.` : '<span style="color:var(--dang)">Code invalide</span>'; };
+    si.oninput = () => {
+      const sd = Hist.parse(si.value);
+      so.innerHTML = !sd ? '' : sd.free ? `<b style="color:var(--ok)">Graine « ${sd.free.replace(/</g, '&lt;')} »</b> · même texte = même carte et mêmes vagues — cliquez une menace pour lancer.`
+        : `<b style="color:var(--ok)">Code de défi</b> · ${sd.diff ? DIFFS[sd.diff].name : 'menace au choix'} · ${GMODES[sd.gm].n} — cliquez une menace pour lancer.`;
+    };
     si.oninput();
     this.open('ov-new');
   },
@@ -6490,7 +6496,7 @@ const UI = {
       ]);
       this.open('ov-pause'); Sfx.play('ui'); return;
     }
-    $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · Graine <b>${G.seed}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
+    $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · Code de carte <b>${Hist.code()}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
       `<br>Doctrine <b>${DOCTRINES[G.doctrine].n}</b> · Commandant niv. <b>${Store.data.cmd.lvl}</b>` +
       (G.daily ? '<br>' + G.mutKeys.map(k => `<b style="color:var(--gold)">${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>') : '');
     this.btns($('pause-btns'), [
@@ -7162,6 +7168,7 @@ const UI = {
       <h3>PROGRESSION</h3><ul>
         <li><b>Arbre de compétences</b> (<kbd>K</kbd>) : 18 compétences en 3 branches, payées en nanites, pour la partie en cours. Les nœuds finaux débloquent la <b>Cryo-Bombe</b> et la <b>Surcharge</b>.</li>
         <li><b>Héritage</b> : les fragments gagnés à chaque fin de partie achètent des bonus permanents.</li>
+        <li><b>Graine libre</b> : dans Nouvelle partie, tapez un nombre ou n'importe quel mot (« neon », votre prénom…) : le même texte donne toujours la même carte et les mêmes vagues.</li>
         <li><b>Défier un ami</b> : à la fin d'une partie, copiez son <b>code de carte</b> (ex. 1A2B3C-L-S). Saisi dans Nouvelle partie, il redonne exactement la même carte et les mêmes vagues. Le <b>Palmarès</b> garde l'historique de vos 30 dernières parties.</li>
         <li><b>Analyse de combat</b> (<kbd>G</kbd>) : graphiques de la partie en cours — dégâts, éliminations, tirs et rentabilité de chaque tourelle, et dégâts par vague. Le <b>Codex</b> réunit les fiches de tout ce que vous avez rencontré.</li>
         <li>La partie est <b>sauvegardée automatiquement</b> entre les vagues.</li></ul>
