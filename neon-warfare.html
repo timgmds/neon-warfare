@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#05060c">
-<title>Neon Warfare 8</title>
+<title>Neon Warfare 9</title>
 <style>
 /* Univers unique et assumé : écran d'arcade néon, toujours sombre. */
 :root{
@@ -213,6 +213,19 @@ body.no-crt #crt{display:none}
 #bossbar{position:absolute;left:50%;transform:translateX(-50%);top:66px;width:min(560px,70vw);z-index:25;display:none;pointer-events:none}
 #bossbar .nm{text-align:center;font-size:11px;letter-spacing:.5em;color:var(--dang);font-weight:800;text-shadow:0 0 8px var(--dang);margin-bottom:4px;animation:blink 1s infinite alternate}
 #bossbar .tr{position:relative;height:10px;background:rgba(0,0,0,.8);border:1px solid var(--dang);border-radius:6px;overflow:hidden;box-shadow:0 0 18px rgba(255,42,109,.35)}
+#callout{position:absolute;left:0;right:0;top:34%;z-index:34;text-align:center;pointer-events:none}
+#callout b{display:inline-block;font-size:clamp(18px,3.4vw,30px);font-weight:900;letter-spacing:.22em;color:#fff;font-style:italic;
+  text-shadow:0 0 12px var(--cc),0 0 30px var(--cc);animation:callout 1.4s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes callout{0%{opacity:0;transform:scale(2.2) rotate(-4deg)}15%{opacity:1;transform:scale(1) rotate(-2deg)}75%{opacity:1;transform:scale(1.04) rotate(-2deg)}100%{opacity:0;transform:scale(.9) translateY(-14px) rotate(-2deg)}}
+#bossintro{position:absolute;left:50%;top:22%;z-index:36;display:none;align-items:center;gap:14px;pointer-events:none;transform:translateX(-50%);
+  width:min(520px,92vw);padding:12px 16px;border-radius:12px;background:linear-gradient(90deg,rgba(40,0,12,.92),rgba(5,6,12,.92));border:1px solid var(--bc);box-shadow:0 0 30px color-mix(in srgb,var(--bc) 45%,transparent)}
+#bossintro.show{display:flex;animation:bossin 3.4s ease forwards}
+@keyframes bossin{0%{opacity:0;transform:translateX(-50%) translateX(-60px) skewX(-8deg)}10%{opacity:1;transform:translateX(-50%)}85%{opacity:1;transform:translateX(-50%)}100%{opacity:0;transform:translateX(-50%) translateX(60px)}}
+#bossintro canvas{width:64px;height:64px;flex:0 0 auto}
+#bossintro span{font-size:10px;letter-spacing:.35em;color:var(--dang);font-weight:800}
+#bossintro b{display:block;font-size:22px;letter-spacing:.25em;color:var(--bc);text-shadow:0 0 12px var(--bc)}
+#bossintro p{margin:2px 0 0;font-size:12px;color:#c6d3e8;line-height:1.4}
+.gm-seg{margin:0 0 6px}
 #evchip{position:absolute;left:50%;transform:translateX(-50%);top:66px;z-index:25;display:none;align-items:center;gap:8px;pointer-events:none;
   padding:5px 12px;border-radius:20px;border:1px solid var(--ec,#fff);background:rgba(3,6,12,.85);box-shadow:0 0 14px var(--ec,#fff);font-size:11px;font-weight:800;letter-spacing:.2em;color:#fff;white-space:nowrap}
 #evchip.low{margin-top:38px}
@@ -651,21 +664,24 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <div id="mp-wait">EN ATTENTE DE VOTRE PARTENAIRE…</div>
 <div id="tpanel" class="panel"></div>
 <div id="banner"></div>
+<div id="callout"></div>
+<div id="bossintro"><canvas id="bi-cv"></canvas><div><span>⚠ ALERTE BOSS</span><b id="bi-n"></b><p id="bi-d"></p></div></div>
 <div id="toasts"></div>
 <div id="tip"></div>
 <div id="fps"></div>
 
 <div class="ov" id="ov-menu">
   <div class="menu">
-    <div class="title">NEON WARFARE<span>FUSION PROTOCOL · 8</span></div>
+    <div class="title">NEON WARFARE<span>FUSION PROTOCOL · 9</span></div>
     <div class="cmdb" id="menu-cmd"></div>
     <div class="mbtns" id="menu-btns"></div>
     <div class="mfoot" id="menu-foot"></div>
   </div>
 </div>
 <div class="ov" id="ov-new"><div class="modal" style="width:880px"><button class="mclose" data-close>✕</button>
-  <h2>NOUVELLE PARTIE</h2><div class="sub">Choisissez votre doctrine, puis le niveau de menace. Une carte unique est générée à chaque partie.</div>
+  <h2>NOUVELLE PARTIE</h2><div class="sub">Choisissez votre doctrine et votre mode, puis le niveau de menace. Une carte unique est générée à chaque partie.</div>
   <div class="lbl-s">DOCTRINE</div><div class="docs" id="doc-row"></div><div class="doc-desc" id="doc-desc"></div>
+  <div class="lbl-s" style="margin-bottom:6px">MODE</div><div class="seg gm-seg" id="gm-row"></div><div class="doc-desc" id="gm-desc"></div>
   <div class="lbl-s" style="margin-bottom:8px">MENACE</div>
   <div class="dgrid" id="diff-grid"></div></div></div>
 <div class="ov" id="ov-cards"><div class="modal cmodal" style="width:900px">
@@ -725,12 +741,12 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <script>
 'use strict';
 /* =====================================================================
-   NEON WARFARE 8 — FUSION PROTOCOL
+   NEON WARFARE 9 — FUSION PROTOCOL
    Tower defense mono-fichier : aucun asset externe, fonctionne hors-ligne.
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '8.2';
+const VERSION = '9.0';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -1259,6 +1275,14 @@ const RECIPES = [
 ];
 const TIER_NAMES = ['STANDARD', 'SOUTIEN', 'FUSION T2', 'FUSION T3', 'FUSION T4'];
 const COMBO_STEPS = [25, 50, 75, 100, 150, 200, 300, 500];
+const COMBO_CALL = { 25: 'CARNAGE', 50: 'DÉCHAÎNÉ', 75: 'INARRÊTABLE', 100: 'APOCALYPTIQUE', 150: 'LÉGENDAIRE', 200: 'DIVIN', 300: 'COSMIQUE', 500: 'AU-DELÀ DU RÉEL' };
+/* ---------- modes de jeu (écran Nouvelle partie) ---------- */
+const GMODES = {
+  classic: { n: 'Classique', c: '#00f3ff', d: 'Vagues infinies, un boss toutes les 5 vagues. Le mode de référence pour les records.' },
+  rush:    { n: 'Boss Rush', c: '#ff2a6d', d: 'Un boss à chaque vague dès la vague 3. Crédits de départ ×1,5, primes ×1,3, fragments ×1,5.' },
+  chaos:   { n: 'Chaos', c: '#ff8a3d', d: 'Un événement aléatoire presque à chaque vague, dès la vague 3. Fragments ×1,2.' },
+  sandbox: { n: 'Bac à sable', c: '#39ff88', d: 'Crédits et nanites illimités, tous les plans de fusion débloqués : testez tout ! Ni succès, ni XP, ni records.' }
+};
 const STRATS = ['PREMIER', 'FORT', 'FAIBLE', 'PROCHE'];
 
 /* w : coût en « points de menace » — from : première vague d'apparition */
@@ -2325,7 +2349,10 @@ const Enemies = {
     G.enemies.push(e);
     Codex.see('e', type);
     if (o.child && G.waves[e.wave]) G.waves[e.wave].left++;
-    if (e.boss) { Render.shake(8); Sfx.play('boss'); }
+    if (e.boss) {
+      Render.shake(8); Sfx.play('boss');
+      if (!G.demo && !(G.seenBoss || (G.seenBoss = {}))[type]) { G.seenBoss[type] = 1; UI.bossIntro(d, type); }
+    }
     return e;
   },
   update() {
@@ -2433,13 +2460,20 @@ const Enemies = {
     if (G.combo > G.stats.maxCombo) G.stats.maxCombo = G.combo;
     if (G.combo === 100) Ach.unlock('combo');
     Missions.on('kill', 1, e); Missions.on('combo', G.combo);
+    if (!G.demo) {
+      // multi-élimination : 6 ennemis ou plus en moins d'une demi-seconde
+      if (G.tick - (G.mkT || 0) > 30) { G.mkT = G.tick; G.mkN = 0; }
+      if (++G.mkN === 6) UI.callout('MULTI-ÉLIMINATION', '#00f3ff');
+      else if (G.mkN === 12) UI.callout('MASSACRE ×12', '#ff2bd6');
+    }
     if (COMBO_STEPS.includes(G.combo) && !G.demo) {
       FX.float(e.x, e.y - 26, `COMBO ${G.combo} !`, '#ffd23f', 18);
+      UI.callout(`${COMBO_CALL[G.combo]} ×${G.combo}`, '#ffd23f');
       Sfx.play('combo', 1, 1 + COMBO_STEPS.indexOf(G.combo) * .12);
       UI.comboBurst = performance.now();
     }
     const cm = 1 + Math.min(1, Math.floor(G.combo / 10) * .1);
-    const bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * G.mut.bounty * (1 + .02 * (G.waveNum - 1))));
+    const bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * G.mut.bounty * (G.gm === 'rush' ? 1.3 : 1) * (1 + .02 * (G.waveNum - 1))));
     gain(bounty, null);
     if (UI.dmgNums || e.boss) FX.float(e.x, e.y - 8, '+' + bounty, '#ffd23f', e.boss ? 18 : 10);
     if (e.d.spawn) {
@@ -2975,7 +3009,7 @@ const Waves = {
   // hasard reproductible : une carte donnée produit toujours les mêmes vagues (aperçu fiable, Défi du jour équitable)
   rng(n, salt = 0) { return mulberry32((G.seed ^ Math.imul(n + 1, 2654435761) ^ salt) >>> 0); },
   plan(n) {
-    const R = this.rng(n), boss = n % 5 === 0;
+    const R = this.rng(n), boss = n % 5 === 0 || (G.gm === 'rush' && n >= 3);
     let th = WTHEMES[0];
     if (boss) th = { id: 'boss', name: 'Alerte Boss', countMul: .65 };
     else if (n > 3) { const pool = WTHEMES.filter(t => (t.from || 1) <= n); th = pool[weightedIndex(pool.map(t => t.w), R)]; }
@@ -2997,7 +3031,7 @@ const Waves = {
     return { n, name: th.name, theme: th.id, list: order, counts, bosses: boss ? this.bossesFor(n) : [], hpMul: this.hpMul(n) * (th.hpMul || 1) * G.mut.hp, gapMul: th.gapMul || 1 };
   },
   bossesFor(n) {
-    const k = n / 5 - 1, c = n >= 45 ? 3 : n >= 30 ? 2 : 1, out = [];
+    const rush = G.gm === 'rush', k = rush ? n - 3 : n / 5 - 1, c = rush ? (n >= 30 ? 3 : n >= 15 ? 2 : 1) : n >= 45 ? 3 : n >= 30 ? 2 : 1, out = [];
     for (let i = 0; i < c; i++) out.push(BOSS_ORDER[(k + i) % BOSS_ORDER.length]);
     return out;
   },
@@ -3067,6 +3101,7 @@ const Waves = {
     gain(bonus, null); G.nanites += nano;
     let extra = '';
     if (G.income) { gain(G.income); extra += ` · revenu +${G.income}`; }
+    if (G.gm === 'sandbox') { G.money = Math.max(G.money, 99999); G.nanites = Math.max(G.nanites, 999); }
     if (G.sendStock) G.sendStock = {};
     if (G.mod.interest > 0) {
       const cap = 40 * w.n; let it = 0;
@@ -3458,7 +3493,7 @@ const Cmd = {
   nextDoctrine(l) { return Object.values(DOCTRINES).filter(d => d.lvl > l).sort((a, b) => a.lvl - b.lvl)[0] || null; },
   gain(x) {
     x = Math.round(x);
-    if (!x || (G && G.demo)) return;
+    if (!x || (G && (G.demo || G.gm === 'sandbox'))) return;
     const c = Store.data.cmd;
     c.xp += x;
     if (G) G.xpRun += x;
@@ -3561,7 +3596,9 @@ const Net = {
   on: false, coop: false, versus: false, me: 0, role: null, pc: null, dc: null, ws: null, code: '', peer: null,
   status: '', err: false, ping: 0, handlers: {}, timers: [], cand: [], hasRemote: false,
   get connected() { return !!this.dc && this.dc.readyState === 'open'; },
-  supported() { return typeof RTCPeerConnection !== 'undefined' && typeof WebSocket !== 'undefined'; },
+  supported() { return typeof RTCPeerConnection !== 'undefined' && typeof WebSocket !== 'undefined' && !this.sandboxed(); },
+  // aperçus intégrés (ex. claude.ai) : les connexions directes y sont bloquées
+  sandboxed() { try { return !!(window.claude && window.claude.hot) || window.top !== window.self && /claude/.test(document.referrer + location.hostname); } catch (e) { return true; } },
   setStatus(s, err = false) { this.status = s; this.err = err; if (UI.top() === 'ov-mp') UI.renderMP(); },
   later(fn, ms, every) { const id = every ? setInterval(fn, ms) : setTimeout(fn, ms); this.timers.push([id, every]); return id; },
 
@@ -4321,7 +4358,7 @@ const Act = {
 
 const Ach = {
   unlock(id) {
-    if (!ACH[id] || Store.data.ach[id] || (G && G.demo)) return;
+    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.gm === 'sandbox'))) return;
     Store.data.ach[id] = Date.now(); Store.data.meta.frags += 3; Store.save();
     UI.toast('Succès : ' + ACH[id].n, ACH[id].d + ' <span class="frags">+3 ✦</span>', '#ffd23f', 4.5);
     Sfx.play('ach');
@@ -4338,7 +4375,7 @@ const SaveSys = {
   pack() {
     const M = G.map;
     return {
-      v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
+      v: 8, gm: G.gm, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
       doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       rs: G.rs, nanites: G.nanites, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
@@ -4363,7 +4400,7 @@ const Game = {
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
       doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null, traps: [],
-      tstats: {}, waveDmg: {}, mLast: null, actor: null, autoWave: !!Store.s.autoWave, wallets: null, net: null,
+      gm: 'classic', tstats: {}, waveDmg: {}, mLast: null, actor: null, autoWave: !!Store.s.autoWave, wallets: null, net: null,
       tokens: [3, 3], slot: [], bets: [], jpot: 500, curse: 0, lastDur: 0, lastMc: 0, leakHist: [], betsWon: 0,
       events: Store.s.events !== false, evQ: null, ev: null, evSpd: 1, evCount: 0, meteors: [], bolts: [], pods: [], craters: [], comet: null, rift: null,
       stats: { kills: 0, gold: 0, maxCombo: 0, leaks: 0, bosses: 0, built: 0, fusions: 0, clean: 0, missions: 0 }
@@ -4379,6 +4416,8 @@ const Game = {
     const portrait = opts.portrait != null ? opts.portrait : View.w < View.h * .9;
     this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
     G.perks = pk; G.net = opts.mp || null;
+    G.gm = GMODES[opts.gm] && !opts.daily ? opts.gm : 'classic';
+    if (G.gm === 'chaos') { G.mutKeys = ['chaos']; G.mut = makeMut(G.mutKeys); }
     if (opts.events != null) G.events = opts.events;
     if (opts.autoWave != null) G.autoWave = opts.autoWave;
     if (daily) { G.daily = daily.date; G.mutKeys = daily.mutKeys; G.mut = makeMut(daily.mutKeys); }
@@ -4394,6 +4433,8 @@ const Game = {
       if (c.length) G.unlocked.add(spick(c).r);
     }
     G.cmdStart = Object.assign({}, Store.data.cmd);
+    if (G.gm === 'rush') G.money = Math.round(G.money * 1.5);
+    if (G.gm === 'sandbox') { G.money = 99999; G.nanites = 999; for (const r of RECIPES) G.unlocked.add(r.r); }
     if (G.net === 'coop') {
       // un portefeuille par joueur : G.money désigne celui de l'auteur de l'action (ou du joueur local)
       const m = Math.round(G.money * COOP.start);
@@ -4427,6 +4468,7 @@ const Game = {
       const map = { C: s.map.C, R: s.map.R, cells: Uint8Array.from(s.map.cells, ch => +ch), paths: s.map.paths || [s.map.path] };
       this.makeState(s.diffKey, map, s.seed);
       if (s.daily) { G.daily = s.daily; G.mutKeys = s.mutKeys || []; G.mut = makeMut(G.mutKeys); }
+      if (s.gm && GMODES[s.gm]) { G.gm = s.gm; if (G.gm === 'chaos' && !s.daily) { G.mutKeys = ['chaos']; G.mut = makeMut(G.mutKeys); } }
       Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, recycle: s.recycle,
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
         doctrine: DOCTRINES[s.doctrine] ? s.doctrine : 'standard', missions: (s.missions || []).filter(m => MDEF[m.id]),
@@ -4486,7 +4528,7 @@ const Game = {
       FX.spark(ex, ey, '#ff2a6d', 80, 7, 60, 3); Render.flash(.6, '#ff2a6d'); Render.shake(25); Sfx.play('boom'); Sfx.play('leak');
       MP.defeat(); return;
     }
-    const frags = Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1)));
+    const frags = G.gm === 'sandbox' ? 0 : Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1) * (G.gm === 'rush' ? 1.5 : 1)));
     Store.data.meta.frags += frags;
     let best, prev;
     if (G.daily) {
@@ -4494,8 +4536,9 @@ const Game = {
       prev = D[G.daily] || 0; best = G.waveNum > prev;
       if (best) D[G.daily] = G.waveNum;
     } else {
-      prev = Store.data.records[G.diffKey] || 0; best = G.waveNum > prev;
-      if (best) Store.data.records[G.diffKey] = G.waveNum;
+      const rk = G.gm === 'classic' ? G.diffKey : G.diffKey + ':' + G.gm;
+      prev = Store.data.records[rk] || 0; best = G.gm !== 'sandbox' && G.waveNum > prev;
+      if (best) Store.data.records[rk] = G.waveNum;
     }
     Store.data.stats.kills += G.stats.kills;
     Store.data.save = null;
@@ -5751,6 +5794,20 @@ const UI = {
     $('bb-fill').style.width = (Math.max(0, b.hp / b.maxHp) * 100).toFixed(1) + '%';
     $('bb-sh').style.width = b.maxShield ? (b.shield / b.maxShield * 100).toFixed(1) + '%' : '0';
   },
+  callout(txt, col) {
+    if (Demo.busy) return;
+    const C = $('callout'); C.innerHTML = '';
+    const b = document.createElement('b'); b.textContent = txt; b.style.setProperty('--cc', col || '#ffd23f');
+    C.appendChild(b); clearTimeout(this.coT); this.coT = setTimeout(() => { C.innerHTML = ''; }, 1500);
+  },
+  bossIntro(d, type) {
+    const el = $('bossintro');
+    el.style.setProperty('--bc', d.color);
+    $('bi-n').textContent = d.name; $('bi-d').textContent = LORE[type] || '';
+    Spr.enemyIcon($('bi-cv'), type, 64);
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    clearTimeout(this.biT); this.biT = setTimeout(() => el.classList.remove('show'), 3500);
+  },
   refreshEvent() {
     const el = $('evchip'), L = Events.label();
     if (!L || G.over) { if (this.last.ev) { el.style.display = 'none'; this.last.ev = null; } return; }
@@ -6238,13 +6295,17 @@ const UI = {
   },
   openNew() {
     this.renderDocs();
+    const gm = GMODES[Store.s.gm] ? Store.s.gm : 'classic';
+    $('gm-row').innerHTML = Object.entries(GMODES).map(([k, m]) => `<button data-k="${k}" class="${k === gm ? 'on' : ''}" style="--tc:${m.c}">${m.n.toUpperCase()}</button>`).join('');
+    $('gm-row').querySelectorAll('button').forEach(b => b.onclick = () => { Store.s.gm = b.dataset.k; Store.save(); Sfx.play('ui'); this.openNew(); });
+    $('gm-desc').innerHTML = `<b style="color:${GMODES[gm].c}">${GMODES[gm].n}</b> — ${GMODES[gm].d}`;
     const g = $('diff-grid'); g.innerHTML = '';
     for (const k in DIFFS) {
-      const d = DIFFS[k], rec = Store.data.records[k] || 0, el = document.createElement('div');
+      const d = DIFFS[k], rec = Store.data.records[gm === 'classic' ? k : k + ':' + gm] || 0, el = document.createElement('div');
       el.className = 'dcard'; el.style.setProperty('--dc', d.color);
       el.innerHTML = `<h3>${d.name}</h3><p>${d.desc}</p><div class="st">PV ennemis <b>x${d.hp}</b><br>Intégrité <b>${d.lives}</b> · Crédits <b>${d.money}</b><br>Fragments <b>x${d.frag}</b><br>Record : <b>${rec ? 'vague ' + rec : '—'}</b></div>`;
       el.onclick = () => {
-        const go = () => { this.closeAll(); Game.newGame(k); };
+        const go = () => { this.closeAll(); Game.newGame(k, { gm }); };
         if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par la nouvelle.', go);
         else go();
       };
@@ -6525,7 +6586,7 @@ const UI = {
   mpState: 'home', mpManual: null,
   openMP() {
     if (!Net.supported()) {
-      this.toast('Multijoueur indisponible', 'Ce navigateur (ou cet aperçu) bloque les connexions directes. Ouvrez le fichier neon-warfare.html directement dans Chrome, Edge ou Firefox.', '#ff2a6d', 7);
+      this.toast('Multijoueur indisponible ici', 'Cet aperçu bloque les connexions directes. Téléchargez neon-warfare.html (github.com/timgmds/neon-warfare) et ouvrez-le directement dans Chrome, Edge ou Firefox.', '#ff2a6d', 8);
       return;
     }
     if (!Net.on && this.mpState === 'lobby') this.mpState = 'home';
