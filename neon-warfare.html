@@ -3877,6 +3877,7 @@ const MP = {
       this.stT = now;
       if (Net.versus) Net.send({ t: 'st', lives: Math.ceil(G.lives), max: G.maxLives, wave: G.waveNum, kills: G.stats.kills, inc: G.income || 0, over: G.over });
     }
+    if (Net.coop && Lock.desync) this.resync();
     if (Net.coop && now - (this.curT || 0) > 90) {
       const h = UI.hover;
       if (h.inside && (h.wx !== this.cwx || h.wy !== this.cwy || UI.placing !== this.cpl)) {
@@ -3959,6 +3960,46 @@ const MP = {
       Net.coop = false; Net.versus = false;
     } else if (UI.top() === 'ov-mp') { UI.mpState = 'home'; Net.setStatus('La connexion a été perdue.', true); }
   },
+  // instantané de la partie entre deux vagues (coopération) : tout ce qui influe sur la simulation
+  snap() {
+    const s = SaveSys.pack();
+    const keys = ['tick', 'nextId', 'autoT', 'autoWave', 'tokens', 'jpot', 'bets', 'curse', 'lastDur', 'lastMc', 'leakHist', 'betsWon', 'cardN', 'evCount', 'mLast',
+      'perks', 'net', 'events', 'recycling', 'combo', 'comboT', 'overdriveT', 'ev', 'evSpd', 'evQ', 'pods', 'craters', 'wallets', 'jpot', 'slot', 'income', 'sendStock'];
+    s.x = {}; for (const k of keys) s.x[k] = G[k];
+    s.x.drops = G.drops.map(d => Object.assign({}, d));
+    s.tw = G.towers.map(t => [t.owner, t.heat, t.over ? 1 : 0, t.cd, t.ang, t.aimT, t.ramp, t.stun, t.fresh ? 1 : 0, t.id]);
+    return JSON.parse(JSON.stringify(s));
+  },
+  restore(s) {
+    const wasUI = UI.sel ? [UI.sel.tx, UI.sel.ty] : null;
+    Game.unpack(s);
+    const X = s.x;
+    for (const k in X) if (k !== 'wallets') G[k] = X[k];
+    G.towers.forEach((t, i) => { const a = s.tw[i]; if (!a) return; [t.owner, t.heat, t.over, t.cd, t.ang, t.aimT, t.ramp, t.stun, t.fresh, t.id] = a; t.over = !!t.over; t.fresh = !!t.fresh; });
+    G.rs = s.rs;   // la reconstruction des tourelles consomme du hasard : on remet la graine de l'hôte
+    G.missions = (s.missions || []).filter(m => MDEF[m.id]);
+    G.preview = Waves.plan(G.waveNum + 1);   // après G.net : les PV dépendent du mode
+    if (X.wallets) {
+      G.wallets = X.wallets.slice(); delete G.money;
+      Object.defineProperty(G, 'money', {
+        get() { return this.wallets[this.actor != null ? this.actor : Net.me]; },
+        set(v) { this.wallets[this.actor != null ? this.actor : Net.me] = v; }, enumerable: true, configurable: true
+      });
+    }
+    Skills.apply(); Towers.recalc(); Fusion.scan && Fusion.scan();
+    Render.dirtyMap = true;
+    UI.buildBar(); UI.onPreview(); UI.renderMissions(); UI.refreshHUD(); UI.refreshAbils(true); UI.refreshAuto();
+    UI.deselect(); if (wasUI) { const t = Towers.at(wasUI[0], wasUI[1]); if (t) UI.select(t); }
+  },
+  quiet() {
+    return G.phase === 'prep' && !G.enemies.length && !G.spawnQ.length && !G.strikes.length && !G.vortices.length && !G.meteors.length && !G.bolts.length && !G.comet && !G.rift && !Shots.pool.n;
+  },
+  // l'hôte renvoie l'état complet dès que la partie est calme ; l'invité l'applique au même tick
+  resync() {
+    if (Net.role !== 'host' || !Lock.desync || Lock.hold || !G || G.over || !this.quiet()) return;
+    Lock.hold = true;
+    Net.send({ t: 'snap', s: this.snap() });
+  },
   flagDesync() { if (Lock.desync) return; Lock.desync = true; Net.send({ t: 'desync' }); this.on.desync.call(this); },
   // messages reçus
   on: {
@@ -3989,7 +4030,14 @@ const MP = {
       if (v == null) { Lock.pend.set(m.k, m.v); if (Lock.pend.size > 30) Lock.pend.delete(Lock.pend.keys().next().value); }
       else if (v !== m.v) this.flagDesync();
     },
-    desync() { Lock.desync = true; if (G && G.net) G.desync = true; UI.toast('Désynchronisation', 'Vos deux parties ont divergé (navigateurs différents ?). Elles continuent, mais peuvent différer légèrement.', '#ffd23f', 6); }
+    snap(m) {
+      if (!G || !Net.coop) return;
+      this.restore(m.s); Lock.reset(G.tick);
+      Net.send({ t: 'snapok' });
+      UI.toast('Resynchronisé', 'Votre partie a été réalignée sur celle de l\'hôte.', '#39ff88', 3);
+    },
+    snapok() { if (!G) return; Lock.reset(G.tick); UI.toast('Resynchronisé', 'Les deux parties sont de nouveau identiques.', '#39ff88', 3); },
+    desync() { Lock.desync = true; if (G && G.net) G.desync = true; UI.toast('Désynchronisation', 'Vos deux parties ont divergé (navigateurs différents ?). Elles seront réalignées automatiquement entre deux vagues.', '#ffd23f', 6); }
   }
 };
 
@@ -4284,8 +4332,12 @@ const Ach = {
 const SaveSys = {
   save() {
     if (!G || G.over || G.demo || G.net) return;
+    Store.data.save = this.pack();
+    Store.save();
+  },
+  pack() {
     const M = G.map;
-    Store.data.save = {
+    return {
       v: 8, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
       doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
@@ -4296,7 +4348,6 @@ const SaveSys = {
       towers: G.towers.map(t => [t.key, t.tx, t.ty, t.level, t.invested, t.kills, Math.round(t.dealt), t.strat, t.oc ? 1 : 0, t.spec, t.shots]),
       date: Date.now()
     };
-    Store.save();
   },
   clear() { Store.data.save = null; Store.save(); }
 };
@@ -4363,6 +4414,16 @@ const Game = {
     if (!s) return false;
     try {
       Demo.stop();
+      this.unpack(s);
+      this.start(false);
+      if (G.cardQ > 0) { if (!G.offer) G.offer = Cards.roll(); UI.openCards(); }
+      return true;
+    } catch (e) {
+      console.error(e); G = null; SaveSys.clear(); return false;
+    }
+  },
+  unpack(s) {
+    {
       const map = { C: s.map.C, R: s.map.R, cells: Uint8Array.from(s.map.cells, ch => +ch), paths: s.map.paths || [s.map.path] };
       this.makeState(s.diffKey, map, s.seed);
       if (s.daily) { G.daily = s.daily; G.mutKeys = s.mutKeys || []; G.mut = makeMut(G.mutKeys); }
@@ -4388,11 +4449,6 @@ const Game = {
         dmg: a[3], hp: a[4], max: a[5], cost: a[6], born: 0, hitT: 0, dists: G.map.P.map(P => P.tdist.get(a[2] * G.map.C + a[1])) });
       G.preview = Waves.plan(G.waveNum + 1);
       Missions.fill();
-      this.start(false);
-      if (G.cardQ > 0) { if (!G.offer) G.offer = Cards.roll(); UI.openCards(); }
-      return true;
-    } catch (e) {
-      console.error(e); G = null; SaveSys.clear(); return false;
     }
   },
   start(fresh) {
