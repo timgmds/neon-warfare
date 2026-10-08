@@ -195,6 +195,8 @@ body.no-crt #crt{display:none}
 #banner .t{font-size:clamp(22px,4vw,42px);font-weight:900;letter-spacing:.32em;color:#fff;
   text-shadow:0 0 18px var(--bc,var(--accent)),0 0 42px var(--bc,var(--accent))}
 #banner .s{font-size:12px;letter-spacing:.45em;color:var(--bc,var(--accent));margin-top:8px;font-weight:700}
+#banner .bn{max-width:calc(100% - 24px)}
+#banner .long .t{font-size:clamp(18px,3.2vw,34px);letter-spacing:.18em}
 @keyframes bn{0%{opacity:0;transform:scale(1.35)}12%{opacity:1;transform:scale(1)}78%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-18px)}}
 #toasts{position:absolute;right:14px;bottom:112px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
 .toast{background:linear-gradient(90deg,#0b0f1a,#161c2c);border-left:3px solid var(--tc,var(--gold));padding:9px 14px;border-radius:5px;
@@ -211,6 +213,12 @@ body.no-crt #crt{display:none}
 #bossbar{position:absolute;left:50%;transform:translateX(-50%);top:66px;width:min(560px,70vw);z-index:25;display:none;pointer-events:none}
 #bossbar .nm{text-align:center;font-size:11px;letter-spacing:.5em;color:var(--dang);font-weight:800;text-shadow:0 0 8px var(--dang);margin-bottom:4px;animation:blink 1s infinite alternate}
 #bossbar .tr{position:relative;height:10px;background:rgba(0,0,0,.8);border:1px solid var(--dang);border-radius:6px;overflow:hidden;box-shadow:0 0 18px rgba(255,42,109,.35)}
+#evchip{position:absolute;left:50%;transform:translateX(-50%);top:66px;z-index:25;display:none;align-items:center;gap:8px;pointer-events:none;
+  padding:5px 12px;border-radius:20px;border:1px solid var(--ec,#fff);background:rgba(3,6,12,.85);box-shadow:0 0 14px var(--ec,#fff);font-size:11px;font-weight:800;letter-spacing:.2em;color:#fff;white-space:nowrap}
+#evchip.low{top:104px}
+#evchip i{font-style:normal;color:var(--ec);font-size:14px}
+#evchip s{display:block;width:70px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);overflow:hidden}
+#evchip s b{display:block;height:100%;background:var(--ec)}
 #bb-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--dang),#ff7a1a);width:100%;transition:width .2s}
 #bb-sh{position:absolute;left:0;top:0;height:3px;background:#4df3ff;width:0;transition:width .2s;box-shadow:0 0 6px #4df3ff}
 
@@ -534,6 +542,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   </div>
 </header>
 
+<div id="evchip"><i id="ev-i"></i><span id="ev-n"></span><s><b id="ev-p"></b></s></div>
 <div id="bossbar"><div class="nm" id="bb-name"></div><div class="tr"><div id="bb-fill"></div><div id="bb-sh"></div></div></div>
 
 <footer id="dock" class="hidden">
@@ -703,7 +712,7 @@ const Store = {
   data: null,
   defaults() {
     return {
-      settings: { sfx: .6, music: .3, musicStyle: 'arena', quality: 'auto', theme: 'theme-cyber', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true },
+      settings: { sfx: .6, music: .3, musicStyle: 'arena', quality: 'auto', theme: 'theme-cyber', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true, events: true },
       meta: { frags: 0, perks: {} }, ach: {}, records: {}, daily: {}, stats: { recycled: 0, games: 0, kills: 0 }, save: null, tuto: false,
       cmd: { lvl: 1, xp: 0 }, doctrine: 'standard', codex: { e: {}, t: {} }, mv: 9
     };
@@ -757,7 +766,8 @@ const Sfx = {
   // délai minimal (ms) entre deux occurrences d'un même son : évite la saturation à haute cadence
   gap: { shot: 55, laser: 110, sniper: 90, rail: 140, zap: 80, boom: 80, mortar: 90, missile: 90, pop: 40, hit: 50, crit: 70, flame: 120,
     freeze: 300, pulse: 120, vortex: 300, coin: 45, ui: 30, build: 60, upgrade: 60, sell: 60, error: 140, leak: 160, wave: 400,
-    boss: 800, ach: 600, fuse: 300, nuke: 300, alarm: 1200, mission: 400, levelup: 1000, combo: 200, card: 100 },
+    boss: 800, ach: 600, fuse: 300, nuke: 300, alarm: 1200, mission: 400, levelup: 1000, combo: 200, card: 100,
+    evgood: 800, evbad: 800, meteor: 120, spin: 60, jackpot: 1500, reel: 90, lose: 300, win: 300 },
   play(name, vol = 1, pitch = 1) {
     if (!this.ctx || Store.s.sfx <= 0 || this.ctx.state !== 'running' || Demo.busy) return;
     const now = performance.now(), g = this.gap[name] || 40;
@@ -814,6 +824,9 @@ const Sfx = {
   _combo(t, v, p) { [0, 4, 7, 12].forEach((s, i) => { const f = 440 * p * Math.pow(2, s / 12); this.osc('sawtooth', f, f * 1.01, .12, .03 * v, t + i * .045); }); },
   _card(t, v) { this.noise(.12, .05 * v, t, 'bandpass', 2500, 5000, 2); },
   _fuse(t, v) { this.osc('sawtooth', 180, 1700, .7, .05 * v, t); this.osc('sine', 90, 900, .7, .08 * v, t); this.noise(.6, .05 * v, t + .1, 'highpass', 2000, 8000); },
+  _evgood(t, v) { [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => this.osc('triangle', f, f, .22, .05 * v, t + i * .055)); this.noise(.4, .03 * v, t, 'highpass', 6000, 9000); },
+  _evbad(t, v) { for (let i = 0; i < 2; i++) { this.osc('sawtooth', 720, 360, .45, .05 * v, t + i * .5); this.osc('square', 360, 180, .45, .025 * v, t + i * .5); } },
+  _meteor(t, v) { this.noise(1.1, .07 * v, t, 'bandpass', 2600, 280, 2.5); this.osc('sine', 900, 120, 1.1, .03 * v, t); },
   _nuke(t, v) { this.osc('sawtooth', 1700, 40, 1.1, .09 * v, t); this.noise(1.3, .28 * v, t + .2, 'lowpass', 2200, 40); }
 };
 
@@ -1217,10 +1230,11 @@ const MUTATORS = {
   nanotech:  { n: 'Nanotech', i: '◈', d: 'Nanites de fin de vague x2, primes -20%.', nano: 2, bounty: .8 },
   elite:     { n: 'Élite', i: '★', d: 'Élites 3x plus fréquents, dès la vague 4.', elite: 3 },
   titans:    { n: 'Titans', i: '☠', d: 'Boss +60% de PV, mais +5 nanites par boss.', bossHp: 1.6, bossNano: 5 },
-  fragile:   { n: 'Noyau fragile', i: '♥', d: 'Intégrité -50%, fragments x1,5.', lives: .5, frag: 1.5 }
+  fragile:   { n: 'Noyau fragile', i: '♥', d: 'Intégrité -50%, fragments x1,5.', lives: .5, frag: 1.5 },
+  chaos:     { n: 'Chaos', i: '☄', d: 'Un événement aléatoire presque à chaque vague, fragments x1,2.', events: 3, frag: 1.2 }
 };
 function makeMut(keys) {
-  const m = { spd: 1, armor: 1, armorAdd: 0, count: 1, hp: 1, money: 1, bounty: 1, nano: 1, elite: 1, bossHp: 1, bossNano: 0, lives: 1, frag: 1 };
+  const m = { spd: 1, armor: 1, armorAdd: 0, count: 1, hp: 1, money: 1, bounty: 1, nano: 1, elite: 1, bossHp: 1, bossNano: 0, lives: 1, frag: 1, events: 1 };
   for (const k of keys) {
     const u = MUTATORS[k]; if (!u) continue;
     for (const p in m) if (u[p] !== undefined) m[p] = p === 'armorAdd' || p === 'bossNano' ? m[p] + u[p] : m[p] * u[p];
@@ -1292,7 +1306,8 @@ const ACH = {
   hard15:   { n: 'Masochiste', d: 'Atteindre la vague 15 en Hardcore ou Cauchemar.', i: '☢' },
   overdrive:{ n: 'Pleine Puissance', d: 'Utiliser les 3 capacités dans une même partie.', i: '✺' },
   daily:    { n: 'Défi Relevé', d: 'Atteindre la vague 15 lors d\'un Défi du jour.', i: '☼' },
-  codex:    { n: 'Encyclopédiste', d: 'Compléter entièrement le Codex.', i: '❖' }
+  codex:    { n: 'Encyclopédiste', d: 'Compléter entièrement le Codex.', i: '❖' },
+  chaos:    { n: 'Météorologue', d: 'Vivre 10 événements aléatoires dans une même partie.', i: '☄' }
 };
 
 const ABILS = {
@@ -1305,6 +1320,20 @@ const ABILS = {
 };
 
 /* ---------- Pièges : posés SUR le chemin, à usage unique ou destructibles ---------- */
+/* ---------- Événements aléatoires : surgissent pendant une vague (t : b = aubaine, m = menace, x = imprévu) ---------- */
+const EVENTS = {
+  meteor: { n: 'Pluie d\'astéroïdes', i: '☄', c: '#ff8a3d', t: 'x', w: 3, from: 4, d: 'Des astéroïdes s\'écrasent : dégâts massifs aux ennemis, mais les tourelles touchées sont sonnées. Certains laissent un débris recyclable.' },
+  supply: { n: 'Ravitaillement', i: '⬙', c: '#39ff88', t: 'b', w: 3, from: 3, d: 'Une capsule atterrit sur la carte : cliquez-la avant qu\'elle ne s\'autodétruise (12 s).' },
+  gold:   { n: 'Ruée vers l\'or', i: '$', c: '#ffd23f', t: 'b', w: 2.2, from: 5, dur: 900, mod: { bounty: 2 }, d: 'Primes doublées pendant 15 s.' },
+  surge:  { n: 'Surtension', i: 'ϟ', c: '#00f3ff', t: 'b', w: 2, from: 5, dur: 600, mod: { rate: 1.4 }, d: 'Le réseau s\'emballe : cadence de tir +40 % pendant 10 s.' },
+  solar:  { n: 'Tempête solaire', i: '☀', c: '#ffb13d', t: 'x', w: 2, from: 6, dur: 720, mod: { range: .8, dmg: 1.25 }, d: 'Portée des tourelles -20 % mais dégâts +25 % pendant 12 s.' },
+  blood:  { n: 'Lune de sang', i: '◐', c: '#ff2a6d', t: 'x', w: 2, from: 8, dur: 720, spd: 1.3, mod: { bounty: 1.5 }, d: 'Ennemis 30 % plus rapides pendant 12 s… mais primes +50 %.' },
+  comet:  { n: 'Comète', i: '✶', c: '#9fe8ff', t: 'b', w: 1.4, from: 10, d: 'Une comète remonte le chemin et pulvérise tout ce qu\'elle croise.' },
+  rift:   { n: 'Faille dimensionnelle', i: '◎', c: '#c43dff', t: 'm', w: 1.4, from: 9, d: 'Une faille s\'ouvre au milieu du chemin et libère des ennemis supplémentaires (primes +50 %).' },
+  storm:  { n: 'Orage IEM', i: '⚡', c: '#fff35c', t: 'x', w: 1.4, from: 12, d: 'La foudre frappe la carte : elle électrocute les ennemis mais sonne les tourelles proches.' }
+};
+const EV_KIND = { b: ['AUBAINE', '#39ff88'], m: ['MENACE', '#ff2a6d'], x: ['IMPRÉVU', '#ffd23f'] };
+
 const TRAPS = {
   mine:      { name: 'Mine', cost: 40, color: '#ff5544', max: 8, r: 58, d: 'Explose au passage d\'un ennemi au sol : gros dégâts de zone. Usage unique.' },
   barricade: { name: 'Barricade', cost: 120, color: '#ffae00', max: 4, d: 'Bloque les ennemis au sol, qui doivent la détruire pour passer. Les volants l\'ignorent.' }
@@ -2204,7 +2233,7 @@ const Enemies = {
           FX.ring(e.x, e.y, d.color, 70, 26, 4); FX.spark(e.x, e.y, d.color, 24, 4.5); Render.shake(9); Sfx.play('boom', .6);
         }
       }
-      let sp = e.spd;
+      let sp = e.spd * G.evSpd;
       if (e.leapTo) sp = 0;   // se ramasse avant de bondir
       if (e.freezeT > 0) { e.freezeT--; sp = 0; }
       else if (e.slowT > 0) { e.slowT--; sp *= e.slowF; if (e.slowT === 0) e.slowF = 1; }
@@ -2872,6 +2901,7 @@ const Waves = {
       Sfx.play('wave');
     }
     G.preview = this.plan(n + 1);
+    Events.onLaunch(n);
     UI.onPreview();
     if (UI.sel) UI.renderPanel();
     if (!G.demo) Music.intensity = 1;
@@ -2880,7 +2910,8 @@ const Waves = {
     const Q = G.spawnQ;
     while (Q.length && Q[0].at <= G.tick) {
       const s = Q.shift();
-      Enemies.spawn(s.type, { hpMul: s.hpMul, elite: s.elite, wave: s.wave, pi: s.pi || 0 });
+      const e = Enemies.spawn(s.type, { hpMul: s.hpMul, elite: s.elite, wave: s.wave, pi: s.pi || 0, dist: s.dist });
+      if (s.bmul) { e.bounty *= s.bmul; if (s.dist) { FX.spark(e.x, e.y, '#c43dff', 10, 3); e.px = e.x; e.py = e.y; } }
     }
     for (const k in G.waves) { const w = G.waves[k]; if (w.left <= 0) this.cleared(w); }
     if (G.phase === 'prep' && G.autoWave && !G.over && --G.autoT <= 0) this.launch();
@@ -3146,6 +3177,7 @@ const Skills = {
       if (c.add) for (const p in c.add) m[p] += c.add[p] * s;
     }
     for (const tp of G.timed) { const c = CARDS[tp.id]; if (c && c.ehp) m.ehp *= c.ehp; }
+    if (G.ev && EVENTS[G.ev.k].mod) { const em = EVENTS[G.ev.k].mod; for (const p in em) m[p] *= em[p]; }
     G.mod = m;
   }
 };
@@ -3368,6 +3400,156 @@ const Codex = {
 const Net = { on: false, coop: false, versus: false, me: 0 };
 const Lock = { push() { return false; } };
 
+/* ============================== ÉVÉNEMENTS ALÉATOIRES ==============================
+   Tirés à chaque lancement de vague (hasard de simulation : identiques en coopération), ils se déclenchent
+   quelques secondes plus tard. Les effets à durée passent par G.mod (Skills.apply), les autres sont des entités. */
+const Events = {
+  onLaunch(n) {
+    if (!G.events || G.evQ || n < 3) return;
+    const ch = Math.min(.85, (.22 + n * .008) * G.mut.events);
+    if (sr() >= ch) return;
+    const pool = Object.keys(EVENTS).filter(k => EVENTS[k].from <= Math.max(n, G.mut.events > 1 ? 99 : 0));
+    const k = pool[weightedIndex(pool.map(k => EVENTS[k].w), sr)];
+    G.evQ = { k, at: G.tick + 240 + Math.floor(sr() * 900) };
+  },
+  start(k) {
+    const E = EVENTS[k], K = EV_KIND[E.t];
+    G.evCount = (G.evCount || 0) + 1;
+    if (G.evCount >= 10) Ach.unlock('chaos');
+    if (!G.demo) {
+      UI.banner(`${E.i} ${E.n.toUpperCase()}`, K[0], E.c);
+      UI.toast(E.n, E.d, E.c, 5);
+    }
+    Sfx.play(E.t === 'b' ? 'evgood' : 'evbad');
+    if (E.dur) {
+      if (G.ev) this.end();
+      G.ev = { k, t: E.dur, dur: E.dur };
+      if (E.spd) G.evSpd = E.spd;
+      Skills.apply(); Towers.recalc();
+    }
+    const n = Math.max(1, G.waveNum), M = G.map;
+    if (k === 'meteor') {
+      const cnt = 7 + Math.min(8, Math.floor(n / 4)), al = G.enemies.filter(e => e.alive);
+      for (let i = 0; i < cnt; i++) {
+        let x, y;
+        if (al.length && sr() < .7) { const e = al[Math.floor(sr() * al.length)]; x = e.x + srnd(-40, 40); y = e.y + srnd(-40, 40); }
+        else { x = srnd(.5, M.C - .5) * TILE; y = srnd(.5, M.R - .5) * TILE; }
+        G.meteors.push({ x: clamp(x, 10, M.C * TILE - 10), y: clamp(y, 10, M.R * TILE - 10), t: 70 + i * 24 + Math.floor(sr() * 16), big: sr() < .2 });
+      }
+    } else if (k === 'supply') {
+      const free = [];
+      for (let y = 0; y < M.R; y++) for (let x = 0; x < M.C; x++) if (M.cells[y * M.C + x] === 0 && !G.tgrid[y * M.C + x]) free.push([x, y]);
+      const c = free.length ? free[Math.floor(sr() * free.length)] : [M.C >> 1, M.R >> 1];
+      G.pods.push({ id: G.nextId++, x: (c[0] + .5) * TILE, y: (c[1] + .5) * TILE, age: 0 });
+    } else if (k === 'comet') {
+      const pi = Math.floor(sr() * M.P.length);
+      G.comet = { pi, d: M.P[pi].total, hit: [], trail: [] };
+      Render.shake(6);
+    } else if (k === 'rift') {
+      const pi = Math.floor(sr() * M.P.length), P = M.P[pi], dist = P.total * srnd(.35, .6), w = G.waves[G.waveNum];
+      const types = Object.keys(ENEMIES).filter(t => ENEMIES[t].from <= n && t !== 'carrier');
+      const cnt = 6 + Math.floor(n / 3);
+      for (let i = 0; i < cnt; i++) {
+        G.spawnQ.push({ at: G.tick + 60 + i * 26, type: types[Math.floor(sr() * types.length)], wave: G.waveNum, hpMul: w ? w.hpMul : Waves.hpMul(n), pi, dist, bmul: 1.5 });
+        if (w) w.left++;
+      }
+      G.spawnQ.sort((a, b) => a.at - b.at);
+      Path.posAt(dist, _pt, pi);
+      G.rift = { x: _pt.x, y: _pt.y, t: 60 + cnt * 26 + 90, T: 60 + cnt * 26 + 90 };
+    } else if (k === 'storm') {
+      for (let i = 0; i < 9; i++) G.bolts.push({ x: srnd(.5, M.C - .5) * TILE, y: srnd(.5, M.R - .5) * TILE, t: 40 + i * 38 + Math.floor(sr() * 20) });
+    }
+  },
+  end() {
+    G.ev = null; G.evSpd = 1;
+    Skills.apply(); Towers.recalc();
+  },
+  update() {
+    if (G.evQ && G.tick >= G.evQ.at) { const k = G.evQ.k; G.evQ = null; if (G.phase === 'combat') this.start(k); }
+    if (G.ev && --G.ev.t <= 0) this.end();
+    const n = Math.max(1, G.waveNum), hm = Waves.hpMul(n);
+    // astéroïdes : chute annoncée par une cible, puis impact
+    for (let i = G.meteors.length - 1; i >= 0; i--) {
+      const m = G.meteors[i];
+      if (--m.t > 0) { if (m.t === 60) Sfx.play('meteor'); continue; }
+      G.meteors.splice(i, 1);
+      this.blast(m.x, m.y, m.big ? 95 : 68, (m.big ? 340 : 190) * hm, m.big ? 240 : 150, '#ff8a3d', m.big);
+      const tx = Math.floor(m.x / TILE), ty = Math.floor(m.y / TILE), M = G.map, idx = ty * M.C + tx;
+      if (tx >= 0 && ty >= 0 && tx < M.C && ty < M.R && M.cells[idx] === 0 && !G.tgrid[idx] && sr() < (m.big ? .6 : .22)) { M.cells[idx] = 2; Render.dirtyMap = true; }
+      G.craters.push({ x: m.x, y: m.y, r: m.big ? 46 : 32, life: 900 });
+    }
+    // foudre
+    for (let i = G.bolts.length - 1; i >= 0; i--) {
+      const b = G.bolts[i];
+      if (--b.t > 0) continue;
+      G.bolts.splice(i, 1);
+      FX.bolt(b.x + srnd(-30, 30), b.y - 600, b.x, b.y, '#fff35c', 3, 14);
+      this.blast(b.x, b.y, 60, 150 * hm, 100, '#fff35c', false);
+      Sfx.play('zap');
+    }
+    // capsules de ravitaillement
+    for (let i = G.pods.length - 1; i >= 0; i--) {
+      const p = G.pods[i];
+      if (++p.age === 50) { FX.ring(p.x, p.y, '#39ff88', 40, 20, 3); FX.spark(p.x, p.y, '#39ff88', 14, 3); Render.shake(4); Sfx.play('build'); }
+      if (p.age > 50 + 720) { G.pods.splice(i, 1); FX.spark(p.x, p.y, '#ff2a6d', 16, 3); FX.float(p.x, p.y - 16, 'AUTODESTRUCTION', '#ff2a6d', 11); }
+    }
+    // comète : remonte le chemin depuis le noyau
+    const C = G.comet;
+    if (C) {
+      C.d -= 9;
+      Path.posAt(Math.max(0, C.d), _pt, C.pi);
+      C.trail.unshift(_pt.x, _pt.y); if (C.trail.length > 40) C.trail.length = 40;
+      const r2 = 34 * 34, dmg = 520 * hm;
+      for (const e of G.enemies) if (e.alive && !C.hit.includes(e.id) && d2(e.x, e.y, _pt.x, _pt.y) < r2) { C.hit.push(e.id); Combat.hit(e, e.boss ? dmg * .5 : dmg, null); FX.spark(e.x, e.y, '#9fe8ff', 8, 3); }
+      if ((G.tick & 1) === 0) FX.spark(_pt.x, _pt.y, '#9fe8ff', 2, 2, 20);
+      if (C.d <= 0) { G.comet = null; FX.ring(_pt.x, _pt.y, '#9fe8ff', 60, 24, 3); }
+    }
+    if (G.rift && --G.rift.t <= 0) G.rift = null;
+    for (let i = G.craters.length - 1; i >= 0; i--) if (--G.craters[i].life <= 0) G.craters.splice(i, 1);
+  },
+  // impact de zone : blesse les ennemis, sonne et fait chauffer les tourelles proches
+  blast(x, y, r, dmg, stun, col, big) {
+    const r2 = r * r;
+    for (const e of G.enemies) if (e.alive && d2(e.x, e.y, x, y) <= r2) Combat.hit(e, dmg, null);
+    const tr2 = (r * .75) * (r * .75);
+    for (const t of G.towers) if (d2(t.cx, t.cy, x, y) <= tr2) {
+      t.stun = Math.max(t.stun, stun); if (t.d.heat) t.heat = Math.min(99, t.heat + 35);
+      FX.float(t.cx, t.cy - 18, 'SONNÉE', '#fff35c', 10);
+    }
+    FX.ring(x, y, col, r * 1.2, 26, 4); FX.ring(x, y, '#ffffff', r * .6, 16, 2); FX.spark(x, y, col, big ? 34 : 20, big ? 5.5 : 4, 40, 3);
+    if (Render.hq) for (let i = 0; i < 5; i++) FX.smoke(x + rnd(-14, 14), y + rnd(-14, 14), 60, rnd(5, 9));
+    Render.shake(big ? 14 : 7); if (big) Render.flash(.25, col);
+    Sfx.play('boom', big ? 1 : .7);
+  },
+  // côté interface : toucher une capsule envoie l'action « ouvrir »
+  tapPod(x, y) {
+    for (const p of G.pods) if (p.age >= 50 && d2(x, y, p.x, p.y) < 30 * 30) { Act.do('pod', p.id); return true; }
+    return false;
+  },
+  open(id) {
+    const i = G.pods.findIndex(p => p.id === id); if (i < 0) return;
+    const p = G.pods[i]; G.pods.splice(i, 1);
+    const r = sr(), n = Math.max(1, G.waveNum);
+    let txt, col = '#39ff88';
+    if (r < .5) { const v = Math.round(120 + 30 * n); gain(v); txt = '+' + v + '¢'; col = '#ffd23f'; }
+    else if (r < .78) { const v = 3 + Math.floor(n / 8); G.nanites += v; txt = `+${v} ◈`; col = '#00ffaa'; }
+    else if (r < .92) { for (const k of Abil.keys) G.abil[k] = 0; txt = 'CAPACITÉS RECHARGÉES'; col = '#00f3ff'; UI.refreshAbils(true); }
+    else { const v = Math.min(10, G.maxLives - G.lives); G.lives += v; G.maxLives += 10 - v; G.lives += 10 - v; txt = '+10 ♥'; col = '#ff2a6d'; }
+    FX.float(p.x, p.y - 20, txt, col, 16); FX.ring(p.x, p.y, col, 50, 22, 3); FX.spark(p.x, p.y, col, 22, 4);
+    Sfx.play('mission');
+    Missions.on('pod');
+  },
+  label() {
+    if (G.ev) { const E = EVENTS[G.ev.k]; return { E, p: G.ev.t / G.ev.dur }; }
+    if (G.meteors.length) return { E: EVENTS.meteor, p: -1 };
+    if (G.bolts.length) return { E: EVENTS.storm, p: -1 };
+    if (G.comet) return { E: EVENTS.comet, p: -1 };
+    if (G.rift) return { E: EVENTS.rift, p: G.rift.t / G.rift.T };
+    if (G.pods.length) return { E: EVENTS.supply, p: Math.max(0, 1 - (G.pods[0].age - 50) / 720) };
+    return null;
+  }
+};
+
 /* ============================== ACTIONS DU JOUEUR ==============================
    Tout ce qui modifie la partie à l'initiative d'un joueur passe par ici. En solo l'action s'exécute aussitôt ;
    en coopération elle est horodatée et exécutée au même tick sur les deux machines (lockstep).
@@ -3397,6 +3579,7 @@ const Act = {
     card: i => Cards.pick(i),
     reroll: () => Cards.reroll(),
     drop: id => Drops.grab(id),
+    pod: id => Events.open(id),
     speed: v => Game.setSpeed(v),
     auto: on => { G.autoWave = !!on; if (G.phase === 'prep') G.autoT = 480; UI.refreshAuto(); }
   },
@@ -3457,6 +3640,7 @@ const Game = {
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
       doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null, traps: [],
       tstats: {}, waveDmg: {}, mLast: null, actor: null, autoWave: !!Store.s.autoWave, wallets: null, net: null,
+      events: Store.s.events !== false, evQ: null, ev: null, evSpd: 1, evCount: 0, meteors: [], bolts: [], pods: [], craters: [], comet: null, rift: null,
       stats: { kills: 0, gold: 0, maxCombo: 0, leaks: 0, bosses: 0, built: 0, fusions: 0, clean: 0, missions: 0 }
     };
     Path.build(map);
@@ -3543,7 +3727,7 @@ const Game = {
     if (G.comboT > 0 && --G.comboT === 0) G.combo = 0;
     Enemies.update();
     if (G.over) return;
-    Towers.update(); Shots.update(); Strikes.update(); Traps.update();
+    Towers.update(); Shots.update(); Strikes.update(); Traps.update(); Events.update();
     Enemies.compact();
     Drops.update(); Recycle.update();
     FX.update();
@@ -3996,6 +4180,7 @@ const Render = {
     this.drawFlow(c, now);
     this.drawPortals(c, now);
     this.drawUnder(c, now);
+    this.drawEventsUnder(c, now);
     this.drawTraps(c, now);
     this.drawTowers(c, now);
     this.drawFusePairs(c, now);
@@ -4006,7 +4191,14 @@ const Render = {
     this.drawAdditive(c);
     this.drawDrops(c);
     this.drawOver(c, now);
+    this.drawEventsOver(c, now);
     this.drawFloats(c);
+    if (G.ev) {
+      const col = EVENTS[G.ev.k].c;
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.fillStyle = rgba(col, G.ev.k === 'blood' ? .07 : .035); c.fillRect(0, 0, cv.width, cv.height);
+      c.strokeStyle = rgba(col, .18 + .12 * Math.sin(now * .006)); c.lineWidth = 8 * View.dpr; c.strokeRect(0, 0, cv.width, cv.height);
+    }
     if (G.overdriveT > 0) {
       c.setTransform(1, 0, 0, 1, 0, 0);
       c.strokeStyle = rgba('#ffae00', .25 + .15 * Math.sin(now * .01)); c.lineWidth = 10 * View.dpr; c.strokeRect(0, 0, cv.width, cv.height);
@@ -4301,6 +4493,81 @@ const Render = {
     }
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   },
+  /* ---------- événements aléatoires ---------- */
+  drawEventsUnder(c, t) {
+    for (const k of G.craters) {
+      const a = Math.min(1, k.life / 240);
+      const g = c.createRadialGradient(k.x, k.y, 0, k.x, k.y, k.r);
+      g.addColorStop(0, `rgba(8,5,3,${(.75 * a).toFixed(3)})`); g.addColorStop(.7, `rgba(30,14,6,${(.45 * a).toFixed(3)})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(k.x, k.y, k.r, 0, TAU); c.fill();
+      if (k.life > 600) { c.strokeStyle = rgba('#ff8a3d', (k.life - 600) / 300 * .7); c.lineWidth = 2; c.beginPath(); c.arc(k.x, k.y, k.r * .55, 0, TAU); c.stroke(); }
+    }
+    const rf = G.rift;
+    if (rf) {
+      const life = rf.T - rf.t, sc = Math.min(1, life / 30, rf.t / 40), r = 30 * sc;
+      c.save(); c.translate(rf.x, rf.y);
+      const g = c.createRadialGradient(0, 0, 0, 0, 0, r * 1.6); g.addColorStop(0, 'rgba(0,0,0,.9)'); g.addColorStop(.45, rgba('#c43dff', .55)); g.addColorStop(1, rgba('#c43dff', 0));
+      c.fillStyle = g; c.beginPath(); c.arc(0, 0, r * 1.6, 0, TAU); c.fill();
+      c.strokeStyle = '#e9a8ff'; c.lineWidth = 2;
+      for (let i = 0; i < 3; i++) { c.rotate(t * .003 + i * 2.1); c.beginPath(); c.ellipse(0, 0, r, r * .45, 0, 0, Math.PI * 1.3); c.stroke(); }
+      c.restore();
+    }
+    for (const p of G.pods) {
+      if (p.age < 50) continue;
+      const left = 1 - (p.age - 50) / 720, blink = left < .25 && (t % 300 < 150);
+      c.save(); c.translate(p.x, p.y);
+      c.strokeStyle = rgba('#39ff88', .5 + .3 * Math.sin(t * .008)); c.lineWidth = 2;
+      c.beginPath(); c.arc(0, 0, 22 + 3 * Math.sin(t * .006), 0, TAU); c.stroke();
+      c.strokeStyle = blink ? '#ff2a6d' : '#39ff88'; c.lineWidth = 3;
+      c.beginPath(); c.arc(0, 0, 26, -Math.PI / 2, -Math.PI / 2 + left * TAU); c.stroke();
+      c.fillStyle = '#1a2230'; c.strokeStyle = '#9fb0cc'; c.lineWidth = 1.5;
+      c.beginPath(); c.moveTo(-10, 12); c.lineTo(-12, -4); c.lineTo(-6, -13); c.lineTo(6, -13); c.lineTo(12, -4); c.lineTo(10, 12); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = blink ? '#ff2a6d' : '#39ff88'; c.fillRect(-7, -2, 14, 4);
+      c.fillStyle = '#ffffff'; c.globalAlpha = .6 + .4 * Math.sin(t * .01); c.fillRect(-2, -10, 4, 4); c.globalAlpha = 1;
+      c.restore();
+    }
+  },
+  drawEventsOver(c, t) {
+    // astéroïdes : cible au sol puis rocher en flammes
+    for (const m of G.meteors) {
+      if (m.t > 70) continue;
+      const k = m.t / 70, r = m.big ? 95 : 68;
+      c.strokeStyle = rgba('#ff8a3d', .35 + .55 * (1 - k)); c.lineWidth = 2; c.setLineDash([7, 6]); c.lineDashOffset = t * .05;
+      c.beginPath(); c.arc(m.x, m.y, r * (.6 + .4 * k), 0, TAU); c.stroke(); c.setLineDash([]);
+      c.fillStyle = rgba('#ff8a3d', .08 + .12 * (1 - k)); c.beginPath(); c.arc(m.x, m.y, r * .6, 0, TAU); c.fill();
+      const hx = m.x + 260 * k, hy = m.y - 420 * k, sz = m.big ? 11 : 7;
+      const g = c.createLinearGradient(hx, hy, hx + 70, hy - 113);
+      g.addColorStop(0, 'rgba(255,190,90,.9)'); g.addColorStop(1, 'rgba(255,90,20,0)');
+      c.strokeStyle = g; c.lineWidth = sz * 1.6; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx + 70, hy - 113); c.stroke();
+      c.fillStyle = '#fff2c4'; c.beginPath(); c.arc(hx, hy, sz, 0, TAU); c.fill();
+      c.fillStyle = rgba('#ff8a3d', .5); c.beginPath(); c.arc(hx, hy, sz * 1.8, 0, TAU); c.fill();
+    }
+    for (const b of G.bolts) {
+      if (b.t > 40 || (t % 160 < 60)) continue;
+      c.strokeStyle = rgba('#fff35c', .7); c.lineWidth = 2; c.setLineDash([4, 5]);
+      c.beginPath(); c.arc(b.x, b.y, 60, 0, TAU); c.stroke(); c.setLineDash([]);
+      c.fillStyle = rgba('#fff35c', .1); c.beginPath(); c.arc(b.x, b.y, 60, 0, TAU); c.fill();
+    }
+    for (const p of G.pods) {
+      if (p.age >= 50) continue;
+      const k = 1 - p.age / 50, y = p.y - 320 * k * k;
+      c.fillStyle = rgba('#ffae00', .7); c.beginPath(); c.moveTo(p.x - 6, y + 10); c.lineTo(p.x, y + 26 + Math.random() * 8); c.lineTo(p.x + 6, y + 10); c.fill();
+      c.fillStyle = '#1a2230'; c.strokeStyle = '#9fb0cc'; c.lineWidth = 1.5; c.fillRect(p.x - 9, y - 12, 18, 22); c.strokeRect(p.x - 9, y - 12, 18, 22);
+      c.strokeStyle = rgba('#39ff88', .4); c.setLineDash([4, 4]); c.beginPath(); c.arc(p.x, p.y, 22 * (1 - k * .5), 0, TAU); c.stroke(); c.setLineDash([]);
+    }
+    const C = G.comet;
+    if (C && C.trail.length >= 4) {
+      const T = C.trail; c.lineCap = 'round';
+      for (let i = 2; i < T.length; i += 2) {
+        const a = 1 - i / T.length;
+        c.strokeStyle = `rgba(159,232,255,${(a * .8).toFixed(3)})`; c.lineWidth = 14 * a + 2;
+        c.beginPath(); c.moveTo(T[i - 2], T[i - 1]); c.lineTo(T[i], T[i + 1]); c.stroke();
+      }
+      c.fillStyle = '#ffffff'; c.beginPath(); c.arc(T[0], T[1], 9, 0, TAU); c.fill();
+      c.fillStyle = 'rgba(159,232,255,.35)'; c.beginPath(); c.arc(T[0], T[1], 20, 0, TAU); c.fill();
+    }
+  },
   drawDrops(c) {
     for (const d of G.drops) {
       const bob = d.fly ? 0 : Math.sin(d.ph) * 3;
@@ -4424,7 +4691,7 @@ const Input = {
       if (G.abil[k] <= 0) Act.do('abil', k, Math.round(clamp(h.wx, 0, M.C * TILE)), Math.round(clamp(h.wy, 0, M.R * TILE)));
       return;
     }
-    if (Drops.tap(h.wx, h.wy)) return;
+    if (Drops.tap(h.wx, h.wy) || Events.tapPod(h.wx, h.wy)) return;
     const inMap = h.tx >= 0 && h.ty >= 0 && h.tx < M.C && h.ty < M.R;
     if (UI.placing) {
       if (!inMap) { UI.setPlacing(null); return; }
@@ -4592,6 +4859,7 @@ const UI = {
     const B = $('banner'); B.innerHTML = '';
     const d = document.createElement('div'); d.className = 'bn';
     if (col) d.style.setProperty('--bc', col);
+    if (String(t).length > 12) d.classList.add('long');
     d.innerHTML = `<div class="t">${t}</div>${s ? `<div class="s">${s}</div>` : ''}`;
     B.appendChild(d);
     clearTimeout(this._bt); this._bt = setTimeout(() => d.remove(), 2700);
@@ -4646,7 +4914,7 @@ const UI = {
     this.frameN++;
     if (Game.state !== 'play' || !G) return;
     const f = this.frameN;
-    if (f % 6 === 0) { this.refreshHUD(); this.refreshCombo(); this.refreshBoss(); }
+    if (f % 6 === 0) { this.refreshHUD(); this.refreshCombo(); this.refreshBoss(); this.refreshEvent(); }
     if (f % 4 === 0) this.refreshAbils();
     if (this.sel && f % 12 === 0) this.refreshPanelLive();
     if (f % 30 === 0) this.refreshBadges();
@@ -4706,6 +4974,16 @@ const UI = {
     if (this.last.boss !== b) { this.last.boss = b; el.style.display = 'block'; $('bb-name').textContent = '⚠ ' + b.d.name + (b.elite ? ' ÉLITE' : '') + ' ⚠'; }
     $('bb-fill').style.width = (Math.max(0, b.hp / b.maxHp) * 100).toFixed(1) + '%';
     $('bb-sh').style.width = b.maxShield ? (b.shield / b.maxShield * 100).toFixed(1) + '%' : '0';
+  },
+  refreshEvent() {
+    const el = $('evchip'), L = Events.label();
+    if (!L || G.over) { if (this.last.ev) { el.style.display = 'none'; this.last.ev = null; } return; }
+    if (this.last.ev !== L.E) {
+      this.last.ev = L.E; el.style.display = 'flex'; el.style.setProperty('--ec', L.E.c);
+      $('ev-i').textContent = TXT(L.E.i); $('ev-n').textContent = L.E.n.toUpperCase();
+    }
+    el.classList.toggle('low', !!this.last.boss);
+    const pb = $('ev-p'); pb.parentNode.style.display = L.p < 0 ? 'none' : 'block'; if (L.p >= 0) pb.style.width = (L.p * 100).toFixed(1) + '%';
   },
   refreshSpeed() {
     const b = $('b-speed');
@@ -5212,6 +5490,7 @@ const UI = {
       <div class="opt"><span>Effet CRT<small>Lignes de balayage rétro</small></span><button class="btn" id="o-crt">${tg(s.crt)}</button></div>
       <div class="opt"><span>Secousses & flashs</span><button class="btn" id="o-sh">${tg(s.shake)}</button></div>
       <div class="opt"><span>Chiffres de dégâts</span><button class="btn" id="o-dn">${tg(s.dmgNums)}</button></div>
+      <div class="opt"><span>Événements aléatoires<small>Astéroïdes, ravitaillements, tempêtes… (prochaines parties)</small></span><button class="btn" id="o-ev">${tg(s.events !== false)}</button></div>
       <div class="opt"><span>Compteur FPS<small>Touche F3</small></span><button class="btn" id="o-fps">${tg(s.fps)}</button></div>
       <div class="opt"><span>Démo IA du menu<small>Une partie jouée par l'IA en fond du menu principal</small></span><button class="btn" id="o-demo">${tg(s.demo)}</button></div>
       <div class="opt" style="border:0"><span>Réinitialiser la progression<small>Héritage, succès, records et sauvegarde</small></span><button class="btn danger" id="o-reset">EFFACER</button></div>`;
@@ -5226,6 +5505,7 @@ const UI = {
     $('o-sh').onclick = () => { s.shake = !s.shake; Store.save(); this.openOptions(); };
     $('o-dn').onclick = () => { s.dmgNums = !s.dmgNums; this.dmgNums = s.dmgNums; Store.save(); this.openOptions(); };
     $('o-fps').onclick = () => { this.toggleFps(); this.openOptions(); };
+    $('o-ev').onclick = () => { s.events = s.events === false; Store.save(); this.openOptions(); };
     $('o-demo').onclick = () => {
       s.demo = !s.demo; Store.save();
       if (Game.state === 'menu') { if (s.demo) Demo.start(); else { Demo.stop(); Render.resize(); } }
@@ -5559,6 +5839,9 @@ const UI = {
         <li><b>Héritage</b> : les fragments gagnés à chaque fin de partie achètent des bonus permanents.</li>
         <li><b>Analyse de combat</b> (<kbd>G</kbd>) : graphiques de la partie en cours — dégâts, éliminations, tirs et rentabilité de chaque tourelle, et dégâts par vague. Le <b>Codex</b> réunit les fiches de tout ce que vous avez rencontré.</li>
         <li>La partie est <b>sauvegardée automatiquement</b> entre les vagues.</li></ul>
+      <h3>ÉVÉNEMENTS ALÉATOIRES</h3><ul>
+        <li>Dès la vague 3, une vague sur trois environ réserve une surprise : <b style="color:#ff8a3d">pluie d'astéroïdes</b> (dégâts massifs, mais tourelles sonnées et débris), <b style="color:#39ff88">capsule de ravitaillement</b> à cliquer, <b style="color:#ffd23f">ruée vers l'or</b>, <b style="color:#00f3ff">surtension</b>, <b style="color:#ffb13d">tempête solaire</b>, <b style="color:#ff2a6d">lune de sang</b>, <b style="color:#9fe8ff">comète</b>, <b style="color:#c43dff">faille dimensionnelle</b> ou <b style="color:#fff35c">orage IEM</b>.</li>
+        <li>L'événement en cours s'affiche sous la barre du haut avec sa durée. Ils se désactivent dans les Options.</li></ul>
       <h3>ENNEMIS</h3><ul>
         <li><b>Blindage</b> : réduit chaque impact — privilégiez les gros calibres (Sniper, Railgun, Laser). <b>Bouclier</b> : se régénère. <b>Furtifs</b> : il faut un Radar ou une Stase. <b>Volants</b> : intouchables par Inferno, Titan et Magma.</li>
         <li>Les <b style="color:var(--gold)">élites</b> (cercle doré) sont 3x plus résistants mais lâchent souvent des nanites. Survolez le butin pour le ramasser.</li>
