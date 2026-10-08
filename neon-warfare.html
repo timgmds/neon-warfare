@@ -345,6 +345,46 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .cx .cm{font:10px var(--mono);color:var(--dim);line-height:1.5}
 .cx .cm b{color:#fff}
 .cx p{margin:0;font-size:11px;color:#a9b6cc;line-height:1.45;grid-column:2}
+/* casino */
+.casino .jpot{text-align:center;font-size:11px;letter-spacing:.3em;color:var(--dim);font-weight:700;margin-bottom:8px}
+.casino .jpot b{display:block;font-size:26px;letter-spacing:.08em;color:var(--gold);text-shadow:0 0 14px rgba(255,210,63,.6);margin-top:2px}
+.slot{position:relative;border-radius:16px;padding:16px;background:linear-gradient(180deg,#1a0b26,#0a0612);border:2px solid #ff2bd6;box-shadow:0 0 22px rgba(255,43,214,.4),inset 0 0 30px rgba(0,0,0,.8);overflow:hidden}
+.slot .bulbs{position:absolute;inset:4px;border-radius:12px;pointer-events:none;
+  background:radial-gradient(circle,#ffd23f 0 2px,transparent 3px) 0 0/18px 18px;opacity:.35;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;padding:5px}
+.slot.win .bulbs{animation:bulbs .25s steps(2) infinite;opacity:1}
+.slot.jack{animation:jack .5s infinite alternate}
+.slot.jack .bulbs{animation:bulbs .12s steps(2) infinite;opacity:1}
+@keyframes bulbs{50%{opacity:.25}}
+@keyframes jack{from{box-shadow:0 0 22px #ff2bd6}to{box-shadow:0 0 50px #ffd23f;border-color:#ffd23f}}
+.reels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;position:relative}
+.reel{height:192px;overflow:hidden;border-radius:10px;background:linear-gradient(180deg,#05030a,#16101f 40%,#16101f 60%,#05030a);border:1px solid rgba(255,255,255,.12);position:relative}
+.reel::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.75),transparent 30%,transparent 70%,rgba(0,0,0,.75));pointer-events:none}
+.strip{will-change:transform}
+.sym{height:64px;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;line-height:1}
+.sym.j{font-family:var(--font);font-size:50px;background:linear-gradient(180deg,#ffe066,#ff3d3d);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 6px rgba(255,61,61,.7))}
+.payline{position:absolute;left:10px;right:10px;top:50%;height:2px;margin-top:-1px;background:rgba(255,210,63,.55);box-shadow:0 0 8px #ffd23f;pointer-events:none}
+.coins{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.coins i{position:absolute;top:-30px;font-style:normal;color:#ffd23f;font-weight:900;text-shadow:0 0 6px #ffae00;animation:coin 1.6s ease-in forwards}
+@keyframes coin{to{transform:translateY(300px) rotate(540deg);opacity:.2}}
+.cs-res{min-height:42px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px;font-weight:800;letter-spacing:.06em;margin:10px 0 4px;color:var(--txt)}
+.cs-res.t1{color:var(--ok)}.cs-res.t2{color:var(--gold);text-shadow:0 0 10px rgba(255,210,63,.6)}.cs-res.t3{color:#fff;font-size:22px;text-shadow:0 0 14px #ff2bd6,0 0 28px #ffd23f}.cs-res.tm{color:var(--dang)}
+.cs-ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cs-ctl .seg{flex:1 1 300px;margin:0}
+.cs-ctl .seg button{padding:7px 4px;line-height:1.35}
+.cs-ctl .seg button small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:0;opacity:.85}
+.cs-tok{font-size:10px;letter-spacing:.2em;color:var(--dim);font-weight:700;white-space:nowrap}
+.cs-tok b{font-size:15px;letter-spacing:.15em;color:var(--gold);margin-left:4px}
+.paytab{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 14px;margin-top:14px;font-size:11px;color:#b9c6dd}
+.paytab div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(255,255,255,.06);padding:3px 0}
+.paytab span:first-child{font-weight:900;letter-spacing:.15em;white-space:nowrap}
+.betc{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 12px;cursor:pointer;margin-bottom:8px;transition:border-color .15s,background .15s}
+.betc:hover{border-color:rgba(255,210,63,.6)}
+.betc.on{border-color:var(--gold);background:rgba(255,210,63,.08);box-shadow:0 0 12px rgba(255,210,63,.25)}
+.betc h4{margin:0;font-size:13px;letter-spacing:.12em;color:var(--txt)}
+.betc p{margin:0;font-size:11px;color:#a9b6cc;grid-column:1}
+.betc .od{grid-row:1/3;grid-column:2;font:800 20px var(--mono);color:var(--gold)}
+#wp-bet{display:none;font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--gold);border:1px solid rgba(255,210,63,.5);border-radius:10px;padding:1px 7px;white-space:nowrap}
+@media (max-width:640px){.reel{height:156px}.sym{height:52px;font-size:32px}.sym.j{font-size:40px}.casino .jpot b{font-size:21px}}
 /* analyse de combat */
 .st-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:14px}
 .st-tile{border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;background:rgba(255,255,255,.025);min-width:0}
@@ -530,12 +570,13 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
     <div class="hstat" data-tip="Vague actuelle."><span class="lbl">VAGUE</span><b id="h-wave" style="color:var(--accent)">0</b></div>
   </div>
   <div id="h-center">
-    <div id="wave-prev"><span class="lbl-s">SUIVANTE</span><span id="wp-name"></span><span id="wp-chips"></span></div>
+    <div id="wave-prev"><span class="lbl-s">SUIVANTE</span><span id="wp-name"></span><span id="wp-chips"></span><span id="wp-bet"></span></div>
     <div id="combo"><span>COMBO</span><b id="combo-v">x1.0</b><i id="combo-n"></i></div>
   </div>
   <div class="hud-btns">
     <button class="btn nano" id="b-tree" data-tip="Arbre de compétences [K]">⟁<span class="t"> ARBRE</span><i class="badge" id="bd-tree"></i></button>
     <button class="btn" id="b-lab" style="border-color:var(--sec);color:var(--sec)" data-tip="Labo de fusion [L]">✧<span class="t"> FUSION</span><i class="badge" id="bd-lab"></i></button>
+    <button class="btn gold" id="b-casino" data-tip="Casino néon : machine à sous et paris, entre les vagues [C]">$<span class="t"> CASINO</span><i class="badge" id="bd-casino"></i></button>
     <button class="btn" id="b-stats" data-tip="Analyse de combat : quelle tourelle fait le plus de dégâts, tire le plus… [G]">▥<span class="t"> STATS</span></button>
     <button class="btn" id="b-speed" data-tip="Vitesse de jeu [F]">▶ 1x</button>
     <button class="btn" id="b-pause" data-tip="Pause et menu [Échap]">❚❚</button>
@@ -595,6 +636,21 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   <h2>CODEX</h2><div class="sub" id="codex-sub"></div>
   <div class="seg" id="codex-tabs" style="max-width:340px;margin-bottom:14px"><button data-k="e" class="on">ENNEMIS</button><button data-k="t">TOURELLES</button></div>
   <div class="cxgrid" id="codex"></div></div></div>
+<div class="ov" id="ov-casino"><div class="modal casino" style="width:640px"><button class="mclose" data-close>✕</button>
+  <h2>CASINO NÉON</h2><div class="sub" id="cs-sub"></div>
+  <div class="seg" id="cs-tabs" style="margin-bottom:14px"><button data-k="slot">MACHINE À SOUS</button><button data-k="bet">PARIS SUR LA VAGUE</button></div>
+  <div id="cs-slot">
+    <div class="jpot">JACKPOT PROGRESSIF <b id="cs-jp">0¢</b></div>
+    <div class="slot" id="slot"><div class="bulbs"></div>
+      <div class="reels"><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div></div>
+      <div class="payline"></div><div class="coins" id="cs-coins"></div>
+    </div>
+    <div class="cs-res" id="cs-res"></div>
+    <div class="cs-ctl"><div class="seg" id="cs-lvl"></div><div class="cs-tok" id="cs-tok"></div></div>
+    <button class="btn gold big" id="cs-spin" style="width:100%;margin-top:10px">TIRER LE LEVIER</button>
+    <div class="paytab" id="cs-pay"></div>
+  </div>
+  <div id="cs-bet" hidden></div></div></div>
 <div class="ov" id="ov-stats"><div class="modal" style="width:900px"><button class="mclose" data-close>✕</button>
   <h2>ANALYSE DE COMBAT</h2><div class="sub" id="st-sub"></div>
   <div class="st-tiles" id="st-tiles"></div>
@@ -827,6 +883,14 @@ const Sfx = {
   _evgood(t, v) { [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => this.osc('triangle', f, f, .22, .05 * v, t + i * .055)); this.noise(.4, .03 * v, t, 'highpass', 6000, 9000); },
   _evbad(t, v) { for (let i = 0; i < 2; i++) { this.osc('sawtooth', 720, 360, .45, .05 * v, t + i * .5); this.osc('square', 360, 180, .45, .025 * v, t + i * .5); } },
   _meteor(t, v) { this.noise(1.1, .07 * v, t, 'bandpass', 2600, 280, 2.5); this.osc('sine', 900, 120, 1.1, .03 * v, t); },
+  _reel(t, v) { this.osc('square', 1900, 1500, .03, .02 * v, t); },
+  _win(t, v) { [784, 988, 1175, 1568].forEach((f, i) => this.osc('square', f, f, .12, .035 * v, t + i * .07)); this.osc('triangle', 392, 392, .5, .05 * v, t); },
+  _lose(t, v) { [392, 330, 262].forEach((f, i) => this.osc('triangle', f, f * .98, .2, .045 * v, t + i * .13)); },
+  _jackpot(t, v) {
+    for (let i = 0; i < 14; i++) this.osc('square', 1046 * Math.pow(2, (i % 7) / 12 * 2), 1046 * Math.pow(2, (i % 7) / 12 * 2), .1, .03 * v, t + i * .06);
+    [523, 659, 784, 1047].forEach(f => this.osc('sawtooth', f, f, 1.2, .025 * v, t + .85));
+    for (let i = 0; i < 10; i++) this.osc('square', 1250 + i * 60, 1250 + i * 60, .05, .02 * v, t + .9 + i * .09);
+  },
   _nuke(t, v) { this.osc('sawtooth', 1700, 40, 1.1, .09 * v, t); this.noise(1.3, .28 * v, t + .2, 'lowpass', 2200, 40); }
 };
 
@@ -1307,7 +1371,9 @@ const ACH = {
   overdrive:{ n: 'Pleine Puissance', d: 'Utiliser les 3 capacités dans une même partie.', i: '✺' },
   daily:    { n: 'Défi Relevé', d: 'Atteindre la vague 15 lors d\'un Défi du jour.', i: '☼' },
   codex:    { n: 'Encyclopédiste', d: 'Compléter entièrement le Codex.', i: '❖' },
-  chaos:    { n: 'Météorologue', d: 'Vivre 10 événements aléatoires dans une même partie.', i: '☄' }
+  chaos:    { n: 'Météorologue', d: 'Vivre 10 événements aléatoires dans une même partie.', i: '☄' },
+  jackpot:  { n: 'Jackpot !', d: 'Aligner trois 7 à la machine à sous.', i: '7' },
+  bookie:   { n: 'Bookmaker', d: 'Gagner 5 paris dans une même partie.', i: '⚖' }
 };
 
 const ABILS = {
@@ -1332,6 +1398,19 @@ const EVENTS = {
   rift:   { n: 'Faille dimensionnelle', i: '◎', c: '#c43dff', t: 'm', w: 1.4, from: 9, d: 'Une faille s\'ouvre au milieu du chemin et libère des ennemis supplémentaires (primes +50 %).' },
   storm:  { n: 'Orage IEM', i: '⚡', c: '#fff35c', t: 'x', w: 1.4, from: 12, d: 'La foudre frappe la carte : elle électrocute les ennemis mais sonne les tourelles proches.' }
 };
+/* ---------- Casino : symboles de la machine à sous (poids par rouleau) ---------- */
+const SLOT_SYM = {
+  c: { g: '¢', w: 27, col: '#ffd23f', n: 'Crédits' },
+  n: { g: '◈', w: 16, col: '#00ffaa', n: 'Nanites' },
+  k: { g: '★', w: 9, col: '#ff2bd6', n: 'Protocole' },
+  a: { g: '☄', w: 11, col: '#ff8a3d', n: 'Capacités' },
+  s: { g: '☠', w: 17, col: '#8a93a8', n: 'Crâne' },
+  h: { g: '♥', w: 10, col: '#ff2a6d', n: 'Intégrité' },
+  j: { g: '7', w: 10, col: '#ff3d3d', n: 'Sept' }
+};
+const SLOT_KEYS = Object.keys(SLOT_SYM);
+const BET_LVL = [{ n: 'PRUDENTE', m: 1 }, { n: 'AUDACIEUSE', m: 3 }, { n: 'FOLLE', m: 8 }];
+const BET_STAKE = [{ n: 'PETITE', m: 2 }, { n: 'GROSSE', m: 5 }, { n: 'ÉNORME', m: 12 }];
 const EV_KIND = { b: ['AUBAINE', '#39ff88'], m: ['MENACE', '#ff2a6d'], x: ['IMPRÉVU', '#ffd23f'] };
 
 const TRAPS = {
@@ -2181,7 +2260,7 @@ const Enemies = {
       slowT: 0, slowF: 1, burnT: 0, burnDps: 0, burnSrc: null, freezeT: 0, revealT: 0, markT: 0, markV: 0, hitT: 0, shCd: 0,
       wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: sr() * TAU,
       tA: d.summon ? d.summon.every : d.heal ? 60 : srndi(90, 200), tB: srndi(120, 240), sumLeft: d.summon ? d.summon.max : 0,
-      tC: d.aura ? 90 : 0, tD: d.leap ? d.leap.every : 0, leapTo: 0
+      tC: d.aura ? 90 : 0, tD: d.leap ? d.leap.every : 0, leapTo: 0, t0: G.tick
     };
     Path.place(e); e.px = e.x; e.py = e.y;
     G.enemies.push(e);
@@ -2291,6 +2370,7 @@ const Enemies = {
     if (src) { src.kills++; if (src.ts) src.ts.kills++; }
     G.stats.kills++;
     G.combo++; G.comboT = 150;
+    if (w) { if (G.combo > (w.mc || 0)) w.mc = G.combo; if (e.boss) { w.bk = (w.bk || 0) + 1; if (G.tick - e.t0 > 1500) w.bossSlow = true; } }
     if (G.combo > G.stats.maxCombo) G.stats.maxCombo = G.combo;
     if (G.combo === 100) Ach.unlock('combo');
     Missions.on('kill', 1, e); Missions.on('combo', G.combo);
@@ -2335,7 +2415,7 @@ const Enemies = {
   leak(e) {
     e.alive = false;
     const w = G.waves[e.wave];
-    if (w) { w.left--; w.leaks++; }
+    if (w) { w.left--; w.leaks++; if (e.boss) w.bossSlow = true; }
     const dmg = e.d.leak * (e.elite ? 2 : 1);
     G.lives -= dmg; G.combo = 0; G.stats.leaks++;
     const [x, y] = G.map.P[e.pi].exit;
@@ -2868,7 +2948,9 @@ const Waves = {
     if (!this.canLaunch()) return;
     const early = G.phase === 'combat', P = G.preview, n = P.n;
     G.waveNum = n;
-    const w = { n, left: 0, leaks: 0, hpMul: P.hpMul, t0: G.tick };
+    const hpm = P.hpMul * (G.curse || 1);
+    if (G.curse) { G.curse = 0; if (!G.demo) UI.toast('Malédiction', 'Les ennemis de cette vague ont +15 % de PV.', '#8a93a8', 3); }
+    const w = { n, left: 0, leaks: 0, hpMul: hpm, t0: G.tick };
     G.waves[n] = w;
     const base = G.tick + 40, gap = Math.max(11, 30 - n * .35) * P.gapMul, R = this.rng(n, 0x5eed);
     const eliteP = n >= (G.mut.elite > 1 ? 4 : 8) ? Math.min(.15, .03 + n * .002) * G.mut.elite : 0;
@@ -2878,12 +2960,12 @@ const Waves = {
       const type = P.list[i];
       // sur une carte en fourche, chaque paquet d'ennemis choisit son entrée
       if (nP > 1 && (i === 0 || P.list[i - 1] !== type)) pi = Math.floor(R() * nP);
-      G.spawnQ.push({ at: Math.round(t), type, elite: R() < eliteP, wave: n, hpMul: P.hpMul, pi });
+      G.spawnQ.push({ at: Math.round(t), type, elite: R() < eliteP, wave: n, hpMul: hpm, pi });
       w.left++;
       const same = i + 1 < P.list.length && P.list[i + 1] === type;
       t += gap * (ENEMIES[type].spd > 2 ? .55 : 1) * (same ? 1 : 2.2) * (.85 + R() * .3);
     }
-    P.bosses.forEach((b, i) => { G.spawnQ.push({ at: Math.round(base + (t - base) * .4 + i * 150), type: b, wave: n, hpMul: P.hpMul, pi: Math.floor(R() * nP) }); w.left++; });
+    P.bosses.forEach((b, i) => { G.spawnQ.push({ at: Math.round(base + (t - base) * .4 + i * 150), type: b, wave: n, hpMul: hpm, pi: Math.floor(R() * nP) }); w.left++; });
     G.spawnQ.sort((a, b) => a.at - b.at);
     for (const tw of G.towers) tw.fresh = false;
     G.phase = 'combat';
@@ -2918,6 +3000,9 @@ const Waves = {
   },
   cleared(w) {
     delete G.waves[w.n];
+    G.lastDur = G.tick - w.t0; G.lastMc = w.mc || 0; G.leakHist.push(w.leaks > 0); if (G.leakHist.length > 3) G.leakHist.shift();
+    Casino.resolve(w);
+    G.tokens = G.tokens.map(() => Casino.TOKENS);
     const tb = Cards.tick();
     const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus * tb.cash), nano = Math.round((1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0)) * G.mut.nano) + tb.nano;
     gain(bonus, null); G.nanites += nano;
@@ -3550,6 +3635,83 @@ const Events = {
   }
 };
 
+/* ============================== CASINO : MACHINE À SOUS & PARIS ==============================
+   Ouvert entre les vagues. Tirages et paris passent par Act (hasard de simulation) : en coopération,
+   chaque joueur joue avec son propre portefeuille et ses propres jetons. */
+const Casino = {
+  TOKENS: 3,
+  pl() { return G.actor != null ? G.actor : 0; },
+  base() { return Math.round((20 + 8 * Math.max(1, G.waveNum)) / 5) * 5; },
+  betCost(lvl) { return this.base() * BET_LVL[lvl].m; },
+  tokens(p = this.pl()) { return G.tokens[p] || 0; },
+  spin(lvl) {
+    const p = this.pl(), cost = this.betCost(lvl);
+    if (G.phase !== 'prep' || this.tokens(p) <= 0 || !BET_LVL[lvl]) return false;
+    if (G.money < cost) { UI.noMoney(); return false; }
+    G.money -= cost; G.tokens[p]--;
+    const roll = () => { let r = sr() * 100; for (const k of SLOT_KEYS) { r -= SLOT_SYM[k].w; if (r < 0) return k; } return 'c'; };
+    const R = [roll(), roll(), roll()], n = Math.max(1, G.waveNum);
+    const cnt = {}; for (const k of R) cnt[k] = (cnt[k] || 0) + 1;
+    const three = Object.keys(cnt).find(k => cnt[k] === 3), pair = Object.keys(cnt).find(k => cnt[k] === 2);
+    let cash = 0, txt = 'Perdu…', tier = 0;   // tier : 0 perdu, 1 petit gain, 2 gros gain, 3 jackpot, -1 malédiction
+    if (three === 'j') { cash = cost * 30 + G.jpot; G.nanites += 8; txt = `JACKPOT ! +${fmt(cash)}¢ et +8 ◈`; tier = 3; G.jpot = 400 + 60 * n; Ach.unlock('jackpot'); }
+    else if (three === 'c') { cash = cost * 8; txt = `Triple crédit : +${fmt(cash)}¢`; tier = 2; }
+    else if (three === 'n') { const v = 4 + Math.floor(n / 6); G.nanites += v; cash = cost; txt = `Triple nanite : +${v} ◈ et mise rendue`; tier = 2; }
+    else if (three === 'k') { cash = Math.round(cost * 1.5); G.cardQ++; if (!G.offer) G.offer = Cards.roll(); txt = 'Triple étoile : un protocole offert !'; tier = 2; }
+    else if (three === 'a') { cash = cost * 2; for (const k of Abil.keys) G.abil[k] = 0; txt = 'Triple comète : capacités rechargées !'; tier = 2; UI.refreshAbils(true); }
+    else if (three === 'h') { cash = Math.round(cost * 1.5); const v = Math.min(15, G.maxLives - G.lives); G.lives += 15; G.maxLives += 15 - v; txt = 'Triple cœur : +15 intégrité'; tier = 2; }
+    else if (three === 's') { const v = Math.min(cost, Math.max(0, G.money)); G.money -= v; G.curse = 1.15; txt = `Malédiction ! -${fmt(v)}¢ et vague suivante +15 % de PV`; tier = -1; }
+    else if (pair === 'j') { cash = cost * 3; txt = `Deux sept : +${fmt(cash)}¢`; tier = 1; }
+    else if (pair === 'c') { cash = Math.round(cost * 1.6); txt = `Paire de crédits : +${fmt(cash)}¢`; tier = 1; }
+    else if (pair === 'k') { cash = Math.round(cost * 1.3); txt = `Paire d'étoiles : +${fmt(cash)}¢`; tier = 1; }
+    else if (pair === 'n') { G.nanites += 2; cash = Math.round(cost * .4); txt = `Paire de nanites : +2 ◈`; tier = 1; }
+    else if (pair === 'a') { for (const k of Abil.keys) G.abil[k] = Math.floor(G.abil[k] / 2); cash = Math.round(cost * .5); txt = 'Paire de comètes : recharge des capacités -50 %'; tier = 1; }
+    else if (pair === 'h') { const v = Math.min(3, G.maxLives - G.lives); G.lives += 3; G.maxLives += 3 - v; cash = Math.round(cost * .5); txt = 'Paire de cœurs : +3 intégrité'; tier = 1; }
+    else if (cnt.j) { cash = cost; txt = 'Un sept : mise remboursée'; tier = 1; }
+    if (cash) { gain(cash, p); G.stats.gold -= Math.min(cash, cost); }
+    if (tier <= 0) G.jpot += Math.round(cost * .5);
+    G.slot[p] = { R, txt, tier, seq: (G.slot[p] ? G.slot[p].seq : 0) + 1, cash };
+    G.stats.spins = (G.stats.spins || 0) + 1;
+    return true;
+  },
+  // paris : les options dépendent de la vague à venir et des performances récentes
+  betOptions() {
+    const P = G.preview, n = P.n, boss = P.bosses.length > 0, leaky = G.leakHist.some(x => x), out = [];
+    out.push({ k: 'clean', n: 'Sans fuite', d: `Aucun ennemi ne franchit la défense pendant la vague ${n}.`, odds: +(1.35 + (leaky ? .8 : 0) + (boss ? .4 : 0)).toFixed(2) });
+    if (G.lastDur) { const x = Math.max(20, Math.round(G.lastDur / 60 * .85 / 5) * 5); out.push({ k: 'fast', n: 'Éclair', d: `Vague ${n} entièrement nettoyée en moins de ${x} s.`, odds: 2.2, x }); }
+    const c = Math.max(15, Math.round((G.lastMc || 10) * 1.25 / 5) * 5);
+    out.push({ k: 'combo', n: 'Carnage', d: `Atteindre un combo de ${c} pendant la vague ${n}.`, odds: 2, x: c });
+    if (boss) out.push({ k: 'boss', n: 'Chasseur de boss', d: `Chaque boss abattu moins de 25 s après son apparition.`, odds: 2.6, x: 25 });
+    return out;
+  },
+  myBet(p = Net.me) { return G.bets.find(b => b.p === p && b.n === G.preview.n) || null; },
+  bet(kind, pi) {
+    const p = this.pl();
+    if (G.phase !== 'prep' || G.bets.some(b => b.p === p && b.n === G.preview.n) || !BET_STAKE[pi]) return false;
+    const o = this.betOptions().find(x => x.k === kind); if (!o) return false;
+    const stake = this.base() * BET_STAKE[pi].m;
+    if (G.money < stake) { UI.noMoney(); return false; }
+    G.money -= stake;
+    G.bets.push({ p, k: kind, n: G.preview.n, stake, odds: o.odds, x: o.x || 0, name: o.n });
+    if (Act.mine()) { UI.toast('Pari enregistré', `<b>${o.n}</b> · mise ${fmt(stake)}¢ · cote ×${o.odds}`, '#ffd23f', 3); Sfx.play('coin'); }
+    return true;
+  },
+  resolve(w) {
+    for (let i = G.bets.length - 1; i >= 0; i--) {
+      const b = G.bets[i]; if (b.n !== w.n) continue;
+      G.bets.splice(i, 1);
+      const ok = b.k === 'clean' ? w.leaks === 0 : b.k === 'fast' ? (G.tick - w.t0) <= b.x * 60
+        : b.k === 'combo' ? (w.mc || 0) >= b.x : b.k === 'boss' ? (w.bk || 0) > 0 && !w.bossSlow : false;
+      const mine = !Net.coop || b.p === Net.me;
+      if (ok) {
+        const v = Math.round(b.stake * b.odds); gain(v, b.p); G.stats.gold -= b.stake;
+        G.betsWon = (G.betsWon || 0) + 1; if (G.betsWon >= 5 && mine) Ach.unlock('bookie');
+        if (mine && !G.demo) { UI.toast('PARI GAGNÉ !', `<b>${b.name}</b> : +${fmt(v)}¢ (×${b.odds})`, '#39ff88', 4); Sfx.play('win'); }
+      } else if (mine && !G.demo) { UI.toast('Pari perdu', `<b>${b.name}</b> : la mise de ${fmt(b.stake)}¢ est perdue.`, '#ff2a6d', 3.5); Sfx.play('lose'); }
+    }
+  }
+};
+
 /* ============================== ACTIONS DU JOUEUR ==============================
    Tout ce qui modifie la partie à l'initiative d'un joueur passe par ici. En solo l'action s'exécute aussitôt ;
    en coopération elle est horodatée et exécutée au même tick sur les deux machines (lockstep).
@@ -3580,6 +3742,8 @@ const Act = {
     reroll: () => Cards.reroll(),
     drop: id => Drops.grab(id),
     pod: id => Events.open(id),
+    slot: lvl => Casino.spin(lvl),
+    bet: (k, pi) => Casino.bet(k, pi),
     speed: v => Game.setSpeed(v),
     auto: on => { G.autoWave = !!on; if (G.phase === 'prep') G.autoT = 480; UI.refreshAuto(); }
   },
@@ -3640,6 +3804,7 @@ const Game = {
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
       doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null, traps: [],
       tstats: {}, waveDmg: {}, mLast: null, actor: null, autoWave: !!Store.s.autoWave, wallets: null, net: null,
+      tokens: [3, 3], slot: [], bets: [], jpot: 500, curse: 0, lastDur: 0, lastMc: 0, leakHist: [], betsWon: 0,
       events: Store.s.events !== false, evQ: null, ev: null, evSpd: 1, evCount: 0, meteors: [], bolts: [], pods: [], craters: [], comet: null, rift: null,
       stats: { kills: 0, gold: 0, maxCombo: 0, leaks: 0, bosses: 0, built: 0, fusions: 0, clean: 0, missions: 0 }
     };
@@ -4726,7 +4891,7 @@ const Input = {
       const top = UI.top();
       if (top === 'ov-cards') { const m = /^(Digit|Numpad)([1-3])$/.exec(code); if (m) Act.do('card', +m[2] - 1); return; }
       if (top === 'ov-over' && (code === 'Enter' || code === 'NumpadEnter' || code === 'Space')) { e.preventDefault(); const b = $('go-again'); if (b) b.click(); return; }
-      if ((code === 'KeyP' && top === 'ov-pause') || (code === 'KeyK' && top === 'ov-tree') || (code === 'KeyL' && top === 'ov-lab') || (code === 'KeyH' && top === 'ov-help' && G) || (code === 'KeyG' && top === 'ov-stats')) UI.close(top);
+      if ((code === 'KeyP' && top === 'ov-pause') || (code === 'KeyK' && top === 'ov-tree') || (code === 'KeyL' && top === 'ov-lab') || (code === 'KeyH' && top === 'ov-help' && G) || (code === 'KeyG' && top === 'ov-stats') || (code === 'KeyC' && top === 'ov-casino' && !UI.spinning)) UI.close(top);
       return;
     }
     if (Game.state !== 'play' || !G || G.over || e.repeat) return;
@@ -4737,6 +4902,7 @@ const Input = {
       case 'KeyK': UI.openTree(); break;
       case 'KeyL': UI.openLab(); break;
       case 'KeyG': UI.openStats(); break;
+      case 'KeyC': UI.openCasino(); break;
       case 'KeyH': UI.openHelp(); break;
       case 'KeyQ': Abil.trigger('orbital'); break;
       case 'KeyW': Abil.trigger('emp'); break;
@@ -4765,6 +4931,7 @@ const UI = {
     $('b-tree').onclick = () => this.openTree();
     $('b-lab').onclick = () => this.openLab();
     $('b-stats').onclick = () => this.openStats();
+    $('b-casino').onclick = () => this.openCasino();
     $('b-speed').onclick = () => Game.cycleSpeed();
     $('b-pause').onclick = () => this.openPause();
     $('b-wave').onclick = () => Act.do('wave');
@@ -4924,7 +5091,7 @@ const UI = {
     if (h.inside && !h.touch && G.drops.length && !G.over) Drops.near(h.wx, h.wy, 40);
   },
   refreshHUD() {
-    const L = this.last, lives = Math.max(0, Math.ceil(G.lives)), money = Math.floor(G.money);
+    const L = this.last, lives = Math.max(0, Math.ceil(G.lives)), money = Math.floor(this.holdMoney != null ? this.holdMoney : G.money);
     if (L.lives !== lives) { const el = $('h-lives'); el.textContent = lives; if (L.lives !== undefined && lives < L.lives) this.anim(el, 'bad'); L.lives = lives; }
     if (L.money !== money) {
       $('h-money').textContent = fmt(money); L.money = money;
@@ -4954,6 +5121,8 @@ const UI = {
     if (!G) return;
     $('bd-tree').classList.toggle('on', Skills.anyBuyable());
     $('bd-lab').classList.toggle('on', Fusion.anyResearchable());
+    $('bd-casino').classList.toggle('on', G.phase === 'prep' && Casino.tokens(Net.me) > 0 && G.waveNum >= 1 && G.money >= Casino.betCost(0));
+    this.refreshBet();
   },
   refreshCombo() {
     const c = G.combo, on = c >= 5;
@@ -5468,6 +5637,7 @@ const UI = {
       ['REPRENDRE', 'prim', () => this.close('ov-pause')],
       ['OPTIONS', '', () => this.openOptions()],
       ['ANALYSE DE COMBAT', '', () => this.openStats()],
+      ['CASINO', '', () => this.openCasino()],
       ['MANUEL', '', () => this.openHelp()],
       ['CODEX', '', () => this.openCodex()],
       ['RECOMMENCER', '', () => this.confirm('RECOMMENCER ?', G.daily ? 'Le Défi du jour reprend depuis le début.' : 'Nouvelle carte, même difficulté. La partie en cours sera perdue.', () => {
@@ -5713,6 +5883,128 @@ const UI = {
     }
     this.open('ov-codex');
   },
+  /* ---------- casino ---------- */
+  csTab: 'slot', csLvl: 0, csBet: null, csPct: 0, spinning: false, holdMoney: null,
+  openCasino(tab) {
+    if (!G || G.over) return;
+    if (tab) this.csTab = tab;
+    this.setPlacing(null, true); this.setTargeting(null);
+    $('cs-tabs').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.k === this.csTab); b.onclick = () => { Sfx.play('ui'); this.openCasino(b.dataset.k); }; });
+    $('cs-slot').hidden = this.csTab !== 'slot'; $('cs-bet').hidden = this.csTab !== 'bet';
+    $('cs-sub').innerHTML = G.phase === 'prep'
+      ? `Ouvert entre les vagues : <b>${Casino.TOKENS} jetons</b> de machine à sous et <b>un pari</b> par vague. Le hasard est impitoyable… et généreux.`
+      : '<span style="color:var(--dang)">Fermé pendant la vague</span> — revenez une fois la vague repoussée.';
+    if (this.csTab === 'slot') this.renderSlot(); else this.renderBets();
+    this.open('ov-casino');
+  },
+  slotStrip(el, final, n) {
+    // bande de symboles : n symboles au hasard puis le résultat (au centre de la fenêtre à l'arrêt)
+    let h = '';
+    const sym = k => `<div class="sym ${k}" style="color:${SLOT_SYM[k].col}">${k === 'j' ? '7' : TXT(SLOT_SYM[k].g)}</div>`;
+    for (let i = 0; i < n; i++) h += sym(SLOT_KEYS[Math.floor(Math.random() * SLOT_KEYS.length)]);
+    h += sym(SLOT_KEYS[Math.floor(Math.random() * SLOT_KEYS.length)]) + sym(final) + sym(SLOT_KEYS[Math.floor(Math.random() * SLOT_KEYS.length)]);
+    el.innerHTML = h;
+  },
+  renderSlot() {
+    const me = Net.me, cost = l => Casino.betCost(l), tok = Casino.tokens(me), prep = G.phase === 'prep';
+    $('cs-jp').textContent = fmt(G.jpot) + '¢';
+    $('cs-lvl').innerHTML = BET_LVL.map((b, i) => `<button data-l="${i}" class="${i === this.csLvl ? 'on' : ''}">${b.n}<small>${fmt(cost(i))}¢</small></button>`).join('');
+    $('cs-lvl').querySelectorAll('button').forEach(b => b.onclick = () => { if (this.spinning) return; this.csLvl = +b.dataset.l; Sfx.play('ui'); this.renderSlot(); });
+    $('cs-tok').innerHTML = `JETONS <b>${'●'.repeat(tok)}${'○'.repeat(Math.max(0, Casino.TOKENS - tok))}</b>`;
+    const btn = $('cs-spin');
+    btn.disabled = this.spinning || !prep || tok <= 0 || G.money < cost(this.csLvl);
+    btn.textContent = !prep ? 'FERMÉ PENDANT LA VAGUE' : tok <= 0 ? 'PLUS DE JETONS — PROCHAINE VAGUE' : this.spinning ? 'LES ROULEAUX TOURNENT…' : `TIRER LE LEVIER · ${fmt(cost(this.csLvl))}¢`;
+    btn.onclick = () => this.pullLever();
+    const strips = $('slot').querySelectorAll('.strip');
+    if (!strips[0].children.length) strips.forEach(st => { this.slotStrip(st, SLOT_KEYS[Math.floor(Math.random() * 7)], 0); st.style.transform = 'translateY(0)'; });
+    if (!this.spinning && !$('cs-res').textContent) $('cs-res').textContent = 'Alignez trois symboles sur la ligne dorée.';
+    const g = k => `<span style="color:${SLOT_SYM[k].col}">${k === 'j' ? '7 7 7' : [1, 2, 3].map(() => TXT(SLOT_SYM[k].g)).join(' ')}</span>`;
+    $('cs-pay').innerHTML = [
+      [g('j'), 'JACKPOT + 30× + 8 ◈'], [g('c'), '8× la mise'], [g('n'), 'nanites + mise rendue'], [g('k'), 'protocole offert'],
+      [g('a'), 'capacités rechargées'], [g('h'), '+15 intégrité'], [g('s'), 'malédiction !'], ['<span>PAIRE</span>', 'petit gain'], ['<span style="color:#ff3d3d">UN 7</span>', 'mise remboursée']
+    ].map(([a, b]) => `<div>${a}<span>${b}</span></div>`).join('');
+  },
+  pullLever() {
+    if (this.spinning || !G || G.phase !== 'prep') return;
+    const me = Net.me, prev = G.slot[me] ? G.slot[me].seq : 0, money0 = G.money;
+    if (G.money < Casino.betCost(this.csLvl) || Casino.tokens(me) <= 0) { Sfx.play('error'); return; }
+    this.spinning = true; this.holdMoney = money0;
+    $('slot').classList.remove('win', 'jack'); $('cs-res').className = 'cs-res'; $('cs-res').textContent = '…';
+    this.renderSlot();
+    Act.do('slot', this.csLvl);
+    // en solo le résultat est immédiat ; en coopération il arrive après la latence réseau
+    const wait = (n = 0) => {
+      const r = G && G.slot[me];
+      if (r && r.seq !== prev) this.spinReels(r);
+      else if (n < 120 && G) setTimeout(() => wait(n + 1), 25);
+      else { this.spinning = false; this.holdMoney = null; this.renderSlot(); }
+    };
+    wait();
+  },
+  spinReels(r) {
+    const strips = $('slot').querySelectorAll('.strip'), h = strips[0].firstElementChild ? strips[0].firstElementChild.offsetHeight || 64 : 64;
+    const stopAt = [900, 1350, 1850];
+    strips.forEach((st, i) => {
+      const n = 14 + i * 6;
+      this.slotStrip(st, r.R[i], n);
+      st.style.transition = 'none'; st.style.transform = 'translateY(0)'; void st.offsetHeight;
+      st.style.transition = `transform ${stopAt[i]}ms cubic-bezier(.15,.75,.25,1.04)`;
+      st.style.transform = `translateY(${-(n) * h}px)`;
+    });
+    const t0 = performance.now();
+    const tick = () => { const e = performance.now() - t0; if (e < stopAt[2]) { Sfx.play('reel', .8, 1); setTimeout(tick, 60 + e * .05); } };
+    tick();
+    stopAt.forEach((ms, i) => setTimeout(() => Sfx.play('hit', 1.2), ms));
+    setTimeout(() => this.spinDone(r), stopAt[2] + 120);
+  },
+  spinDone(r) {
+    this.spinning = false; this.holdMoney = null;
+    if (!G) return;
+    const res = $('cs-res'), sl = $('slot');
+    res.textContent = r.txt;
+    res.className = 'cs-res ' + (r.tier === 3 ? 't3' : r.tier === 2 ? 't2' : r.tier === 1 ? 't1' : r.tier < 0 ? 'tm' : '');
+    if (r.tier >= 1) sl.classList.add('win');
+    if (r.tier === 3) { sl.classList.add('jack'); Sfx.play('jackpot'); Render.flash(.4, '#ffd23f'); this.banner('JACKPOT !', `+${fmt(r.cash)} CRÉDITS`, '#ffd23f'); }
+    else if (r.tier === 2) Sfx.play('levelup');
+    else if (r.tier === 1) Sfx.play('win');
+    else Sfx.play(r.tier < 0 ? 'evbad' : 'lose');
+    if (r.tier >= 2) this.coinRain(r.tier === 3 ? 60 : 24);
+    this.refreshHUD(); this.renderSlot();
+    if (G.cardQ > 0 && G.offer && r.R.every(k => k === 'k')) setTimeout(() => { if (G && G.offer) this.openCards(); }, 900);
+  },
+  coinRain(n) {
+    const box = $('cs-coins');
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement('i'); c.textContent = i % 5 ? '¢' : '◈';
+      c.style.left = (Math.random() * 96) + '%'; c.style.fontSize = (12 + Math.random() * 14) + 'px'; c.style.animationDelay = (Math.random() * .7) + 's';
+      box.appendChild(c); setTimeout(() => c.remove(), 2600);
+    }
+  },
+  renderBets() {
+    const box = $('cs-bet'), prep = G.phase === 'prep', mine = Casino.myBet();
+    if (mine) {
+      box.innerHTML = `<div class="betc on" style="cursor:default"><h4>PARI EN COURS · ${mine.name.toUpperCase()}</h4><p>Vague ${mine.n} · mise <b>${fmt(mine.stake)}¢</b> · gain possible <b style="color:var(--gold)">${fmt(Math.round(mine.stake * mine.odds))}¢</b></p><div class="od">×${mine.odds}</div></div>
+        <div class="note">Résultat à la fin de la vague. Bonne chance, Commandant.</div>`;
+      return;
+    }
+    if (!prep) { box.innerHTML = '<div class="st-empty">Les paris se placent entre les vagues, avant le lancement.</div>'; return; }
+    const O = Casino.betOptions();
+    if (!O.some(o => o.k === this.csBet)) this.csBet = O[0].k;
+    const stake = pi => Casino.base() * BET_STAKE[pi].m, sel = O.find(o => o.k === this.csBet);
+    box.innerHTML = `<div class="note" style="margin-bottom:10px">Un pari par vague. La mise est prélevée tout de suite ; si vous gagnez, vous touchez <b>mise × cote</b>.</div>` +
+      O.map(o => `<div class="betc${o.k === this.csBet ? ' on' : ''}" data-k="${o.k}"><h4>${o.n.toUpperCase()}</h4><p>${o.d}</p><div class="od">×${o.odds}</div></div>`).join('') +
+      `<div class="lbl-s" style="margin:6px 0 4px">MISE</div><div class="seg" id="bt-pct">${BET_STAKE.map((b, i) => `<button data-i="${i}" class="${i === this.csPct ? 'on' : ''}">${b.n} · ${fmt(stake(i))}¢</button>`).join('')}</div>
+      <button class="btn gold big" id="bt-go" style="width:100%;margin-top:12px" ${G.money < stake(this.csPct) ? 'disabled' : ''}>PARIER ${fmt(stake(this.csPct))}¢ → ${fmt(Math.round(stake(this.csPct) * sel.odds))}¢</button>`;
+    box.querySelectorAll('.betc').forEach(el => el.onclick = () => { this.csBet = el.dataset.k; Sfx.play('ui'); this.renderBets(); });
+    box.querySelectorAll('#bt-pct button').forEach(b => b.onclick = () => { this.csPct = +b.dataset.i; Sfx.play('ui'); this.renderBets(); });
+    $('bt-go').onclick = () => { Act.do('bet', this.csBet, this.csPct); setTimeout(() => { if (G && this.top() === 'ov-casino') this.renderBets(); this.refreshBet(); }, Net.coop ? 250 : 0); };
+  },
+  refreshBet() {
+    const el = $('wp-bet'), b = G && Casino.myBet(), act = G && G.bets.find(x => x.p === Net.me);
+    const show = b || act;
+    el.style.display = show ? 'inline-block' : 'none';
+    if (show) el.textContent = `PARI ×${show.odds}`;
+  },
   /* ---------- analyse de combat : classement des tourelles de la partie en cours ---------- */
   stOpt: { m: 'dealt', g: 'type', v: 'chart' },
   openStats() {
@@ -5839,6 +6131,9 @@ const UI = {
         <li><b>Héritage</b> : les fragments gagnés à chaque fin de partie achètent des bonus permanents.</li>
         <li><b>Analyse de combat</b> (<kbd>G</kbd>) : graphiques de la partie en cours — dégâts, éliminations, tirs et rentabilité de chaque tourelle, et dégâts par vague. Le <b>Codex</b> réunit les fiches de tout ce que vous avez rencontré.</li>
         <li>La partie est <b>sauvegardée automatiquement</b> entre les vagues.</li></ul>
+      <h3>CASINO NÉON</h3><ul>
+        <li>Entre les vagues (<kbd>C</kbd>), <b>3 jetons</b> de <b>machine à sous</b> : trois mises possibles, des gains en crédits, nanites, protocoles, capacités ou intégrité… et un <b>jackpot progressif</b> qui grossit à chaque mise perdue. Trois crânes : malédiction !</li>
+        <li><b>Paris sur la vague</b> : sans fuite, éclair (vague nettoyée en un temps record), carnage (combo à atteindre) ou chasseur de boss. La mise est prélevée tout de suite, le gain vaut mise × cote.</li></ul>
       <h3>ÉVÉNEMENTS ALÉATOIRES</h3><ul>
         <li>Dès la vague 3, une vague sur trois environ réserve une surprise : <b style="color:#ff8a3d">pluie d'astéroïdes</b> (dégâts massifs, mais tourelles sonnées et débris), <b style="color:#39ff88">capsule de ravitaillement</b> à cliquer, <b style="color:#ffd23f">ruée vers l'or</b>, <b style="color:#00f3ff">surtension</b>, <b style="color:#ffb13d">tempête solaire</b>, <b style="color:#ff2a6d">lune de sang</b>, <b style="color:#9fe8ff">comète</b>, <b style="color:#c43dff">faille dimensionnelle</b> ou <b style="color:#fff35c">orage IEM</b>.</li>
         <li>L'événement en cours s'affiche sous la barre du haut avec sa durée. Ils se désactivent dans les Options.</li></ul>
@@ -5850,7 +6145,7 @@ const UI = {
         <p><kbd>Espace</kbd> Lancer / appeler la vague</p><p><kbd>1</kbd>…<kbd>0</kbd> Choisir une tourelle</p>
         <p><kbd>${q}</kbd> <kbd>${w}</kbd> <kbd>E</kbd> Capacités</p><p><kbd>U</kbd> Améliorer · <kbd>X</kbd> Vendre</p>
         <p><kbd>T</kbd> Ciblage · <kbd>O</kbd> Surcadence</p><p><kbd>R</kbd> Recycler le débris sélectionné</p>
-        <p><kbd>F</kbd> Vitesse · <kbd>P</kbd> Pause</p><p><kbd>K</kbd> Arbre · <kbd>L</kbd> Labo · <kbd>G</kbd> Stats · <kbd>H</kbd> Manuel</p>
+        <p><kbd>F</kbd> Vitesse · <kbd>P</kbd> Pause</p><p><kbd>K</kbd> Arbre · <kbd>L</kbd> Labo · <kbd>G</kbd> Stats · <kbd>C</kbd> Casino · <kbd>H</kbd> Manuel</p>
         <p><kbd>Échap</kbd> / clic droit : annuler</p><p><kbd>F3</kbd> Compteur FPS</p></div>`;
     this.open('ov-help');
   }
