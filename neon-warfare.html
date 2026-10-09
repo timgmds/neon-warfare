@@ -243,6 +243,11 @@ body.no-crt #crt{display:none}
 #evchip s b{display:block;height:100%;background:var(--ec)}
 #bb-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--dang),#ff7a1a);width:100%;transition:width .2s}
 #bb-sh{position:absolute;left:0;top:0;height:3px;background:#4df3ff;width:0;transition:width .2s;box-shadow:0 0 6px #4df3ff}
+#bb-ticks i{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:rgba(255,255,255,.85);box-shadow:0 0 4px #fff}
+#bossbar.mega{width:min(720px,80vw)}
+#bossbar.mega .tr{height:15px;border-width:2px}
+#bossbar.mega .nm{font-size:13px;letter-spacing:.35em}
+#bossbar.inv #bb-fill{background:linear-gradient(90deg,#ffffff,#c9d6ff)}
 
 /* ---------- OVERLAYS / MODALS ---------- */
 .ov{position:absolute;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(1,3,8,.8);padding:14px}
@@ -551,6 +556,11 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .pcard .ct{display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;min-width:0}
 .pcard .hk{position:absolute;top:8px;left:10px;font:10px var(--mono);color:var(--dim)}
 .pcard.pact{background:linear-gradient(170deg,rgba(255,61,90,.12),rgba(255,255,255,.01))}
+.pcard.legend{background:linear-gradient(170deg,rgba(255,210,63,.18),rgba(255,255,255,.01));box-shadow:0 0 26px -8px var(--rc),inset 0 0 22px -12px var(--rc)}
+.pcard.legend .ci{animation:legendGlow 1.4s ease-in-out infinite alternate}
+@keyframes legendGlow{to{box-shadow:0 0 36px 0 var(--rc),inset 0 0 18px -4px var(--rc)}}
+.pcard:nth-child(4){animation-delay:.24s}
+.cgrid.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
 @keyframes cardIn{from{opacity:0;transform:translateY(26px) scale(.92)}}
 
 /* ---------- DOCTRINES & COMMANDANT ---------- */
@@ -573,6 +583,11 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .cmdb .nx{font-size:10.5px;color:var(--dim);margin-top:6px}
 .cmdb .nx b{color:var(--gold)}
 .goline{font-size:15px;margin:2px 0 10px;font-weight:700;letter-spacing:.04em}
+.gocode{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:0 auto 10px;padding:8px 10px;border:1px dashed rgba(255,43,214,.55);border-radius:10px;background:rgba(255,43,214,.06)}
+.gocode span{font-size:10px;letter-spacing:.3em;color:#ff7ae6;font-weight:800}
+.gocode input{width:150px;min-width:0;text-align:center;font:700 16px var(--mono);letter-spacing:.08em;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18);border-radius:7px;padding:5px 8px}
+.gocode .btn{padding:6px 12px;font-size:11px}
+.hrow .hp{padding:2px 9px;font-size:11px;margin-left:6px}
 .goline.rec{color:var(--gold);text-shadow:0 0 14px rgba(255,210,63,.6);font-size:18px;animation:blink .6s infinite alternate}
 #combo.t1 b{color:#ffae00} #combo.t2 b{color:#ff5e3a;font-size:28px} #combo.t3 b{color:#ff2bd6;font-size:32px;text-shadow:0 0 14px #ff2bd6}
 #combo.burst{animation:cburst .45s}
@@ -602,7 +617,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   .panel{width:auto;padding:8px 10px;max-height:52vh;overflow-y:auto}
   .panel .note{display:none}
   #missions{width:min(210px,56vw);right:6px}
-  .cgrid{grid-template-columns:1fr;gap:10px}
+  .cgrid,.cgrid.c4{grid-template-columns:1fr;gap:10px}
   .pcard{min-height:0;flex-direction:row;text-align:left;padding:12px;gap:12px}
   .pcard .ci{width:48px;height:48px;font-size:20px;flex:0 0 auto}
   .pcard .ct{align-items:flex-start;gap:4px}
@@ -656,7 +671,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 </header>
 
 <div id="evchip"><i id="ev-i"></i><span id="ev-n"></span><s><b id="ev-p"></b></s></div>
-<div id="bossbar"><div class="nm" id="bb-name"></div><div class="tr"><div id="bb-fill"></div><div id="bb-sh"></div></div></div>
+<div id="bossbar"><div class="nm" id="bb-name"></div><div class="tr"><div id="bb-fill"></div><div id="bb-sh"></div><div id="bb-ticks"></div></div></div>
 
 <footer id="dock" class="hidden">
   <div id="abils"></div>
@@ -757,7 +772,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.0';
+const VERSION = '9.1';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -1329,6 +1344,23 @@ const BOSSES = {
   sentinelle: { name: 'SENTINELLE', hp: 1250, shield: 400, spd: .5, bounty: 170, leak: 20, r: 22, color: '#4dd2ff', shape: 'boss5', boss: true, aura: { every: 240, r: 130, f: .3 } },
   sauteur:    { name: 'SAUTEUR', hp: 1150, armor: 3, spd: .45, bounty: 170, leak: 22, r: 20, color: '#ff5cf0', shape: 'boss6', rot: true, boss: true, leap: { every: 330, dist: 230 } }
 };
+/* MÉGA-BOSS : vague 50 (Léviathan), vague 100 (Oméga), puis en alternance toutes les 50 vagues.
+   Plusieurs phases : à chaque seuil de PV, 2,5 s d'invulnérabilité puis de nouveaux pouvoirs. S'il atteint le noyau, c'est fini. */
+BOSSES.leviathan = { name: 'LÉVIATHAN', hp: 15000, armor: 5, spd: .36, bounty: 1500, leak: 9999, r: 30, color: '#00e1ff', shape: 'mega1', rot: true, boss: true, mega: true, heavy: true,
+  phases: [
+    { n: 'Carapace abyssale', armor: 5, jam: { every: 360, r: 210, t: 120 } },
+    { at: .66, n: 'Frénésie des profondeurs', armor: 1.5, spd: 1.35, summon: { types: ['ram', 'hive', 'tank'], every: 420, n: 3 }, jam: { every: 420, r: 210, t: 120 } },
+    { at: .33, n: 'Abysse', armor: 2, spd: 1.15, regen: .006, drain: { every: 420, n: 3, t: 240, r: 260 }, summon: { types: ['juggernaut', 'ram'], every: 600, n: 2 } }
+  ] };
+BOSSES.omega = { name: 'OMÉGA', hp: 32000, shield: 9000, armor: 4, spd: .32, bounty: 4000, leak: 9999, r: 34, color: '#ff2bd6', shape: 'mega2', boss: true, mega: true, heavy: true,
+  spawn: { type: 'echo', n: 3, hp: 1 },
+  phases: [
+    { n: 'Singularité éveillée', armor: 4, rift: { every: 480, n: 3 }, jam: { every: 420, r: 230, t: 100 } },
+    { at: .75, n: 'Distorsion', armor: 3, blink: { every: 540, dist: 120 }, rift: { every: 420, n: 4 }, jam: { every: 420, r: 230, t: 100 } },
+    { at: .5, n: 'Miroir', armor: 4, shieldBack: .6, aura: { every: 300, r: 190, f: .5 }, summon: { types: ['wraith'], every: 240, n: 4 }, blink: { every: 540, dist: 120 } },
+    { at: .25, n: 'Effondrement', armor: 1.5, spd: 1.6, drain: { every: 360, n: 4, t: 240, r: 300 }, rift: { every: 360, n: 4 } }
+  ] };
+ENEMIES.echo = { name: 'Écho d\'Oméga', hp: 2400, armor: 3, spd: .95, bounty: 250, leak: 30, r: 18, color: '#ff7af0', shape: 'mega2', w: 0, from: 999 };
 /* fragments de la Scission : jamais présents dans les vagues normales */
 ENEMIES.shard =    { name: 'Fragment', hp: 380, armor: 1, spd: .8, bounty: 25, leak: 6, r: 14, color: '#ffbf5c', shape: 'boss4', rot: true, w: 0, from: 999, spawn: { type: 'shardlet', n: 2, hp: 1 } };
 ENEMIES.shardlet = { name: 'Éclat', hp: 130, spd: 1.15, bounty: 8, leak: 3, r: 9, color: '#ffd9a0', shape: 'diamond', w: 0, from: 999 };
@@ -1363,6 +1395,9 @@ const LORE = {
   mite: 'Essaim libéré par une Ruche. Rapide, fragile, nombreux.',
   wraith: 'Mort revenu à la vie par un Nécromant.',
   shardlet: 'Dernier éclat d\'une Scission. Rapide, mais fragile.',
+  leviathan: 'Méga-boss de la vague 50. Trois phases : carapace et IEM géantes, puis frénésie et escorte blindée, puis l\'Abysse qui régénère et neutralise vos meilleures tourelles. S\'il touche le noyau, la partie est perdue.',
+  omega: 'Méga-boss de la vague 100. Quatre phases : failles d\'élites, distorsions, miroir de boucliers, puis effondrement. Abattu, il libère trois Échos. S\'il touche le noyau, la partie est perdue.',
+  echo: 'Fragment d\'Oméga qui survit à sa destruction.',
   colosse: 'Forteresse ambulante au blindage massif. Lent, mais il encaisse tout.',
   hydre: 'Invoque des drones en avançant et libère six éclaireurs en mourant.',
   overlord: 'Bouclier colossal et impulsions IEM à large portée.',
@@ -1475,6 +1510,8 @@ const ACH = {
   wave10:   { n: 'Vétéran', d: 'Terminer la vague 10.', i: 'Ⅹ' },
   wave25:   { n: 'Légende', d: 'Terminer la vague 25.', i: '★' },
   wave50:   { n: 'Immortel', d: 'Terminer la vague 50.', i: '∞' },
+  leviathan: { n: 'Chasseur d\'abysses', d: 'Vaincre le Léviathan, méga-boss de la vague 50.', i: '≋' },
+  omega:    { n: 'Fin des temps', d: 'Vaincre Oméga, méga-boss de la vague 100.', i: 'Ω' },
   combo:    { n: 'Roi du Combo', d: 'Enchaîner 100 éliminations sans interruption.', i: '⚡' },
   rich:     { n: 'Magnat', d: 'Posséder 5 000 crédits.', i: '$' },
   maxlvl:   { n: 'Surcadencé', d: 'Améliorer une tourelle au niveau 10.', i: '▲' },
@@ -1617,34 +1654,63 @@ const MISSIONS = [
 /* ---------- Protocoles : une carte à choisir parmi 3 après chaque vague ----------
    r : rareté (0 standard, 1 rare, 2 pacte) — mod : multiplicateurs cumulés — add : bonus additifs — now : effet immédiat */
 const CARDS = {
-  cash:     { r: 0, i: '¢', n: 'Subvention', d: () => `+${50 + 10 * G.waveNum} crédits immédiatement.`, now: () => { gain(50 + 10 * G.waveNum); } },
-  nano:     { r: 0, i: '◈', n: 'Cache de nanites', d: () => '+2 nanites immédiatement.', now: () => { G.nanites += 2; } },
-  repair:   { r: 0, i: '♥', n: 'Réparations', d: () => '+15 intégrité (dans la limite du maximum).', need: () => G.lives < G.maxLives, now: () => { G.lives = Math.min(G.maxLives, G.lives + 15); } },
-  recharge: { r: 0, i: '☄', n: 'Recharge express', d: () => 'Toutes les capacités sont rechargées.', need: () => Abil.keys.some(k => G.abil[k] > 0), now: () => { for (const k of Abil.keys) G.abil[k] = 0; } },
-  scrap:    { r: 0, i: '⟳', n: 'Ferraille', d: () => '+2 charges de recyclage.', now: () => { G.recycle += 2; } },
-  hull:     { r: 0, i: '⛨', n: 'Coque renforcée', d: () => '+10 intégrité maximale (et actuelle).', max: 4, now: () => { G.maxLives += 10; G.lives += 10; } },
-  dmg:      { r: 1, i: '✦', n: 'Munitions perforantes', d: () => '+5% de dégâts pour toutes les tourelles.', mod: { dmg: 1.05 }, max: 5 },
-  rate:     { r: 1, i: '⚙', n: 'Servomoteurs', d: () => '+5% de cadence de tir.', mod: { rate: 1.05 }, max: 4 },
-  range:    { r: 1, i: '◎', n: 'Optique longue', d: () => '+5% de portée.', mod: { range: 1.05 }, max: 3 },
-  crit:     { r: 1, i: '⌖', n: 'Visée laser', d: () => '+3% de chances de critique.', add: { crit: .03 }, max: 3 },
-  splash:   { r: 1, i: '✹', n: 'Charges creuses', d: () => '+12% de rayon d\'explosion.', mod: { splash: 1.12 }, max: 3, need: () => G.towers.some(t => t.d.splash) },
-  burn:     { r: 1, i: '♨', n: 'Napalm', d: () => 'Brûlures +25%.', mod: { burn: 1.25 }, max: 3, need: () => G.towers.some(t => t.d.burn) },
-  slow:     { r: 1, i: '❄', n: 'Azote liquide', d: () => 'Ralentissements 20% plus puissants.', mod: { slow: 1.2 }, max: 2, need: () => G.towers.some(t => t.d.slow) },
-  bounty:   { r: 1, i: '$', n: 'Prime de guerre', d: () => '+6% de crédits par élimination.', mod: { bounty: 1.06 }, max: 3 },
-  cool:     { r: 1, i: '♒', n: 'Caloducs', d: () => '+25% de refroidissement.', mod: { cool: 1.25 }, max: 3 },
-  renovate: { r: 1, i: '▲', n: 'Rénovation', d: () => '+1 niveau gratuit pour vos 2 tourelles les plus faibles.', max: 3, need: () => G.towers.some(t => t.level < Towers.maxLevel(t)),
+  cash:     { cat: 'eco', r: 0, i: '¢', n: 'Subvention', d: () => `+${50 + 10 * G.waveNum} crédits immédiatement.`, now: () => { gain(50 + 10 * G.waveNum); } },
+  nano:     { cat: 'eco', r: 0, i: '◈', n: 'Cache de nanites', d: () => '+2 nanites immédiatement.', now: () => { G.nanites += 2; } },
+  repair:   { cat: 'def', r: 0, i: '♥', n: 'Réparations', d: () => '+15 intégrité (dans la limite du maximum).', need: () => G.lives < G.maxLives, now: () => { G.lives = Math.min(G.maxLives, G.lives + 15); } },
+  recharge: { cat: 'tac', r: 0, i: '☄', n: 'Recharge express', d: () => 'Toutes les capacités sont rechargées.', need: () => Abil.keys.some(k => G.abil[k] > 0), now: () => { for (const k of Abil.keys) G.abil[k] = 0; } },
+  scrap:    { cat: 'eco', r: 0, i: '⟳', n: 'Ferraille', d: () => '+2 charges de recyclage.', now: () => { G.recycle += 2; } },
+  hull:     { cat: 'def', r: 0, i: '⛨', n: 'Coque renforcée', d: () => '+10 intégrité maximale (et actuelle).', max: 4, now: () => { G.maxLives += 10; G.lives += 10; } },
+  dmg:      { cat: 'atk', r: 1, i: '✦', n: 'Munitions perforantes', d: () => '+5% de dégâts pour toutes les tourelles.', mod: { dmg: 1.05 }, max: 5 },
+  rate:     { cat: 'atk', r: 1, i: '⚙', n: 'Servomoteurs', d: () => '+5% de cadence de tir.', mod: { rate: 1.05 }, max: 4 },
+  range:    { cat: 'atk', r: 1, i: '◎', n: 'Optique longue', d: () => '+5% de portée.', mod: { range: 1.05 }, max: 3 },
+  crit:     { cat: 'atk', r: 1, i: '⌖', n: 'Visée laser', d: () => '+3% de chances de critique.', add: { crit: .03 }, max: 3 },
+  splash:   { cat: 'atk', r: 1, i: '✹', n: 'Charges creuses', d: () => '+12% de rayon d\'explosion.', mod: { splash: 1.12 }, max: 3, need: () => G.towers.some(t => t.d.splash) },
+  burn:     { cat: 'atk', r: 1, i: '♨', n: 'Napalm', d: () => 'Brûlures +25%.', mod: { burn: 1.25 }, max: 3, need: () => G.towers.some(t => t.d.burn) },
+  slow:     { cat: 'tac', r: 1, i: '❄', n: 'Azote liquide', d: () => 'Ralentissements 20% plus puissants.', mod: { slow: 1.2 }, max: 2, need: () => G.towers.some(t => t.d.slow) },
+  bounty:   { cat: 'eco', r: 1, i: '$', n: 'Prime de guerre', d: () => '+6% de crédits par élimination.', mod: { bounty: 1.06 }, max: 3 },
+  cool:     { cat: 'tac', r: 1, i: '♒', n: 'Caloducs', d: () => '+25% de refroidissement.', mod: { cool: 1.25 }, max: 3 },
+  renovate: { cat: 'eco', r: 1, i: '▲', n: 'Rénovation', d: () => '+1 niveau gratuit pour vos 2 tourelles les plus faibles.', max: 3, need: () => G.towers.some(t => t.level < Towers.maxLevel(t)),
     now: () => { G.towers.filter(t => t.level < Towers.maxLevel(t)).sort((a, b) => a.level - b.level).slice(0, 2).forEach(t => { t.level++; t.born = performance.now() - 170; }); } },
-  chain:    { r: 2, i: '⚡', n: 'Supraconducteurs', d: () => 'Arcs électriques : +1 rebond.', add: { chain: 1 }, max: 3, need: () => G.towers.some(t => t.d.chain) },
-  pierce:   { r: 2, i: '⟟', n: 'Ogives à uranium', d: () => 'Toutes les tourelles ignorent 15% du blindage.', add: { pierce: .15 }, max: 3 },
-  gift:     { r: 2, i: '✧', n: 'Plan offert', d: () => 'Un plan de fusion T2 aléatoire, gratuitement.', need: () => RECIPES.some(r => TOWERS[r.r].tier === 2 && Fusion.canResearch(r)),
+  chain:    { cat: 'atk', r: 2, i: '⚡', n: 'Supraconducteurs', d: () => 'Arcs électriques : +1 rebond.', add: { chain: 1 }, max: 3, need: () => G.towers.some(t => t.d.chain) },
+  pierce:   { cat: 'atk', r: 2, i: '⟟', n: 'Ogives à uranium', d: () => 'Toutes les tourelles ignorent 15% du blindage.', add: { pierce: .15 }, max: 3 },
+  gift:     { cat: 'tac', r: 2, i: '✧', n: 'Plan offert', d: () => 'Un plan de fusion T2 aléatoire, gratuitement.', need: () => RECIPES.some(r => TOWERS[r.r].tier === 2 && Fusion.canResearch(r)),
     now: () => { const c = RECIPES.filter(r => TOWERS[r.r].tier === 2 && Fusion.canResearch(r)); const r = spick(c); G.unlocked.add(r.r); if (!G.demo) G.freshBp = r.r; UI.toast('Plan offert : ' + TOWERS[r.r].name, 'Constructible dès maintenant.', TOWERS[r.r].color, 4); } },
-  greed:    { r: 2, pact: true, i: '☍', n: 'Pacte de cupidité', d: () => '+20% de crédits par élimination, mais ennemis 15% plus rapides et 10% plus résistants.', mod: { bounty: 1.2, espd: 1.15, ehp: 1.1 }, max: 1 },
-  glass:    { r: 2, pact: true, i: '◬', n: 'Canon de verre', d: () => '+20% de dégâts, mais -25% d\'intégrité maximale.', mod: { dmg: 1.2 }, max: 1,
+  greed:    { cat: 'pact', r: 2, pact: true, i: '☍', n: 'Pacte de cupidité', d: () => '+20% de crédits par élimination, mais ennemis 15% plus rapides et 10% plus résistants.', mod: { bounty: 1.2, espd: 1.15, ehp: 1.1 }, max: 1 },
+  glass:    { cat: 'pact', r: 2, pact: true, i: '◬', n: 'Canon de verre', d: () => '+20% de dégâts, mais -25% d\'intégrité maximale.', mod: { dmg: 1.2 }, max: 1,
     now: () => { G.maxLives = Math.max(5, Math.round(G.maxLives * .75)); G.lives = Math.min(G.lives, G.maxLives); } },
-  surge:    { r: 2, pact: true, i: '⚠', n: 'Survoltage', d: () => '+15% de cadence, mais la surcadence chauffe 2x plus.', mod: { rate: 1.15, heat: 2 }, max: 1 },
-  horde:    { r: 2, pact: true, i: '⁂', n: 'Appel de la horde', d: () => 'Pendant 3 vagues : ennemis +30% de PV, mais +2 nanites et +30% de bonus de fin de vague.', timed: 3, ehp: 1.3, max: 1 }
+  surge:    { cat: 'pact', r: 2, pact: true, i: '⚠', n: 'Survoltage', d: () => '+15% de cadence, mais la surcadence chauffe 2x plus.', mod: { rate: 1.15, heat: 2 }, max: 1 },
+  horde:    { cat: 'pact', r: 2, pact: true, i: '⁂', n: 'Appel de la horde', d: () => 'Pendant 3 vagues : ennemis +30% de PV, mais +2 nanites et +30% de bonus de fin de vague.', timed: 3, ehp: 1.3, max: 1 },
+  // ----- v9.1 : des protocoles qui changent la façon de jouer -----
+  tokens:   { cat: 'eco', r: 0, i: '♣', n: 'Jetons de faveur', d: () => '+3 jetons de machine à sous pour cette préparation.', now: () => { G.tokens[Casino.pl()] = (G.tokens[Casino.pl()] || 0) + 3; } },
+  bank:     { cat: 'eco', r: 0, i: '⌂', n: 'Coffre-fort', d: () => '+3% d\'intérêts sur vos crédits à chaque fin de vague.', add: { interest: .03 }, max: 2 },
+  fund:     { cat: 'eco', r: 1, i: '⚑', n: 'Fonds de guerre', d: () => `+10 crédits par tourelle à chaque fin de vague (actuellement +${10 * G.towers.length}).`, add: { towerCash: 10 }, max: 2, need: () => G.towers.length >= 4 },
+  rookie:   { cat: 'eco', r: 1, i: '⚒', n: 'Production de masse', d: () => 'Tourelles de base : construction et améliorations 12% moins chères.', mod: { t0cost: .88 }, max: 2 },
+  exec:     { cat: 'atk', r: 1, i: '☠', n: 'Protocole d\'exécution', d: () => 'Les ennemis (hors boss) tombés sous 7% de leurs PV sont achevés instantanément.', add: { exec: .07 }, max: 2 },
+  hunter:   { cat: 'atk', r: 1, i: '♛', n: 'Tueur de titans', d: () => '+20% de dégâts contre les boss.', mod: { bossDmg: 1.2 }, max: 3 },
+  ambush:   { cat: 'atk', r: 1, i: '⚔', n: 'Embuscade', d: () => '+50% de dégâts contre les ennemis encore intacts (premier impact).', add: { fresh: .5 }, max: 2 },
+  frost:    { cat: 'atk', r: 1, i: '❅', n: 'Fracture thermique', d: () => '+25% de dégâts contre les ennemis ralentis ou gelés.', add: { frostDmg: .25 }, max: 2, need: () => G.towers.some(t => t.d.slow) },
+  aa:       { cat: 'atk', r: 1, i: '✈', n: 'Batteries antiaériennes', d: () => '+30% de dégâts contre les volants.', add: { airDmg: .3 }, max: 2, need: () => G.waveNum >= 5 },
+  breaker:  { cat: 'atk', r: 1, i: '⛏', n: 'Brise-blindage', d: () => '+25% de dégâts contre les ennemis blindés.', add: { armDmg: .25 }, max: 2 },
+  veteran:  { cat: 'atk', r: 1, i: '✪', n: 'Vétérans', d: () => 'Tourelles de niveau 8 ou plus : +25% de dégâts.', add: { vet: .25 }, max: 2, need: () => G.towers.some(t => t.level >= 5) },
+  spec:     { cat: 'atk', r: 1, i: '⌬', n: 'Spécialisation', d: () => { const k = Cards.fav(); return k ? `+25% de dégâts pour toutes vos tourelles <b style="color:${TOWERS[k].color}">${TOWERS[k].name}</b> (votre arme la plus efficace).` : '+25% de dégâts pour votre type de tourelle le plus efficace.'; },
+              need: () => !!Cards.fav(), max: 3, now: () => { const k = Cards.fav(); if (!k) return; const S = G.cx.spec || (G.cx.spec = {}); S[k] = (S[k] || 1) * 1.25; } },
+  aegis:    { cat: 'def', r: 1, i: '⛉', n: 'Bouclier du noyau', d: () => 'À chaque vague, les 2 premiers ennemis qui atteignent le noyau sont absorbés (hors boss).', add: { aegis: 2 }, max: 2 },
+  vamp:     { cat: 'def', r: 1, i: '♡', n: 'Siphon vital', d: () => '+1 intégrité toutes les 40 éliminations.', add: { vamp: 1 }, max: 2 },
+  blood:    { cat: 'pact', r: 2, pact: true, i: '⚱', n: 'Pacte du sang', d: () => 'Chaque protocole propose 4 choix au lieu de 3, mais -20% d\'intégrité maximale.', add: { choices: 1 }, max: 1,
+    now: () => { G.maxLives = Math.max(5, Math.round(G.maxLives * .8)); G.lives = Math.min(G.lives, G.maxLives); } },
+  iron:     { cat: 'pact', r: 2, pact: true, i: '⚙', n: 'Pacte de fer', d: () => 'Constructions et améliorations -15%, mais les reventes ne rapportent plus rien (hors droit à l\'erreur).', mod: { cost: .85, refund: 0 }, max: 1 },
+  titans:   { cat: 'pact', r: 2, pact: true, i: '♜', n: 'Pacte des titans', d: () => 'Boss +40% de PV, mais chaque boss abattu vous offre un protocole supplémentaire.', mod: { bossHp: 1.4 }, add: { bossCard: 1 }, max: 1, need: () => G.waveNum >= 3 },
+  frenzy:   { cat: 'pact', r: 2, pact: true, i: '⚡', n: 'Pacte frénétique', d: () => '+30% de cadence de tir, mais -15% de portée.', mod: { rate: 1.3, range: .85 }, max: 1 },
+  usury:    { cat: 'pact', r: 2, pact: true, i: '⧗', n: 'Pacte de l\'usure', d: () => '+2 nanites à chaque fin de vague, mais tous les ennemis gagnent +1 point de blindage.', add: { nanoW: 2, earmor: 1 }, max: 1 },
+  chainx:   { cat: 'legend', r: 3, i: '✺', n: 'Réaction en chaîne', d: () => 'Les ennemis abattus explosent et infligent 20% de leurs PV max aux ennemis proches.', add: { chainx: 1 }, max: 1 },
+  revive:   { cat: 'legend', r: 3, i: '♆', n: 'Second souffle', d: () => 'Une fois dans la partie : quand le noyau cède, il se reconstitue à 50% d\'intégrité.', add: { revive: 1 }, max: 1, need: () => !G.cx.rev },
+  omni:     { cat: 'legend', r: 3, i: '◉', n: 'Œil omniscient', d: () => 'Toutes vos tourelles voient les ennemis furtifs et voilés.', add: { omni: 1 }, max: 1, need: () => G.waveNum >= 5 },
+  orbit:    { cat: 'legend', r: 3, i: '☄', n: 'Satellite de combat', d: () => 'Recharge des capacités -40%.', mod: { abilCd: .6 }, max: 1 },
+  lucky:    { cat: 'legend', r: 3, i: '✤', n: 'Fortune de guerre', d: () => '15% des éliminations rapportent une prime triple.', add: { lucky: .15 }, max: 1 },
+  lethal:   { cat: 'legend', r: 3, i: '✠', n: 'Létalité', d: () => '+10% de chances de critique et dégâts critiques +100%.', add: { crit: .1, critDmg: 1 }, max: 1 }
 };
-const CARD_RARITY = [{ n: 'STANDARD', c: '#9fb0cc' }, { n: 'RARE', c: '#4db8ff' }, { n: 'PACTE', c: '#ff2bd6' }];
+const CARD_RARITY = [{ n: 'STANDARD', c: '#9fb0cc' }, { n: 'RARE', c: '#4db8ff' }, { n: 'PACTE', c: '#ff2bd6' }, { n: 'LÉGENDAIRE', c: '#ffd23f' }];
+const CARD_CAT = { eco: 'ÉCONOMIE', atk: 'ATTAQUE', def: 'DÉFENSE', tac: 'TACTIQUE', pact: '', legend: '' };
 
 /* ============================== SPRITES ==============================
    Tout ce qui est coûteux (dégradés, ombres lumineuses) est dessiné UNE fois
@@ -1992,6 +2058,24 @@ function drawEnemyShape(x, d, elite) {
       for (let i = 0; i < 3; i++) { x.beginPath(); x.arc(0, 0, r * 1.18, i * TAU / 3 + .2, i * TAU / 3 + 1.6); x.stroke(); }
       x.fillStyle = 'rgba(0,30,50,.75)'; circ(x, 0, 0, r * .38); x.fill(); x.fillStyle = '#dff8ff'; circ(x, 0, 0, r * .15); x.fill();
       break;
+    case 'mega1': {   // Léviathan : raie abyssale cuirassée
+      x.beginPath(); x.moveTo(r * 1.3, 0); x.quadraticCurveTo(r * .2, r * 1.25, -r * 1.1, r * .55); x.lineTo(-r * .7, 0); x.lineTo(-r * 1.1, -r * .55); x.quadraticCurveTo(r * .2, -r * 1.25, r * 1.3, 0); x.closePath(); x.fill(); x.stroke();
+      x.shadowBlur = 0; x.strokeStyle = 'rgba(0,20,40,.75)'; x.lineWidth = 2;
+      for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(-r * .2 + i * r * .28, 0, r * .55, -.9, .9); x.stroke(); }
+      x.beginPath(); x.moveTo(-r * .7, 0); x.lineTo(-r * 1.6, 0); x.lineWidth = 3; x.strokeStyle = shade(c, .7); x.stroke();
+      x.fillStyle = '#001a26'; circ(x, r * .62, 0, r * .26); x.fill();
+      x.fillStyle = '#ffffff'; x.shadowColor = c; x.shadowBlur = 14; circ(x, r * .66, 0, r * .13); x.fill();
+      break;
+    }
+    case 'mega2': {   // Oméga : anneaux concentriques autour d'un cœur stellaire
+      polyPath(x, 12, r, 0, r * .78); x.fill(); x.stroke();
+      x.shadowBlur = 0; x.fillStyle = 'rgba(30,0,40,.85)'; circ(x, 0, 0, r * .62); x.fill();
+      x.strokeStyle = 'rgba(255,255,255,.75)'; x.lineWidth = 1.5;
+      for (let i = 0; i < 3; i++) { x.beginPath(); x.arc(0, 0, r * (.3 + i * .12), i * 1.3, i * 1.3 + 4.2); x.stroke(); }
+      x.fillStyle = '#ffffff'; x.shadowColor = c; x.shadowBlur = 16; circ(x, 0, 0, r * .17); x.fill();
+      x.shadowBlur = 0; x.fillStyle = c; x.font = `bold ${Math.round(r * .5)}px sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.globalAlpha = .9; x.fillText('Ω', 0, r * .02); x.globalAlpha = 1;
+      break;
+    }
     case 'boss6':   // sauteur : chevron prêt à bondir
       x.beginPath(); x.moveTo(r * 1.25, 0); x.lineTo(-r * .55, r * 1.05); x.lineTo(-r * .15, 0); x.lineTo(-r * .55, -r * 1.05); x.closePath(); x.fill(); x.stroke();
       x.beginPath(); x.moveTo(r * .2, 0); x.lineTo(-r * 1.05, r * .75); x.lineTo(-r * .8, 0); x.lineTo(-r * 1.05, -r * .75); x.closePath(); x.globalAlpha = .7; x.fill(); x.globalAlpha = 1;
@@ -2384,9 +2468,18 @@ const Stats = {
 
 const Combat = {
   hit(e, dmg, src, crit = false, pierce = 0, dot = false) {
-    if (!e.alive || e.phased) return 0;
+    if (!e.alive || e.phased || e.inv > 0) return 0;
     if (src && e.air && src.d.airMult) dmg *= src.d.airMult;
     if (e.markT > 0) dmg *= 1 + e.markV;
+    const M = G.mod;
+    if (src) {
+      if (e.boss) dmg *= M.bossDmg;
+      if (M.fresh && e.hp >= e.maxHp) dmg *= 1 + M.fresh;
+      if (M.frostDmg && (e.slowT > 0 || e.freezeT > 0)) dmg *= 1 + M.frostDmg;
+      if (M.airDmg && e.air) dmg *= 1 + M.airDmg;
+      if (M.armDmg && e.armor > 0) dmg *= 1 + M.armDmg;
+      if (M.vet && src.level >= 8) dmg *= 1 + M.vet;
+    }
     if (e.shield > 0) {
       const s = Math.min(e.shield, dmg);
       e.shield -= s; dmg -= s; e.shCd = 180;
@@ -2399,6 +2492,7 @@ const Combat = {
     }
     e.hp -= dmg;
     Stats.dmg(src, dmg);
+    if (M.exec && e.hp > 0 && !e.boss && e.hp < e.maxHp * M.exec) { e.hp = 0; if (Render.hq && Math.random() < .3) FX.float(e.x, e.y - e.r - 6, 'EXÉCUTÉ', '#ff3d5a', 10); }
     if (!dot) {
       e.hitT = 3;
       if (crit) Missions.on('crit');
@@ -2422,14 +2516,85 @@ const Combat = {
   }
 };
 
+/* ============================== MÉGA-BOSS ============================== */
+const Mega = {
+  enter(e, i, first) {
+    const P = e.d.phases[i], mu = G.mut;
+    e.mph = i; e.mt = {};
+    e.armor = (P.armor + mu.armorAdd + G.mod.earmor) * mu.armor * e.am;
+    e.spd = e.spd0 * (P.spd || 1);
+    for (const k of ['jam', 'summon', 'drain', 'rift', 'blink', 'aura']) if (P[k]) e.mt[k] = Math.round(P[k].every * (first ? .6 : .4));
+    if (first) return;
+    e.inv = 150; e.leapTo = 0; e.slowT = 0; e.freezeT = 0;
+    if (P.shieldBack && e.maxShield) e.shield = Math.max(e.shield, e.maxShield * P.shieldBack);
+    Render.shake(20); Render.flash(.45, e.d.color); Sfx.play('boss');
+    for (let k = 0; k < 3; k++) FX.ring(e.x, e.y, k & 1 ? '#ffffff' : e.d.color, 70 + k * 45, 30 + k * 8, 4);
+    if (!G.demo) UI.banner(`PHASE ${i + 1}`, `${e.d.name} · ${P.n.toUpperCase()}`, e.d.color);
+  },
+  update(e) {
+    if (e.inv > 0) e.inv--;
+    const D = e.d.phases, P = D[e.mph], nx = D[e.mph + 1], T = e.mt, w = G.waves[e.wave];
+    if (nx && e.hp <= e.maxHp * nx.at) { this.enter(e, e.mph + 1); return; }
+    if (e.inv > 0) return;
+    // régénération plafonnée au seuil de la phase en cours
+    if (P.regen && e.hp < e.maxHp * (P.at || 1)) e.hp = Math.min(e.maxHp * (P.at || 1), e.hp + e.maxHp * P.regen / 60);
+    // distorsion : marque le point d'arrivée, puis se téléporte
+    if (e.leapTo) {
+      if (--e.tD <= 0) {
+        FX.spark(e.x, e.y, e.d.color, 30, 5); e.dist = Math.max(e.dist, e.leapTo); e.leapTo = 0;
+        Path.place(e); e.px = e.x; e.py = e.y;
+        FX.ring(e.x, e.y, e.d.color, 90, 26, 4); Render.shake(12); Sfx.play('boom', .7);
+      }
+      return;
+    }
+    const due = k => P[k] && --T[k] <= 0 && (T[k] = P[k].every, true);
+    if (due('jam')) {
+      const r2 = P.jam.r * P.jam.r; let hit = 0;
+      for (const t of G.towers) if (t.d.kind !== 'support' && d2(t.cx, t.cy, e.x, e.y) <= r2) { t.stun = Math.max(t.stun, P.jam.t); hit++; }
+      FX.ring(e.x, e.y, '#fff35c', P.jam.r, 34, 4); FX.float(e.x, e.y - e.r - 14, 'IEM GÉANTE', '#fff35c', 15);
+      if (hit) Sfx.play('zap');
+    }
+    if (due('summon')) {
+      const S = P.summon;
+      for (let k = 0; k < S.n; k++) {
+        e.sc = (e.sc || 0) + 1;
+        this.add(S.types[e.sc % S.types.length], e, Math.max(0, e.dist - 34 - k * 24), .8, false);
+      }
+      FX.ring(e.x, e.y, e.d.color, 70, 22, 3);
+    }
+    if (due('drain')) {   // neutralise les tourelles qui font le plus mal
+      const r2 = P.drain.r * P.drain.r;
+      const L = G.towers.filter(t => t.d.kind !== 'support' && d2(t.cx, t.cy, e.x, e.y) <= r2).sort((a, b) => b.dealt - a.dealt || a.id - b.id).slice(0, P.drain.n);
+      for (const t of L) { t.stun = Math.max(t.stun, P.drain.t); FX.line(e.x, e.y, t.cx, t.cy, e.d.color, 3, 26); FX.float(t.cx, t.cy - 18, 'DRAINÉE', e.d.color, 11); }
+      if (L.length) { Sfx.play('zap', .9); FX.ring(e.x, e.y, e.d.color, P.drain.r, 30, 2); }
+    }
+    if (due('rift')) {   // faille : des élites surgissent plus loin sur le chemin
+      const tot = G.map.P[e.pi].total, at = Math.min(tot - 90, e.dist + srnd(90, 220));
+      const pool = Object.keys(ENEMIES).filter(k => ENEMIES[k].from <= G.waveNum && ENEMIES[k].w > 0 && !ENEMIES[k].air);
+      for (let k = 0; k < P.rift.n; k++) this.add(spick(pool), e, Math.max(0, at - k * 18), .7, true);
+      Path.posAt(at, _pt, e.pi);
+      FX.ring(_pt.x, _pt.y, e.d.color, 60, 30, 4); FX.spark(_pt.x, _pt.y, e.d.color, 24, 4); FX.float(_pt.x, _pt.y - 30, 'FAILLE', e.d.color, 14);
+    }
+    if (due('blink')) {
+      e.leapTo = Math.min(G.map.P[e.pi].total - 80, e.dist + P.blink.dist); e.tD = 60;
+      FX.float(e.x, e.y - e.r - 14, 'DISTORSION', e.d.color, 15); Sfx.play('alarm', .6);
+    }
+    if (due('aura')) Enemies.aura(e, P.aura);
+  },
+  add(type, e, dist, hpf, elite) {
+    const w = G.waves[e.wave];
+    Enemies.spawn(type, { dist, hpMul: (w ? w.hpMul : 1) * hpf, wave: e.wave, child: true, pi: e.pi, elite });
+  }
+};
+
 /* ============================== ENNEMIS ============================== */
 const Enemies = {
   spawn(type, o = {}) {
-    const d = EDEF(type), elite = !!o.elite, mu = G.mut, hm = (o.hpMul || 1) * (elite ? 3 : 1) * (d.boss ? mu.bossHp : 1) * G.mod.ehp;
+    const d = EDEF(type), elite = !!o.elite, mu = G.mut, hm = (o.hpMul || 1) * (elite ? 3 : 1) * (d.boss ? mu.bossHp * G.mod.bossHp : 1) * G.mod.ehp;
     const e = {
       id: G.nextId++, type, d, alive: true, boss: !!d.boss, air: !!d.air, stealth: !!d.stealth, elite,
       hp: d.hp * hm, maxHp: d.hp * hm, shield: (d.shield || 0) * hm, maxShield: (d.shield || 0) * hm,
-      armor: ((d.armor || 0) + mu.armorAdd) * mu.armor * Math.sqrt(o.hpMul || 1), spd: d.spd * mu.spd * G.mod.espd * (1 + Math.min(.35, Math.max(0, (o.wave || G.waveNum) - 25) * .01)), r: d.r * (elite ? 1.25 : 1),
+      armor: ((d.armor || 0) + mu.armorAdd + G.mod.earmor) * mu.armor * Math.sqrt(o.hpMul || 1), spd: d.spd * mu.spd * G.mod.espd * (1 + Math.min(.35, Math.max(0, (o.wave || G.waveNum) - 25) * .01)), r: d.r * (elite ? 1.25 : 1),
       dist: o.dist || 0, seg: 0, x: 0, y: 0, px: 0, py: 0, ang: 0, pi: G.map.P[o.pi] ? o.pi : 0, rem: 0,
       slowT: 0, slowF: 1, burnT: 0, burnDps: 0, burnSrc: null, freezeT: 0, revealT: 0, markT: 0, markV: 0, hitT: 0, shCd: 0,
       wave: o.wave || 0, bounty: d.bounty * (elite ? 3 : 1), ph: sr() * TAU,
@@ -2438,23 +2603,31 @@ const Enemies = {
       tP: d.phase ? srndi(60, d.phase.every) : 0, phased: false, veilT: 0, pulled: 0, acc: 1
     };
     Path.place(e); e.px = e.x; e.py = e.y;
+    if (d.mega) { e.spd0 = e.spd; e.am = Math.sqrt(o.hpMul || 1); Mega.enter(e, 0, true); }
     G.enemies.push(e);
     Codex.see('e', type);
     if (o.child && G.waves[e.wave]) G.waves[e.wave].left++;
     if (e.boss) {
-      Render.shake(8); Sfx.play('boss');
-      if (!G.demo && !(G.seenBoss || (G.seenBoss = {}))[type]) { G.seenBoss[type] = 1; UI.bossIntro(d, type); }
+      Render.shake(d.mega ? 22 : 8); Sfx.play('boss');
+      if (d.mega && !G.demo) { Render.flash(.5, d.color); Sfx.play('alarm'); UI.bossIntro(d, type, true); }
+      else if (!G.demo && !(G.seenBoss || (G.seenBoss = {}))[type]) { G.seenBoss[type] = 1; UI.bossIntro(d, type); }
     }
     return e;
   },
   update() {
     const M = G.map, arr = G.enemies;
     let boss = null;
+    // Réaction en chaîne : explosions différées (au plus 20 par tick, pour ne jamais geler le jeu)
+    if (G.cxq && G.cxq.length) {
+      const q = G.cxq.splice(0, 60);
+      for (let i = 0; i < q.length; i += 3) { Combat.splash(q[i], q[i + 1], 55, q[i + 2], null, false, false); if (Render.hq) FX.ring(q[i], q[i + 1], '#ff7a1a', 55, 16, 2); }
+    }
     for (let i = 0, n = arr.length; i < n; i++) {
       const e = arr[i];
       if (!e.alive) continue;
       const d = e.d;
       e.px = e.x; e.py = e.y;
+      if (d.mega) { Mega.update(e); if (!e.alive) continue; }
       if (e.hitT > 0) e.hitT--;
       if (e.revealT > 0) e.revealT--;
       if (e.markT > 0 && --e.markT === 0) e.markV = 0;
@@ -2512,7 +2685,7 @@ const Enemies = {
       if (e.dist >= M.P[e.pi].total) { this.leak(e); if (G.over) return; continue; }
       Path.place(e);
       if (e.air) { e.ph += .05; const w = Math.sin(e.ph) * 7; e.x -= Math.sin(e.ang) * w; e.y += Math.cos(e.ang) * w; }
-      if (e.boss && !boss) boss = e;
+      if (e.boss && (!boss || (e.d.mega && !boss.d.mega))) boss = e;
     }
     G.boss = boss;
   },
@@ -2577,19 +2750,29 @@ const Enemies = {
       UI.comboBurst = performance.now();
     }
     const cm = 1 + Math.min(1, Math.floor(G.combo / 10) * .1);
-    const bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * G.mut.bounty * (G.gm === 'rush' ? 1.3 : 1) * (1 + .015 * (G.waveNum - 1))));
+    let bounty = Math.max(1, Math.round(e.bounty * cm * G.mod.bounty * G.diff.bounty * G.mut.bounty * (G.gm === 'rush' ? 1.3 : 1) * (1 + .015 * (G.waveNum - 1))));
+    if (G.mod.lucky && sr() < G.mod.lucky) { bounty *= 3; if (!G.demo) FX.float(e.x, e.y - 20, '×3', '#ffd23f', 13); }
     gain(bounty, null);
+    if (G.mod.vamp && G.stats.kills % 40 === 0 && G.lives < G.maxLives) { G.lives = Math.min(G.maxLives, G.lives + G.mod.vamp); FX.float(e.x, e.y - 30, '+' + G.mod.vamp + ' ♥', '#ff5d8f', 12); }
+    if (G.mod.chainx) (G.cxq || (G.cxq = [])).push(e.x, e.y, e.maxHp * .2);
+    if (e.boss && G.mod.bossCard) G.cx.bc = (G.cx.bc || 0) + 1;
     if (UI.dmgNums || e.boss) FX.float(e.x, e.y - 8, '+' + bounty, '#ffd23f', e.boss ? 18 : 10);
     if (e.d.spawn) {
       const s = e.d.spawn;
       for (let k = 0; k < s.n; k++)
         this.spawn(s.type, { dist: Math.max(0, e.dist - k * 14), hpMul: (w ? w.hpMul : 1) * (s.hp || .5) * (e.elite ? 1.5 : 1), wave: e.wave, child: true, pi: e.pi });
-      FX.float(e.x, e.y - 20, s.type === 'scout' ? 'BRÈCHE' : s.type === 'mite' ? 'ESSAIM' : 'SCISSION', e.d.color, 12);
+      FX.float(e.x, e.y - 20, s.type === 'scout' ? 'BRÈCHE' : s.type === 'mite' ? 'ESSAIM' : s.type === 'echo' ? 'ÉCHOS' : 'SCISSION', e.d.color, s.type === 'echo' ? 20 : 12);
     }
     const dm = G.mod.drop;
     if (e.boss) {
-      const bn = 3 + G.mut.bossNano;
+      const bn = (e.d.mega ? 15 : 3) + G.mut.bossNano;
       G.nanites += bn; G.stats.bosses++;
+      if (e.d.mega) {
+        G.stats.megas = (G.stats.megas || 0) + 1; Ach.unlock(e.type);
+        if (!G.demo) { UI.callout(e.d.name + ' ANÉANTI', e.d.color); Render.flash(.6, '#ffffff'); }
+        for (let i = 0; i < 6; i++) FX.ring(e.x, e.y, i & 1 ? '#ffffff' : e.d.color, 80 + i * 45, 34 + i * 8, 4);
+        Drops.spawn(e.x, e.y - 14, 'nano'); Drops.spawn(e.x, e.y + 14, 'repair');
+      }
       FX.float(e.x, e.y - 28, `+${bn} ◈`, '#00ffaa', 18);
       Ach.unlock('boss');
       Cmd.gain(20 * Cmd.mult());
@@ -2613,12 +2796,23 @@ const Enemies = {
     e.alive = false;
     const w = G.waves[e.wave];
     if (w) { w.left--; w.leaks++; if (e.boss) w.bossSlow = true; }
+    const [x, y] = G.map.P[e.pi].exit;
+    if (w && !e.boss && (w.aeg || 0) < G.mod.aegis) {   // Bouclier du noyau
+      w.aeg = (w.aeg || 0) + 1; w.leaks--;
+      FX.ring(x, y, '#4df3ff', 46, 22, 3); FX.float(x, y - 24, 'ABSORBÉ', '#4df3ff', 14); Sfx.play('zap', .5);
+      return;
+    }
     const dmg = e.d.leak * (e.elite ? 2 : 1);
     G.lives -= dmg; G.combo = 0; G.stats.leaks++;
-    const [x, y] = G.map.P[e.pi].exit;
     FX.float(x, y - 24, '-' + dmg, '#ff2a6d', 18);
     FX.ring(x, y, '#ff2a6d', 40, 22, 3);
     Render.shake(e.boss ? 20 : 7); Render.flash(e.boss ? .4 : .18, '#ff2a6d'); Sfx.play('leak');
+    if (G.lives <= 0 && G.mod.revive && !G.cx.rev) {   // Second souffle
+      G.cx.rev = 1; G.lives = Math.ceil(G.maxLives * .5);
+      FX.ring(x, y, '#ffd23f', 120, 40, 5); Render.flash(.5, '#ffd23f');
+      if (!G.demo) UI.callout('SECOND SOUFFLE', '#ffd23f');
+      return;
+    }
     if (G.lives <= 0) { G.lives = 0; Game.gameOver(); }
   },
   compact() {
@@ -2631,9 +2825,9 @@ const Enemies = {
 /* ============================== TOURELLES ============================== */
 const Towers = {
   _hit: [],
-  costOf(k) { return Math.round(TOWERS[k].cost * G.mod.cost * (G.mod.kcost[k] || 1)); },
+  costOf(k) { return Math.round(TOWERS[k].cost * G.mod.cost * (G.mod.kcost[k] || 1) * (TOWERS[k].tier === 0 ? G.mod.t0cost : 1)); },
   maxLevel(t) { return t.d.kind === 'support' ? 5 : 10; },
-  upCost(t) { return Math.round((t.d.cost * .6 * t.level + 30) * G.mod.cost * (G.mod.kcost[t.key] || 1)); },
+  upCost(t) { return Math.round((t.d.cost * .6 * t.level + 30) * G.mod.cost * (G.mod.kcost[t.key] || 1) * (t.d.tier === 0 ? G.mod.t0cost : 1)); },
   at(tx, ty) { const M = G.map; return (tx < 0 || ty < 0 || tx >= M.C || ty >= M.R) ? null : G.tgrid[ty * M.C + tx]; },
   canPlace(tx, ty) { const M = G.map; return tx >= 0 && ty >= 0 && tx < M.C && ty < M.R && M.cells[ty * M.C + tx] === 0 && !G.tgrid[ty * M.C + tx]; },
   create(key, tx, ty, level = 1) {
@@ -2740,15 +2934,15 @@ const Towers = {
     }
   },
   valid(t, e) {
-    return !!e && e.alive && !e.phased && !(t.d.ground && e.air) && (t.d.reveal || !hid(e)) &&
+    return !!e && e.alive && !e.phased && !(e.inv > 0) && !(t.d.ground && e.air) && (t.d.reveal || G.mod.omni || !hid(e)) &&
       d2(e.x, e.y, t.cx, t.cy) <= t.range * t.range;
   },
   find(t) {
-    const d = t.d, r2 = t.range * t.range, seeAll = !!d.reveal, s = t.strat, arr = G.enemies;
+    const d = t.d, r2 = t.range * t.range, seeAll = !!d.reveal || !!G.mod.omni, s = t.strat, arr = G.enemies;
     let best = null, bv = -Infinity;
     for (let i = 0, n = arr.length; i < n; i++) {
       const e = arr[i];
-      if (!e.alive || e.phased || (d.ground && e.air) || (!seeAll && hid(e))) continue;
+      if (!e.alive || e.phased || e.inv > 0 || (d.ground && e.air) || (!seeAll && hid(e))) continue;
       const dd = d2(e.x, e.y, t.cx, t.cy);
       if (dd > r2) continue;
       const v = s === 0 ? -e.rem : s === 1 ? e.hp + e.shield : s === 2 ? -(e.hp + e.shield) : -dd;
@@ -3112,16 +3306,17 @@ const Waves = {
   // croissance polynomiale douce, puis exponentielle au-delà de la vague 40 (l'infini doit finir par céder)
   hpMul(n) {
     const k = n - 1, fork = G.map.P && G.map.P.length > 1 ? .9 : 1;   // deux chemins à couvrir : ennemis un peu moins robustes
-    return (1 + .22 * k + .02 * k * k) * Math.pow(1.045, k) * Math.pow(1.075, Math.max(0, k - 22)) * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp : 1);
+    return (1 + .25 * k + .022 * k * k) * Math.pow(1.05, k) * Math.pow(1.075, Math.max(0, k - 22)) * Math.pow(1.03, Math.max(0, k - 45)) * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp : 1);
   },
   // hasard reproductible : une carte donnée produit toujours les mêmes vagues (aperçu fiable, Défi du jour équitable)
   rng(n, salt = 0) { return mulberry32((G.seed ^ Math.imul(n + 1, 2654435761) ^ salt) >>> 0); },
   plan(n) {
-    const R = this.rng(n), boss = n % 5 === 0 || (G.gm === 'rush' && n >= 3);
+    const R = this.rng(n), mega = n % 50 === 0, boss = mega || n % 5 === 0 || (G.gm === 'rush' && n >= 3);
     let th = WTHEMES[0];
-    if (boss) th = { id: 'boss', name: 'Alerte Boss', countMul: .65 };
+    if (mega) th = { id: 'mega', name: 'Alerte rouge', countMul: .45 };
+    else if (boss) th = { id: 'boss', name: 'Alerte Boss', countMul: .65 };
     else if (n > 3) { const pool = WTHEMES.filter(t => (t.from || 1) <= n); th = pool[weightedIndex(pool.map(t => t.w), R)]; }
-    const budget = (8 + n * 3.6 + n * n * .08) * (th.countMul || 1) * G.mut.count;
+    const budget = (8 + n * 3.8 + n * n * .09) * (th.countMul || 1) * G.mut.count;
     const avail = Object.keys(ENEMIES).filter(k => ENEMIES[k].from <= n);
     const wts = avail.map(k => (k === 'drone' ? 2.2 : 1) * ((th.mod && th.mod[k]) || 1) * (ENEMIES[k].from === n ? .6 : 1));
     const list = []; let spent = 0;
@@ -3139,7 +3334,8 @@ const Waves = {
     return { n, name: th.name, theme: th.id, list: order, counts, bosses: boss ? this.bossesFor(n) : [], hpMul: this.hpMul(n) * (th.hpMul || 1) * G.mut.hp, gapMul: th.gapMul || 1 };
   },
   bossesFor(n) {
-    const rush = G.gm === 'rush', k = rush ? n - 3 : n / 5 - 1, c = rush ? (n >= 30 ? 3 : n >= 15 ? 2 : 1) : n >= 45 ? 3 : n >= 30 ? 2 : 1, out = [];
+    if (n % 50 === 0) { const m = [(n / 50) % 2 ? 'leviathan' : 'omega']; if (n >= 150) m.push(BOSS_ORDER[(n / 50) % BOSS_ORDER.length]); return m; }
+    const rush = G.gm === 'rush', k = rush ? n - 3 : n / 5 - 1, c = rush ? (n >= 30 ? 3 : n >= 15 ? 2 : 1) : n >= 40 ? 3 : n >= 20 ? 2 : 1, out = [];
     for (let i = 0; i < c; i++) out.push(BOSS_ORDER[(k + i) % BOSS_ORDER.length]);
     return out;
   },
@@ -3154,7 +3350,7 @@ const Waves = {
     const w = { n, left: 0, leaks: 0, hpMul: hpm, t0: G.tick };
     G.waves[n] = w;
     const base = G.tick + 40, gap = Math.max(11, 30 - n * .35) * P.gapMul, R = this.rng(n, 0x5eed);
-    const eliteP = n >= (G.mut.elite > 1 ? 4 : 6) ? Math.min(.25, .04 + n * .003) * G.mut.elite : 0;
+    const eliteP = n >= (G.mut.elite > 1 ? 4 : 6) ? Math.min(.3, .05 + n * .004) * G.mut.elite : 0;
     let t = base, pi = 0;
     const nP = G.map.P.length;
     for (let i = 0; i < P.list.length; i++) {
@@ -3177,7 +3373,7 @@ const Waves = {
       Missions.on('early');
     }
     if (P.bosses.length) {
-      UI.banner(`VAGUE ${n}`, 'ALERTE BOSS · ' + P.bosses.map(b => BOSSES[b].name).join(' + '), '#ff2a6d');
+      UI.banner(`VAGUE ${n}`, (n % 50 === 0 ? 'ALERTE ROUGE · ' : 'ALERTE BOSS · ') + P.bosses.map(b => BOSSES[b].name).join(' + '), '#ff2a6d');
       Sfx.play('alarm');
     } else {
       UI.banner(`VAGUE ${n}`, P.name.toUpperCase(), null);
@@ -3205,10 +3401,11 @@ const Waves = {
     Casino.resolve(w);
     G.tokens = G.tokens.map(() => Casino.TOKENS);
     const tb = Cards.tick();
-    const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus * tb.cash), nano = Math.round((1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0)) * G.mut.nano) + tb.nano;
+    const bonus = Math.round((40 + w.n * 10) * G.mod.waveBonus * tb.cash), nano = Math.round((1 + Math.floor(w.n / 10) + (w.n % 5 === 0 ? 2 : 0)) * G.mut.nano) + tb.nano + G.mod.nanoW;
     gain(bonus, null); G.nanites += nano;
     let extra = '';
     if (G.income) { gain(G.income); extra += ` · revenu +${G.income}`; }
+    if (G.mod.towerCash && G.towers.length) { const v = G.mod.towerCash * G.towers.length; gain(v, null); extra += ` · fonds de guerre +${v}`; }
     if (G.gm === 'sandbox') { G.money = Math.max(G.money, 99999); G.nanites = Math.max(G.nanites, 999); }
     if (G.sendStock) G.sendStock = {};
     if (G.mod.interest > 0) {
@@ -3235,6 +3432,7 @@ const Waves = {
     Cmd.gain((4 + 2 * Math.floor(w.n / 5)) * Cmd.mult());
     Missions.fill();
     if (w.n % 2 === 0) Cards.offer();   // un protocole toutes les 2 vagues : des choix qui pèsent, sans inflation
+    while (G.cx.bc > 0) { G.cx.bc--; Cards.offer(); }   // Pacte des titans
     if (Object.keys(G.waves).length === 0 && G.spawnQ.length === 0) {
       G.phase = 'prep'; G.autoT = G.net === 'versus' ? 900 : 480; Music.intensity = 0;
       if (G.net === 'versus') UI.buildBar();
@@ -3460,6 +3658,8 @@ const Skills = {
       recycleMul: r('c5') ? 2 : 1, orbDmg: r('c6') ? 1.75 : 1, orbCd: r('c6') ? .7 : 1,
       abilCd: 1 - .08 * (pk.h_cd || 0), waveBonus: 1 + .25 * (pk.h_bonus || 0),
       rate: 1, splash: 1, burn: 1, slow: 1, chain: 0, espd: 1, ehp: 1, bp: 1,
+      exec: 0, bossDmg: 1, fresh: 0, frostDmg: 0, airDmg: 0, armDmg: 0, vet: 0, aegis: 0, vamp: 0, t0cost: 1, choices: 0, bossHp: 1, bossCard: 0,
+      earmor: 0, nanoW: 0, towerCash: 0, chainx: 0, revive: 0, omni: 0, lucky: 0,
       kdmg: Object.assign({}, D.kdmg), kcost: Object.assign({}, D.kcost)
     };
     for (const p of ['dmg', 'heat', 'splash', 'rate', 'espd', 'bp']) if (D[p]) m[p] *= D[p];
@@ -3470,6 +3670,7 @@ const Skills = {
       if (c.add) for (const p in c.add) m[p] += c.add[p] * s;
     }
     for (const tp of G.timed) { const c = CARDS[tp.id]; if (c && c.ehp) m.ehp *= c.ehp; }
+    if (G.cx && G.cx.spec) for (const k in G.cx.spec) m.kdmg[k] = (m.kdmg[k] || 1) * G.cx.spec[k];
     if (G.ev && EVENTS[G.ev.k].mod) { const em = EVENTS[G.ev.k].mod; for (const p in em) m[p] *= em[p]; }
     G.mod = m;
   }
@@ -3629,9 +3830,21 @@ const Cards = {
     return !c.need || c.need();
   },
   roll() {
-    const w = G.waveNum, pool = Object.keys(CARDS).filter(id => this.ok(id)), out = [], rw = [55, 32 + w * .5, 10 + w * .4];
-    while (out.length < 3 && pool.length) out.push(pool.splice(weightedIndex(pool.map(id => rw[CARDS[id].r]), sr), 1)[0]);
+    const w = G.waveNum, rw = [55, 32 + w * .5, 10 + w * .4, w >= 12 ? 3 + w * .12 : 0], n = 3 + (G.mod.choices || 0), out = [], cats = {};
+    const pool = Object.keys(CARDS).filter(id => this.ok(id) && rw[CARDS[id].r] > 0);
+    // une main variée : une catégorie déjà présente devient bien moins probable
+    while (out.length < n && pool.length) {
+      const id = pool.splice(weightedIndex(pool.map(k => rw[CARDS[k].r] * (cats[CARDS[k].cat] ? .25 : 1)), sr), 1)[0];
+      out.push(id); cats[CARDS[id].cat] = 1;
+    }
     return out;
+  },
+  // le type de tourelle qui a infligé le plus de dégâts (Spécialisation)
+  fav() {
+    const S = {}; let b = null;
+    for (const t of G.towers) if (t.d.kind !== 'support') S[t.key] = (S[t.key] || 0) + t.dealt + 1;
+    for (const k in S) if (!b || S[k] > S[b]) b = k;
+    return b;
   },
   offer() {
     if (G.demo) { const o = this.roll(); if (o.length) this.apply(pick(o)); return; }
@@ -4528,7 +4741,7 @@ const SaveSys = {
     const M = G.map;
     return {
       v: 8, gm: G.gm, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
-      doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart,
+      doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, cx: G.cx,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       rs: G.rs, nanites: G.nanites, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
       tstats: Object.fromEntries(Object.entries(G.tstats).map(([k, s]) => [k, [Math.round(s.dealt), s.kills, s.shots, s.spent]])),
@@ -4551,7 +4764,7 @@ const Game = {
       phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
-      doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null, traps: [],
+      doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null, traps: [], cx: {},
       gm: 'classic', tstats: {}, waveDmg: {}, mLast: null, actor: null, autoWave: !!Store.s.autoWave, wallets: null, net: null,
       tokens: [3, 3], slot: [], bets: [], jpot: 500, curse: 0, lastDur: 0, lastMc: 0, leakHist: [], betsWon: 0,
       events: Store.s.events !== false, evQ: null, ev: null, evSpd: 1, evCount: 0, meteors: [], bolts: [], pods: [], craters: [], comet: null, rift: null,
@@ -4625,7 +4838,7 @@ const Game = {
       Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, recycle: s.recycle,
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
         doctrine: DOCTRINES[s.doctrine] ? s.doctrine : 'standard', missions: (s.missions || []).filter(m => MDEF[m.id]),
-        cards: s.cards || {}, timed: s.timed || [], cardQ: s.cardQ || 0, offer: s.offer || null, xpRun: s.xpRun || 0,
+        cards: s.cards || {}, timed: s.timed || [], cardQ: s.cardQ || 0, offer: s.offer || null, xpRun: s.xpRun || 0, cx: s.cx || {},
         cmdStart: s.cmdStart || Object.assign({}, Store.data.cmd), waveDmg: s.waveDmg || {} });
       for (const k in s.tstats || {}) if (TOWERS[k]) { const a = s.tstats[k]; G.tstats[k] = { dealt: a[0], kills: a[1], shots: a[2], spent: a[3] }; }
       Object.assign(G.abil, s.abil || {});
@@ -4681,7 +4894,7 @@ const Game = {
       FX.spark(ex, ey, '#ff2a6d', 80, 7, 60, 3); Render.flash(.6, '#ff2a6d'); Render.shake(25); Sfx.play('boom'); Sfx.play('leak');
       MP.defeat(); return;
     }
-    const frags = G.gm === 'sandbox' ? 0 : Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1) * (G.gm === 'rush' ? 1.5 : 1)));
+    const frags = G.gm === 'sandbox' ? 0 : Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2 + (G.stats.megas || 0) * 25) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1) * (G.gm === 'rush' ? 1.5 : 1)));
     Store.data.meta.frags += frags;
     let best, prev;
     if (G.daily) {
@@ -5353,6 +5566,17 @@ const Render = {
         c.strokeStyle = 'rgba(77,243,255,.9)'; c.lineWidth = 2;
         c.beginPath(); c.arc(x, y, e.r + 5, -Math.PI / 2, -Math.PI / 2 + TAU * e.shield / e.maxShield); c.stroke();
       }
+      if (e.d.mega) {
+        const rr = e.r + 10 + Math.sin(performance.now() * .004) * 3;
+        c.strokeStyle = rgba(e.d.color, .55); c.lineWidth = 2; c.setLineDash([10, 8]); c.lineDashOffset = -performance.now() * .03 * (e.mph & 1 ? -1 : 1);
+        c.beginPath(); c.arc(x, y, rr, 0, TAU); c.stroke(); c.setLineDash([]);
+        if (e.inv > 0) {
+          c.globalCompositeOperation = 'lighter'; c.globalAlpha = .35 + .25 * Math.sin(performance.now() * .02);
+          c.drawImage(Spr.glow('#ffffff', false), x - e.r * 2, y - e.r * 2, e.r * 4, e.r * 4);
+          c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+          c.save(); c.translate(x, y); c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 2.5; polyPath(c, 6, e.r + 14, performance.now() * .002); c.stroke(); c.restore();
+        }
+      }
       if (e.markT > 0 && !hidden) {
         const r = e.r + 7, q = 4;
         c.strokeStyle = 'rgba(255,60,90,.85)'; c.lineWidth = 1.2; c.beginPath();
@@ -5689,7 +5913,7 @@ const Input = {
     if (code === 'F3' || code === 'Backquote') { e.preventDefault(); UI.toggleFps(); return; }
     if (UI.stack.length) {
       const top = UI.top();
-      if (top === 'ov-cards') { const m = /^(Digit|Numpad)([1-3])$/.exec(code); if (m) Act.do('card', +m[2] - 1); return; }
+      if (top === 'ov-cards') { const m = /^(Digit|Numpad)([1-4])$/.exec(code); if (m) Act.do('card', +m[2] - 1); return; }
       if (top === 'ov-over' && (code === 'Enter' || code === 'NumpadEnter' || code === 'Space')) { e.preventDefault(); const b = $('go-again'); if (b) b.click(); return; }
       if ((code === 'KeyP' && top === 'ov-pause') || (code === 'KeyK' && top === 'ov-tree') || (code === 'KeyL' && top === 'ov-lab') || (code === 'KeyH' && top === 'ov-help' && G) || (code === 'KeyG' && top === 'ov-stats') || (code === 'KeyC' && top === 'ov-casino' && !UI.spinning)) UI.close(top);
       return;
@@ -5818,6 +6042,7 @@ const UI = {
     if (d.spd >= 2) p.push('rapide'); if (d.heal) p.push('soigneur'); if (d.jam) p.push('IEM'); if (d.blink) p.push('téléportation');
     if (d.spawn) p.push(d.spawn.type === 'scout' || d.spawn.type === 'mite' ? 'libère des unités' : 'se divise'); if (d.summon) p.push(d.summon.type === 'wraith' ? 'relève les morts' : 'invoque des drones');
     if (d.aura) p.push('protège ses alliés'); if (d.leap) p.push('bondit en avant');
+    if (d.mega) p.push(d.phases.length + ' phases', 'IEM géante', 'défaite immédiate s\'il passe');
     if (d.regen) p.push('régénère'); if (d.sapper) p.push('désamorce les pièges'); if (d.phase) p.push('déphasage'); if (d.noSlow) p.push('insensible au gel');
     if (d.accel) p.push('accélère'); if (d.veil) p.push('rend ses alliés invisibles'); if (d.heavy) p.push('résiste aux trous noirs');
     return p.join(' · ');
@@ -5946,7 +6171,12 @@ const UI = {
     const b = G.boss, el = $('bossbar');
     Music.intensity = G.over ? 0 : b ? 2 : G.phase === 'combat' ? 1 : 0;
     if (!b || !b.alive) { if (this.last.boss) { el.style.display = 'none'; this.last.boss = null; } return; }
-    if (this.last.boss !== b) { this.last.boss = b; el.style.display = 'block'; $('bb-name').textContent = '⚠ ' + b.d.name + (b.elite ? ' ÉLITE' : '') + ' ⚠'; }
+    if (this.last.boss !== b || this.last.bph !== b.mph) {
+      this.last.boss = b; this.last.bph = b.mph; el.style.display = 'block'; el.classList.toggle('mega', !!b.d.mega);
+      $('bb-name').textContent = b.d.mega ? `☠ ${b.d.name} · PHASE ${b.mph + 1}/${b.d.phases.length} ☠` : '⚠ ' + b.d.name + (b.elite ? ' ÉLITE' : '') + ' ⚠';
+      $('bb-ticks').innerHTML = b.d.mega ? b.d.phases.slice(1).map(P => `<i style="left:${P.at * 100}%"></i>`).join('') : '';
+    }
+    el.classList.toggle('inv', b.inv > 0);
     $('bb-fill').style.width = (Math.max(0, b.hp / b.maxHp) * 100).toFixed(1) + '%';
     $('bb-sh').style.width = b.maxShield ? (b.shield / b.maxShield * 100).toFixed(1) + '%' : '0';
   },
@@ -5956,13 +6186,14 @@ const UI = {
     const b = document.createElement('b'); b.textContent = txt; b.style.setProperty('--cc', col || '#ffd23f');
     C.appendChild(b); clearTimeout(this.coT); this.coT = setTimeout(() => { C.innerHTML = ''; }, 1500);
   },
-  bossIntro(d, type) {
+  bossIntro(d, type, mega) {
     const el = $('bossintro');
     el.style.setProperty('--bc', d.color);
+    el.querySelector('span').textContent = mega ? '☠ ALERTE ROUGE · MÉGA-BOSS' : '⚠ ALERTE BOSS';
     $('bi-n').textContent = d.name; $('bi-d').textContent = LORE[type] || '';
     Spr.enemyIcon($('bi-cv'), type, 64);
     el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-    clearTimeout(this.biT); this.biT = setTimeout(() => el.classList.remove('show'), 3500);
+    clearTimeout(this.biT); this.biT = setTimeout(() => el.classList.remove('show'), mega ? 5000 : 3500);
   },
   refreshEvent() {
     const el = $('evchip'), L = Events.label();
@@ -6040,14 +6271,14 @@ const UI = {
   },
   renderCards() {
     $('cards-t').textContent = `PROTOCOLE · VAGUE ${G.waveNum}`;
-    $('cards-sub').innerHTML = `Choisissez une amélioration pour la suite de la partie${G.cardQ > 1 ? ` (<b>${G.cardQ}</b> en attente)` : ''}. Raccourcis : <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>.`;
-    const box = $('cards'); box.innerHTML = '';
+    $('cards-sub').innerHTML = `Choisissez une amélioration pour la suite de la partie${G.cardQ > 1 ? ` (<b>${G.cardQ}</b> en attente)` : ''}. Raccourcis : ${G.offer.map((_, i) => `<kbd>${i + 1}</kbd>`).join(' ')}.`;
+    const box = $('cards'); box.innerHTML = ''; box.classList.toggle('c4', G.offer.length > 3);
     G.offer.forEach((id, i) => {
-      const c = CARDS[id], col = c.pact ? '#ff3d5a' : CARD_RARITY[c.r].c, own = G.cards[id] || 0;
+      const c = CARDS[id], col = c.pact ? '#ff3d5a' : CARD_RARITY[c.r].c, own = G.cards[id] || 0, cat = CARD_CAT[c.cat];
       const st = c.timed ? `Durée : ${c.timed} vagues` : c.max ? `Niveau ${own} → ${own + 1} / ${c.max}` : 'Effet immédiat';
       const el = document.createElement('div');
-      el.className = 'pcard' + (c.pact ? ' pact' : ''); el.tabIndex = 0; el.style.setProperty('--rc', col);
-      el.innerHTML = `<span class="hk">${i + 1}</span><div class="ci">${TXT(c.i)}</div><div class="ct"><div class="rr">${c.pact ? 'PACTE' : CARD_RARITY[c.r].n}</div><h3>${c.n}</h3><p>${c.d()}</p><div class="st">${st}</div></div>`;
+      el.className = 'pcard' + (c.pact ? ' pact' : '') + (c.r === 3 ? ' legend' : ''); el.tabIndex = 0; el.style.setProperty('--rc', col);
+      el.innerHTML = `<span class="hk">${i + 1}</span><div class="ci">${TXT(c.i)}</div><div class="ct"><div class="rr">${c.pact ? 'PACTE' : CARD_RARITY[c.r].n}${cat ? ' · ' + cat : ''}</div><h3>${c.n}</h3><p>${c.d()}</p><div class="st">${st}</div></div>`;
       el.onclick = () => Act.do('card', i);
       el.onkeydown = e => { if (e.key === 'Enter') Act.do('card', i); };
       box.appendChild(el);
@@ -6683,6 +6914,7 @@ const UI = {
     $('over-body').innerHTML = `<h2 style="color:var(--dang)">ÉCHEC SYSTÈME</h2>
       <div class="sub" style="margin-bottom:6px">${daily ? 'Défi du jour ' + G.daily : G.diff.name}${G.doctrine !== 'standard' ? ' · doctrine ' + DOCTRINES[G.doctrine].n : ''} · le noyau a cédé à la vague <b>${G.waveNum}</b></div>
       ${recLine}
+      <div class="gocode"><span>CODE DE CARTE</span><input id="go-code" readonly value="${Hist.code()}" aria-label="Code de carte"><button class="btn" id="go-cc">COPIER</button>${daily ? '' : '<button class="btn sec" id="go-replay">REJOUER CETTE CARTE</button>'}</div>
       <div class="cmdb" style="margin:6px auto 4px"><div class="cl">NIV <b>${c1.lvl}</b><span>${Cmd.rank(c1.lvl).toUpperCase()}</span><em style="color:var(--gold)">+${fmt(G.xpRun)} XP</em></div>
         <div class="xpbar"><s id="go-xp" style="width:${startW.toFixed(1)}%"></s></div>
         ${ups > 0 ? `<div class="nx" style="color:var(--gold);font-weight:700">▲ ${ups} niveau${ups > 1 ? 'x' : ''} gagné${ups > 1 ? 's' : ''} !</div>` : ''}
@@ -6706,6 +6938,10 @@ const UI = {
       this.toast('Défi copié', `Envoyez-le à un ami : il saisira le code <b>${code}</b> dans Nouvelle partie.`, '#ff2bd6', 5);
     };
     $('go-again').onclick = () => { this.closeAll(); Game.newGame(dk, { daily }); };
+    const ci = $('go-code'), same = { gm: G.gm, seed: G.seed, portrait: G.portrait };
+    ci.onfocus = () => ci.select();
+    $('go-cc').onclick = () => this.copy(ci.value, ci);
+    if ($('go-replay')) $('go-replay').onclick = () => { this.closeAll(); Game.newGame(dk, same); };
     this.open('ov-over');
     $('go-again').focus();
   },
@@ -6852,7 +7088,8 @@ const UI = {
   },
   copy(txt, sel) {
     const done = () => this.toast('Copié', 'Collez-le dans votre message.', '#39ff88', 2);
-    try { navigator.clipboard.writeText(txt).then(done, () => { if (sel) { sel.select(); } }); } catch (e) { if (sel) sel.select(); }
+    const fail = () => { if (sel) { sel.focus(); sel.select(); } this.toast('Copie bloquée', sel ? 'Le code est sélectionné : faites Ctrl+C.' : 'Code : <b>' + txt + '</b>', '#ffae00', 5); };
+    try { navigator.clipboard.writeText(txt).then(done, fail); } catch (e) { fail(); }
   },
   renderChat() {
     const L = $('mp-log'); if (!L) return;
@@ -6899,9 +7136,12 @@ const UI = {
       <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
       ${G.net === 'versus' ? `<div>Ennemis envoyés <b>${G.sentTotal || 0}</b></div><div>Ennemis reçus <b>${G.recvTotal || 0}</b></div>` : `<div>Tourelles <b>${G.towers.length}</b></div><div>Boss vaincus <b>${s.bosses}</b></div>`}</div>
       <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span></div>
+      <div class="gocode"><span>CODE DE CARTE</span><input id="mpe-code" readonly value="${Hist.code()}" aria-label="Code de carte"><button class="btn" id="mpe-cc">COPIER</button></div>
       <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="mpe-quit">QUITTER</button>${Net.connected ? '<button class="btn" id="mpe-lobby">SALON</button>' : ''}<button class="btn" id="mpe-stats">STATS</button>
       ${host ? '<button class="btn prim big" id="mpe-again">REVANCHE !</button>' : Net.connected ? '<span class="note" style="align-self:center">L\'hôte peut relancer une partie…</span>' : ''}</div>`;
     $('mpe-quit').onclick = () => MP.leave();
+    $('mpe-code').onfocus = () => $('mpe-code').select();
+    $('mpe-cc').onclick = () => this.copy($('mpe-code').value, $('mpe-code'));
     if ($('mpe-lobby')) $('mpe-lobby').onclick = () => MP.toLobby();
     $('mpe-stats').onclick = () => this.openStats();
     if (host) $('mpe-again').onclick = () => MP.rematch();
@@ -7128,10 +7368,15 @@ const UI = {
       L.innerHTML = H.map((h, i) => {
         const dt = new Date(h.d), mode = h.net ? (h.net === 'versus' ? `Versus contre ${String(h.vs || '?').replace(/</g, '&lt;')} · ${h.win ? '<b style="color:var(--gold)">VICTOIRE</b>' : 'défaite'}` : 'Coopération') : (h.daily ? 'Défi du jour' : (GMODES[h.gm] || GMODES.classic).n);
         return `<div class="hrow"><b>${h.w}</b><span class="t">${DIFFS[h.diff] ? DIFFS[h.diff].name : '?'} · ${mode}${h.best ? ' · <span style="color:var(--gold)">record</span>' : ''}</span>
-          <span class="c" data-i="${i}" title="Copier le code de carte">${h.code || ''}</span>
+          <span class="c" data-i="${i}" title="Copier le code de carte">${h.code || ''}</span>${h.code && !h.daily ? `<button class="btn hp" data-i="${i}" title="Rejouer cette carte">▶</button>` : ''}
           <span class="m">${dt.toLocaleDateString('fr-FR')} ${dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · ${fmt(h.k)} éliminations${h.mvp && TOWERS[h.mvp] ? ' · MVP ' + TOWERS[h.mvp].name : ''}</span></div>`;
       }).join('');
       L.querySelectorAll('.c').forEach(el => el.onclick = () => { const h = H[+el.dataset.i]; if (h && h.code) this.copy(h.code); });
+      L.querySelectorAll('.hp').forEach(el => el.onclick = () => {
+        const h = H[+el.dataset.i], c = h && Hist.parse(h.code); if (!c) return;
+        if (G && !G.over && !G.demo && Game.state === 'play') { this.toast('Partie en cours', 'Quittez d\'abord la partie en cours pour rejouer une carte.', '#ff2a6d', 3); return; }
+        this.closeAll(); Game.newGame(c.diff || h.diff || 'standard', { gm: c.gm || 'classic', seed: c.seed, portrait: c.portrait == null ? undefined : c.portrait });
+      });
       this.open('ov-ach'); return;
     }
     $('ach-list').className = 'plist';
@@ -7143,7 +7388,7 @@ const UI = {
   openHelp() {
     const q = this.keyLabel('KeyQ'), w = this.keyLabel('KeyW');
     $('help').innerHTML = `
-      <h3>OBJECTIF</h3><p>Les ennemis suivent le chemin lumineux jusqu'à votre <b>noyau</b> (l'hexagone). Chaque ennemi qui passe réduit votre <b>intégrité</b>. Les vagues sont infinies et de plus en plus puissantes, avec un <b>boss toutes les 5 vagues</b>. Tenez le plus longtemps possible.</p>
+      <h3>OBJECTIF</h3><p>Les ennemis suivent le chemin lumineux jusqu'à votre <b>noyau</b> (l'hexagone). Chaque ennemi qui passe réduit votre <b>intégrité</b>. Les vagues sont infinies et de plus en plus puissantes, avec un <b>boss toutes les 5 vagues</b> et un <b style="color:#ff2a6d">méga-boss</b> à plusieurs phases aux vagues 50 (Léviathan) et 100 (Oméga), puis toutes les 50 vagues. Un méga-boss qui atteint le noyau met fin à la partie. Tenez le plus longtemps possible.</p>
       <h3>CONSTRUIRE & AMÉLIORER</h3><ul>
         <li>Choisissez une tourelle dans la barre du bas (touches <kbd>1</kbd>…<kbd>0</kbd>) puis cliquez sur une case libre. <kbd>Maj</kbd> + clic pour en poser plusieurs.</li>
         <li>Cliquez sur une tourelle : amélioration (niveau 10 max), ciblage, surcadence, revente. Entre deux vagues, une tourelle tout juste construite est <b>remboursée à 100%</b> (droit à l'erreur).</li>
@@ -7161,7 +7406,7 @@ const UI = {
         <li><b>Ventilo</b> : refroidit les 4 voisines (avec 2 ventilos, beaucoup de tourelles tiennent la surcadence en permanence). <b>Ordi</b> : +25% de dégâts aux voisines. <b>Nexus</b> : les deux, sur 8 voisines.</li></ul>
       <h3>MISSIONS & PROTOCOLES</h3><ul>
         <li><b>Missions</b> : 3 objectifs courts sont toujours actifs (panneau en haut à droite). Chacune rapporte crédits ou nanites, de l'XP et un fragment, puis est aussitôt remplacée.</li>
-        <li><b>Protocoles</b> : toutes les 2 vagues repoussées, choisissez 1 carte parmi 3 (touches <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>). Bonus immédiats, améliorations cumulables, ou <b style="color:#ff3d5a">pactes</b> : gros gain contre un risque. Relance possible contre des crédits.</li></ul>
+        <li><b>Protocoles</b> : toutes les 2 vagues repoussées, choisissez 1 carte parmi 3 (touches <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>). Près de 50 cartes en quatre familles (économie, attaque, défense, tactique) : bonus immédiats, améliorations cumulables, <b style="color:#ff3d5a">pactes</b> (gros gain contre un risque) et, dès la vague 12, des <b style="color:#ffd23f">légendaires</b> qui changent la partie (Réaction en chaîne, Second souffle, Œil omniscient…). Une même main mélange les familles. Relance possible contre des crédits.</li></ul>
       <h3>COMMANDANT & DOCTRINES</h3><ul>
         <li>Chaque vague, boss et mission donne de l'<b>XP de Commandant</b>, conservée d'une partie à l'autre. Chaque niveau rapporte 2 fragments et un nouveau grade.</li>
         <li>Les niveaux débloquent des <b>doctrines</b> (Artillerie, Génie, Finance, Alchimie, Précision, Bastion, Blitz) à choisir au lancement d'une partie.</li></ul>

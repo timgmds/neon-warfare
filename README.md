@@ -40,6 +40,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Arbre de compétences** | 18 compétences en 3 branches, dont 2 qui débloquent des capacités |
 | **Capacités** | Frappe Orbitale (ciblée), Cryo-Bombe, Surcharge |
 | **Ennemis** | 22 types (dont régénérateurs, ruches, déphaseurs, nécromants, mastodontes, voileurs…), élites et **6 boss** à mécanique (Colosse, Hydre, Overlord, Scission, Sentinelle, Sauteur), présentés à leur arrivée |
+| **Méga-boss** | vague 50 : **Léviathan** (3 phases : carapace et IEM géante, frénésie et escorte blindée, Abysse qui régénère et neutralise vos meilleures tourelles) ; vague 100 : **Oméga** (4 phases : failles d'élites, distorsions, boucliers miroirs, effondrement, puis 3 Échos). Ensuite toutes les 50 vagues. S'il atteint le noyau, la partie est perdue. |
 | **Cartes** | procédurales (portrait/paysage), dont la moitié avec **deux chemins** qui se rejoignent |
 | **Pièges** | **mines** et **barricades** à poser sur le chemin |
 | **Événements aléatoires** | pluie d'astéroïdes, capsule de ravitaillement, ruée vers l'or, surtension, tempête solaire, lune de sang, comète, faille dimensionnelle, orage IEM |
@@ -47,9 +48,9 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Modes** | Classique, **Boss Rush** (un boss par vague), **Chaos** (événements en rafale), **Bac à sable** (ressources illimitées) |
 | **Défi du jour** | même carte et mêmes 2 mutateurs pour tout le monde ce jour-là, record journalier |
 | **Graine libre** | dans Nouvelle partie, un nombre ou n'importe quel mot (`neon`, `Timoti`…) : même texte = même carte et mêmes vagues |
-| **Défier un ami** | chaque partie a un **code de carte** (ex. `1A2B3C-L-S`) : saisi dans Nouvelle partie, il redonne la même carte et les mêmes vagues ; historique des 30 dernières parties dans le Palmarès |
-| **Missions & protocoles** | 3 objectifs courts toujours actifs ; toutes les 2 vagues, 1 carte à choisir parmi 3 |
-| **Progression** | Héritage (bonus permanents), niveau de Commandant et 7 doctrines, 25 succès, Codex de 54 fiches |
+| **Défier un ami** | chaque partie a un **code de carte** (ex. `1A2B3C-L-S`), affiché en fin de partie avec **Copier** et **Rejouer cette carte** : saisi dans Nouvelle partie, il redonne la même carte et les mêmes vagues ; historique des 30 dernières parties dans le Palmarès, rejouables d'un clic (▶) |
+| **Missions & protocoles** | 3 objectifs courts toujours actifs ; toutes les 2 vagues, 1 carte à choisir parmi 3. 48 protocoles en 4 familles (économie, attaque, défense, tactique), 9 pactes et 6 **légendaires** dès la vague 12 |
+| **Progression** | Héritage (bonus permanents), niveau de Commandant et 7 doctrines, 27 succès, Codex de 57 fiches |
 | **Analyse de combat** | graphiques de la partie : dégâts, éliminations, tirs et rentabilité par tourelle, dégâts par vague |
 | **Musique** | générée en direct : **Arena 80s** (synth-rock, solo saturé sur les boss), Ambiance ou Synthwave |
 | **Divers** | annonces de combo et de multi-éliminations, 5 thèmes visuels, démo IA en fond de menu |
@@ -59,7 +60,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | Touche | Action |
 |---|---|
 | `Espace` | Lancer / appeler la vague (prime si appel anticipé) |
-| `1` … `0` | Choisir une tourelle (`Maj` + clic pour en poser plusieurs) ; `1` `2` `3` choisissent un protocole |
+| `1` … `0` | Choisir une tourelle (`Maj` + clic pour en poser plusieurs) ; `1` … `4` choisissent un protocole |
 | `Q` `W` `E` (`A` `Z` `E` en AZERTY) | Capacités |
 | `U` / `X` | Améliorer / vendre la tourelle sélectionnée |
 | `T` / `O` | Changer le ciblage / surcadence |
@@ -109,6 +110,8 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.1** : méga-boss Léviathan (vague 50) et Oméga (vague 100), 26 nouveaux protocoles dont les légendaires,
+  code de carte copiable et « Rejouer cette carte » en fin de partie, difficulté relevée (PV, élites, boss multiples dès la vague 20).
 - **v9.0** : multijoueur en réseau (versus et coopération), musique Arena 80s, événements aléatoires,
   casino (machine à sous et paris), modes Boss Rush, Chaos et Bac à sable, présentation des boss,
   annonces de combo, simulation déterministe.
