@@ -127,6 +127,18 @@ body.no-crt #crt{display:none}
 #b-wave.early:hover{background:var(--gold);color:#000;box-shadow:0 0 14px var(--gold)}
 @keyframes pulse{50%{box-shadow:0 0 18px var(--accent),inset 0 0 8px rgba(var(--accent-rgb),.5)}}
 #b-auto{padding:4px 8px;font-size:9px}
+[hidden]{display:none!important}
+#b-unjam{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);z-index:31;padding:8px 16px;font-size:11px;letter-spacing:.12em;
+  border:2px solid #fff35c;color:#fff35c;background:rgba(3,6,12,.88);border-radius:22px;white-space:nowrap;animation:unjam .9s infinite alternate}
+#b-unjam:hover:not(:disabled){background:#fff35c;color:#000;border-color:#fff35c;box-shadow:0 0 16px #fff35c}
+#b-unjam:active:not(:disabled){transform:translateX(-50%) translateY(1px)}
+#b-unjam b{font-family:var(--mono)}
+@keyframes unjam{to{box-shadow:0 0 16px rgba(255,243,92,.55)}}
+.jam{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px;padding:7px;border:1px solid rgba(255,243,92,.45);border-radius:8px;background:rgba(255,243,92,.06)}
+.jam>span{flex:1 1 100%;font-size:10px;font-weight:800;letter-spacing:.14em;color:#fff35c}
+.jam>span b{font-family:var(--mono);letter-spacing:0}
+.jam .btn{flex:1 1 auto;padding:7px 6px;font-size:10px;border-color:#fff35c;color:#fff35c}
+.jam .btn:hover:not(:disabled){background:#fff35c;color:#000;border-color:#fff35c;box-shadow:0 0 14px #fff35c}
 
 /* ---------- TOWER PANEL ---------- */
 .panel{position:absolute;z-index:40;background:var(--panel);border:1px solid var(--tc,var(--accent));border-radius:10px;
@@ -703,6 +715,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <footer id="dock" class="hidden">
   <div id="abils"></div>
   <div id="bar"></div>
+  <button class="btn" id="b-unjam" hidden></button>
   <div id="wavebox">
     <button class="btn" id="b-wave">LANCER</button>
     <button class="btn" id="b-auto" data-tip="Lance automatiquement la vague suivante après 8 secondes.">AUTO : OFF</button>
@@ -799,7 +812,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.5';
+const VERSION = '9.6';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -1440,7 +1453,7 @@ const HINTS = {
   medic:   ['Médics', 'Ils soignent les ennemis proches. Éliminez-les en priorité (ciblage FAIBLE).'],
   flyer:   ['Volants', 'Inferno, Titan et Magma ne peuvent pas les toucher. L\'Aéro les détruit x2,5.'],
   glitch:  ['Glitchs', 'Ils se téléportent en avant le long du chemin. Ne les sous-estimez pas.'],
-  jammer:  ['Brouilleurs', 'Leur impulsion IEM neutralise vos tourelles proches pendant 1,5 s.'],
+  jammer:  ['Brouilleurs', 'Leur impulsion IEM neutralise vos tourelles proches pendant 1,5 s. Touche D : payer pour les débrouiller tout de suite.'],
   carrier: ['Porteurs', 'À leur destruction, ils libèrent 4 éclaireurs.'],
   boss:    ['Alerte Boss', 'Un boss arrive dans cette vague. Préparez votre Frappe Orbitale !']
 };
@@ -2931,7 +2944,7 @@ const Towers = {
     const C = G.map.C, R = G.map.R;
     for (const t of G.towers) { t.bDmg = 0; t.bCool = 0; t.bRange = 0; }
     for (const s of G.towers) {
-      const sp = s.d.support; if (!sp) continue;
+      const sp = s.d.support; if (!sp || s.stun > 0) continue;   // soutien brouillé : bonus suspendu
       const m = G.mod.support * (1 + .2 * (s.level - 1)) * (s.sm.eff || 1);
       for (const [dx, dy] of (this.diag(s) ? NB8 : NB4)) {
         const x = s.tx + dx, y = s.ty + dy;
@@ -2983,12 +2996,13 @@ const Towers = {
   },
   update() {
     const od = G.overdriveT > 0;
+    let rc = false;
     for (let i = 0; i < G.towers.length; i++) {
       const t = G.towers[i], d = t.d;
       if (t.flash > 0) t.flash--;
       if (t.recoil > .1) t.recoil *= .8; else t.recoil = 0;
       if (d.spinHead) t.spin += d.spinHead * (t.stun > 0 || t.over ? .2 : 1);
-      if (d.kind === 'support') continue;
+      if (d.kind === 'support') { if (t.stun > 0 && --t.stun <= 0) rc = true; continue; }
       if (t.heat > 0) {
         t.heat -= (d.cool || .5) * (1 + t.bCool) * G.mod.cool;
         if (t.heat <= 0) {
@@ -3018,6 +3032,25 @@ const Towers = {
         }
       }
     }
+    if (rc) this.recalc();
+  },
+  // débrouillage payant : le prix suit le temps de brouillage restant et la valeur de la tourelle
+  unjamCost(t) { return t.stun > 0 ? Math.max(10, Math.round((8 + t.invested * .012) * t.stun / 60 * G.mod.cost)) : 0; },
+  jammed() { return G.towers.filter(t => t.stun > 0); },
+  unjamCostAll() { let c = 0; for (const t of G.towers) c += this.unjamCost(t); return c; },
+  unjam(list) {
+    list = list.filter(t => t.stun > 0 && !t.dead);
+    if (!list.length) return false;
+    const c = list.reduce((a, t) => a + this.unjamCost(t), 0);
+    if (G.money < c) { UI.noMoney(); return false; }
+    G.money -= c;
+    for (const t of list) {
+      t.stun = 0; t.aimT = 0;
+      FX.ring(t.cx, t.cy, '#39ff88', 30, 18, 2); FX.float(t.cx, t.cy - 18, 'EN LIGNE', '#39ff88', 11);
+    }
+    if (list.some(t => t.d.support)) this.recalc();
+    if (Act.mine()) Sfx.play('upgrade');
+    return true;
   },
   overheat(t) {
     t.heat = 100; t.over = true; t.beam = null;
@@ -4973,6 +5006,7 @@ const Events = {
         Towers.remove(t); changed = true;
         M.cells[t.ty * M.C + t.tx] = 2; Render.dirtyMap = true;
       } else if (dd <= r2) {
+        if (t.d.support && !(t.stun > 0)) changed = true;
         t.stun = Math.max(t.stun, stun); if (t.d.heat) t.heat = 99;
         if (m.sab === 1 && m.big && t.level > 1) {
           t.invested = Math.round(t.invested * (t.level - 1) / t.level); t.level--; changed = true;
@@ -4994,10 +5028,13 @@ const Events = {
     const r2 = r * r;
     for (const e of G.enemies) if (e.alive && d2(e.x, e.y, x, y) <= r2) Combat.hit(e, dmg, null);
     const tr2 = (r * .75) * (r * .75);
+    let rc = false;
     for (const t of G.towers) if (d2(t.cx, t.cy, x, y) <= tr2) {
+      if (t.d.support && !(t.stun > 0)) rc = true;
       t.stun = Math.max(t.stun, stun); if (t.d.heat) t.heat = Math.min(99, t.heat + 35);
       FX.float(t.cx, t.cy - 18, 'SONNÉE', '#fff35c', 10);
     }
+    if (rc) Towers.recalc();
     FX.ring(x, y, col, r * 1.2, 26, 4); FX.ring(x, y, '#ffffff', r * .6, 16, 2); FX.spark(x, y, col, big ? 34 : 20, big ? 5.5 : 4, 40, 3);
     if (Render.hq) for (let i = 0; i < 5; i++) FX.smoke(x + rnd(-14, 14), y + rnd(-14, 14), 60, rnd(5, 9));
     Render.shake(big ? 14 : 7); if (big) Render.flash(.25, col);
@@ -5126,6 +5163,8 @@ const Act = {
       const t = Towers.at(x, y); if (!t || t.d.kind === 'support' || t.d.kind === 'radar') return;
       t.oc = !!on; FX.float(t.cx, t.cy - 20, t.oc ? 'SURCADENCE' : 'NORMAL', t.oc ? '#ff3355' : '#cfe3ff', 11);
     },
+    unjam: (x, y) => { const t = Towers.at(x, y); return !!t && Towers.unjam([t]); },
+    unjamAll: () => Towers.unjam(Towers.jammed()),
     fuse: (x, y, x2, y2) => {
       const a = Towers.at(x, y), b = Towers.at(x2, y2); if (!a || !b) return;
       const r = Fusion.recipeFor(a.key, b.key); if (r) Fusion.fieldFuse(a, b, r);
@@ -6411,6 +6450,7 @@ const Input = {
       case 'KeyX': case 'Delete': case 'Backspace': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;
       case 'KeyT': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % 4); break;
       case 'KeyO': if (UI.sel) UI.toggleOC(); break;
+      case 'KeyD': UI.unjam(); break;
       case 'KeyR': if (UI.selDebris && !UI.selDebris.trap) Act.do('recycle', UI.selDebris.tx, UI.selDebris.ty); break;
       default: {
         const m = /^(Digit|Numpad)(\d)$/.exec(code);
@@ -6436,6 +6476,7 @@ const UI = {
     $('b-pause').onclick = () => this.openPause();
     $('b-wave').onclick = () => Act.do('wave');
     $('b-auto').onclick = () => this.toggleAuto();
+    $('b-unjam').onclick = () => { Act.do('unjamAll'); this.refreshUnjam(); };
     $('cf-no').onclick = () => this.close('ov-confirm');
     $('mh').onclick = () => { Store.s.mMin = !$('missions').classList.contains('min'); Store.save(); this.applyMissionsMin(); Sfx.play('ui'); };
     document.addEventListener('click', e => {
@@ -6474,14 +6515,15 @@ const UI = {
   },
   hoverTower() {
     const h = this.hover, t = (!this.placing && !this.targeting) ? Towers.at(h.tx, h.ty) : null;
-    if (t === this.hoverT) { if (t) this.moveTip(h.sx, h.sy); return; }
-    this.hoverT = t;
+    const st = !!t && t.stun > 0;
+    if (t === this.hoverT && st === this.hoverSt) { if (t) this.moveTip(h.sx, h.sy); return; }
+    this.hoverT = t; this.hoverSt = st;
     if (!t || t === this.sel) { $('tip').style.display = 'none'; return; }
     const T = $('tip');
     T.style.setProperty('--tc', t.d.color);
     T.innerHTML = `<h4>${t.d.name} <span style="color:#fff;font-size:10px">NIV ${t.level}</span></h4>` +
       (t.d.kind === 'support' ? '<div class="d">Tourelle de soutien</div>' : `<div class="s"><span>DPS</span><b>${fmt(Towers.dps(t))}</b><span>Élim.</span><b>${t.kills}</b></div>`) +
-      (t.over ? '<div class="d" style="color:var(--dang)">SURCHAUFFE</div>' : '') + (t.stun > 0 ? '<div class="d" style="color:#fff35c">BROUILLÉE</div>' : '');
+      (t.over ? '<div class="d" style="color:var(--dang)">SURCHAUFFE</div>' : '') + (t.stun > 0 ? `<div class="d" style="color:#fff35c">BROUILLÉE${t.d.support ? ' · bonus suspendu' : ''}</div><div class="d">Débrouiller : ${fmt(Towers.unjamCost(t))}¢ (sélection puis D)</div>` : '');
     T.style.display = 'block';
     this.moveTip(h.sx, h.sy);
   },
@@ -6586,7 +6628,7 @@ const UI = {
     this.frameN++;
     if (Game.state !== 'play' || !G) return;
     const f = this.frameN;
-    if (f % 6 === 0) { this.refreshHUD(); this.refreshCombo(); this.refreshBoss(); this.refreshEvent(); }
+    if (f % 6 === 0) { this.refreshHUD(); this.refreshCombo(); this.refreshBoss(); this.refreshEvent(); this.refreshUnjam(); }
     if (f % 4 === 0) this.refreshAbils();
     if (this.sel && f % 12 === 0) this.refreshPanelLive();
     if (f % 30 === 0) this.refreshBadges();
@@ -6610,6 +6652,29 @@ const UI = {
     if (L.nano !== G.nanites) { const el = $('h-nano'); el.textContent = G.nanites; if (L.nano !== undefined && G.nanites > L.nano) this.anim(el, 'bump'); L.nano = G.nanites; this.refreshBadges(); }
     if (L.wave !== G.waveNum) { $('h-wave').textContent = G.waveNum; L.wave = G.waveNum; }
     this.refreshWaveBtn();
+  },
+  // bouton flottant « débrouiller » : seulement quand le brouillage en vaut la peine (météores, gros IEM)
+  refreshUnjam() {
+    const b = $('b-unjam');
+    let n = 0, tot = 0;
+    if (!G.over && !G.demo) for (const t of G.towers) if (t.stun > 0) { n++; tot += t.stun; }
+    // sur mobile, le panneau de la tourelle sélectionnée occupe le bas de l'écran et a ses propres boutons
+    const show = n > 0 && (tot >= 240 || (this.last.uj && tot > 30)) && !(View.w < 640 && this.sel);
+    if (show !== this.last.uj) { this.last.uj = show; b.hidden = !show; this.last.ujk = ''; }
+    if (!show) return;
+    const c = Towers.unjamCostAll(), k = n + ':' + c + ':' + (G.money >= c);
+    if (k === this.last.ujk) return;
+    this.last.ujk = k;
+    b.innerHTML = `⚡ DÉBROUILLER ${n > 1 ? n + ' TOURELLES' : 'LA TOURELLE'} · <b>${fmt(c)}¢</b> <span class="k">D</span>`;
+    b.disabled = G.money < c;
+  },
+  // touche D : la tourelle sélectionnée si elle est brouillée, sinon toutes
+  unjam() {
+    const t = this.sel;
+    if (t && !t.dead && t.stun > 0) Act.do('unjam', t.tx, t.ty);
+    else if (Towers.jammed().length) Act.do('unjamAll');
+    else return;
+    this.refreshUnjam(); if (this.sel) this.refreshPanelLive();
   },
   refreshWaveBtn() {
     const b = $('b-wave');
@@ -7042,7 +7107,7 @@ const UI = {
     else if (S) spec = `<div class="note" style="margin-top:6px">Spécialisation débloquée au niveau ${Towers.specLvl(t)}.</div>`;
     const upTxt = t.level >= maxL ? 'NIVEAU MAX' : need ? 'CHOISISSEZ UNE SPÉCIALISATION' : `▲ AMÉLIORER · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢</b> <span class="k">U</span>`;
     P.innerHTML = `<div class="tp-head"><canvas id="tp-ic"></canvas><div><div class="tp-name">${d.name.toUpperCase()}</div><div class="tp-sub">${TIER_NAMES[d.tier]} · NIV ${t.level}/${maxL}</div><div class="pips">${pips}</div></div><span class="tp-close" id="tp-x">✕</span></div>
-      ${body}${tags}${spec}${ctrl}${fuse}
+      ${body}${tags}<div class="jam" id="tp-jam" hidden><span>⚡ BROUILLÉE${sup ? ' · BONUS SUSPENDU' : ''} · <b id="tp-jt"></b></span><button class="btn" id="tp-unjam"></button><button class="btn" id="tp-unjall" hidden></button></div>${spec}${ctrl}${fuse}
       <div class="pbtns"><button class="btn prim" id="tp-up">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE · ${fmt(Towers.sellValue(t))}¢ <span class="k">X</span></button></div>`;
     Spr.icon($('tp-ic'), t.key, 42);
     $('tp-x').onclick = () => this.deselect();
@@ -7051,6 +7116,9 @@ const UI = {
     $('tp-sell').onclick = () => this.sellSel();
     const st = $('tp-strat'); if (st) st.onclick = e => { const b = e.target.closest('button'); if (b) this.setStrat(+b.dataset.s); };
     const oc = $('tp-oc'); if (oc) oc.onclick = () => this.toggleOC();
+    $('tp-unjam').onclick = () => { Act.do('unjam', t.tx, t.ty); this.refreshPanelLive(); this.refreshUnjam(); };
+    $('tp-unjall').onclick = () => { Act.do('unjamAll'); this.refreshPanelLive(); this.refreshUnjam(); };
+    this.last.tpj = null;
     P.querySelectorAll('.fuse-opt').forEach(el => {
       const o = G.towers.find(x => x.id === +el.dataset.o); if (!o) return;
       const r = Fusion.recipeFor(t.key, o.key);
@@ -7073,8 +7141,23 @@ const UI = {
       $('tp-dps').textContent = fmt(Towers.dps(t) * od);
       $('tp-rate').textContent = t.d.kind === 'beam' ? 'continu' : (60 / t.rate * (t.oc ? 2 : 1) * od).toFixed(1) + '/s';
     }
+    this.refreshJam(t);
     const h = $('tp-heat');
     if (h) { const p = t.heat; h.style.width = p + '%'; h.style.background = t.over ? '#777' : p > 80 ? '#ff3355' : p > 50 ? '#ffae00' : '#39ff88'; }
+  },
+  refreshJam(t) {
+    const J = $('tp-jam'); if (!J) return;
+    const on = t.stun > 0, n = on ? Towers.jammed().length : 0, c = Towers.unjamCost(t), ca = n > 1 ? Towers.unjamCostAll() : 0;
+    const k = on ? [Math.ceil(t.stun / 6), c, ca, n, G.money >= c, G.money >= ca].join(':') : '';
+    if (k === this.last.tpj) return;
+    const was = this.last.tpj; this.last.tpj = k;
+    J.hidden = !on;
+    if (!on) { if (was) this.placePanel(); return; }
+    $('tp-jt').textContent = (t.stun / 60).toFixed(1).replace('.', ',') + ' s';
+    const b = $('tp-unjam'); b.innerHTML = `DÉBROUILLER · <b>${fmt(c)}¢</b> <span class="k">D</span>`; b.disabled = G.money < c;
+    const a = $('tp-unjall'); a.hidden = n < 2;
+    if (n > 1) { a.innerHTML = `TOUTES (${n}) · <b>${fmt(ca)}¢</b>`; a.disabled = G.money < ca; }
+    if (!was) this.placePanel();
   },
   refreshPanelButtons() {
     const t = this.sel; if (!t) return;
@@ -7965,11 +8048,13 @@ const UI = {
       <h3>ENNEMIS</h3><ul>
         <li><b>Blindage</b> : réduit chaque impact — privilégiez les gros calibres (Sniper, Railgun, Laser). <b>Bouclier</b> : se régénère. <b>Furtifs</b> : il faut un Radar ou une Stase. <b>Volants</b> : intouchables par Inferno, Titan et Magma.</li>
         <li>Les <b style="color:var(--gold)">élites</b> (cercle doré) sont 3x plus résistants mais lâchent souvent des nanites. Survolez le butin pour le ramasser.</li>
-        <li><b>Boss</b> : le Colosse encaisse, l'Hydre invoque, l'Overlord brouille, la <b>Scission</b> se divise en fragments, la <b>Sentinelle</b> protège ses voisins par des boucliers et le <b>Sauteur</b> marque son point d'atterrissage avant de bondir en avant.</li></ul>
+        <li><b>Boss</b> : le Colosse encaisse, l'Hydre invoque, l'Overlord brouille, la <b>Scission</b> se divise en fragments, la <b>Sentinelle</b> protège ses voisins par des boucliers et le <b>Sauteur</b> marque son point d'atterrissage avant de bondir en avant.</li>
+        <li><b style="color:#fff35c">Tourelles brouillées ⚡</b> (IEM, météores, sabotages) : elles ne tirent plus, et un soutien brouillé ne donne plus son bonus. Le brouillage se dissipe seul, ou se paie pour repartir aussitôt : bouton <b>DÉBROUILLER</b> dans le panneau de la tourelle, ou touche <kbd>D</kbd>. Le prix dépend du temps restant et de la valeur de la tourelle.</li></ul>
       <h3>RACCOURCIS</h3><div class="cols">
         <p><kbd>Espace</kbd> Lancer / appeler la vague</p><p><kbd>1</kbd>…<kbd>0</kbd> Choisir une tourelle</p>
         <p><kbd>${q}</kbd> <kbd>${w}</kbd> <kbd>E</kbd> Capacités</p><p><kbd>U</kbd> Améliorer · <kbd>X</kbd> Vendre</p>
         <p><kbd>T</kbd> Ciblage · <kbd>O</kbd> Surcadence</p><p><kbd>R</kbd> Recycler le débris sélectionné</p>
+        <p><kbd>D</kbd> Débrouiller (la tourelle choisie, sinon toutes)</p>
         <p><kbd>F</kbd> Vitesse · <kbd>P</kbd> Pause</p><p><kbd>K</kbd> Arbre · <kbd>L</kbd> Labo · <kbd>G</kbd> Stats · <kbd>C</kbd> Casino · <kbd>H</kbd> Manuel</p>
         <p><kbd>Échap</kbd> / clic droit : annuler</p><p><kbd>F3</kbd> Compteur FPS</p></div>`;
     this.open('ov-help');
