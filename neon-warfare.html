@@ -392,6 +392,20 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .mp-pl b{font-size:14px;letter-spacing:.06em;overflow-wrap:anywhere;min-width:0}
 .mp-pl span{margin-left:auto;font-size:9px;letter-spacing:.2em;color:var(--dim);white-space:nowrap}
 .mp-pl em{font-style:normal;font-size:9px;font-weight:800;letter-spacing:.15em;color:#000;background:var(--ok);border-radius:4px;padding:2px 6px}
+.mp-pl.free{border-style:dashed;border-color:rgba(255,255,255,.15);opacity:.55}
+.mp-pl.free i{background:rgba(255,255,255,.2);box-shadow:none}
+.mp-kick{flex:0 0 auto;width:24px;height:24px;border-radius:6px;border:1px solid rgba(255,42,109,.6);background:rgba(255,42,109,.1);color:#ff6b93;font:700 12px var(--font);cursor:pointer;padding:0}
+.mp-kick:hover{background:rgba(255,42,109,.3);color:#fff}
+.mp-lcode{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px;padding:8px 10px;border:1px dashed rgba(255,210,63,.45);border-radius:10px}
+.mp-lcode span{font-size:10px;letter-spacing:.3em;color:var(--dim);font-weight:700}
+.mp-lcode b{font:900 20px var(--mono);letter-spacing:.1em;color:var(--gold);text-shadow:0 0 12px rgba(255,210,63,.5);overflow-wrap:anywhere;min-width:0}
+.mp-lcode .btn{padding:5px 10px;font-size:11px}
+.mp-rank{display:flex;flex-direction:column;gap:5px;margin:12px auto 4px;max-width:360px;text-align:left}
+.mp-rank div{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px}
+.mp-rank em{font-style:normal;font:700 13px var(--mono);color:var(--gold);width:30px}
+.mp-rank i{width:9px;height:9px;border-radius:50%;background:var(--oc);box-shadow:0 0 6px var(--oc);flex:0 0 auto}
+.mp-rank b{min-width:0;overflow-wrap:anywhere}
+.mp-rank span{margin-left:auto;color:var(--dim);font-size:11px;white-space:nowrap}
 .mp-modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
 .mp-mode{text-align:left;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 12px;color:var(--txt);cursor:pointer;font-family:var(--font);display:flex;flex-direction:column;gap:4px}
 .mp-mode b{font-size:13px;letter-spacing:.25em;color:var(--mc)}
@@ -410,6 +424,15 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 #mp .mp-h b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 #mp .mp-h span{margin-left:auto;color:var(--dim);font:10px var(--mono);white-space:nowrap}
 #mp .mp-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin:6px 0 4px;overflow:hidden}
+#mp .mp-op{margin-top:5px;padding:3px 5px;border-radius:6px;border:1px solid transparent}
+#mp .mp-op[data-p]{cursor:pointer}
+#mp .mp-op.tg{border-color:var(--oc);background:rgba(255,255,255,.04)}
+#mp .mp-op.out{opacity:.45}
+#mp .mp-op .mp-bar{margin:3px 0 0;height:4px}
+#mp .mp-on{display:flex;align-items:center;gap:6px;min-width:0}
+#mp .mp-on i{width:7px;height:7px;border-radius:50%;background:var(--oc);box-shadow:0 0 6px var(--oc);flex:0 0 auto}
+#mp .mp-on b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;font-size:11px}
+#mp .mp-on span{margin-left:auto;color:var(--dim);font:10px var(--mono);white-space:nowrap}
 #mp .mp-bar s{display:block;height:100%;background:linear-gradient(90deg,var(--dang),#ff7a1a);transition:width .3s}
 #mp .mp-row{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:2px 6px;align-items:baseline;margin-top:3px;color:var(--dim)}
 #mp .mp-row b{color:var(--txt);font-family:var(--mono)}
@@ -731,7 +754,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   <div class="seg" id="codex-tabs" style="max-width:340px;margin-bottom:14px"><button data-k="e" class="on">ENNEMIS</button><button data-k="t">TOURELLES</button></div>
   <div class="cxgrid" id="codex"></div></div></div>
 <div class="ov" id="ov-mp"><div class="modal" style="width:720px"><button class="mclose" data-close>✕</button>
-  <h2>MULTIJOUEUR</h2><div class="sub">À deux, en réseau local ou par internet : <b>versus</b> (chacun sa carte, envoyez des ennemis chez l'adversaire) ou <b>coopération</b> (une carte partagée, chacun ses crédits).</div>
+  <h2>MULTIJOUEUR</h2><div class="sub">De 2 à 4 joueurs, en réseau local ou par internet : <b>versus</b> (chacun sa carte, envoyez des ennemis chez vos adversaires) ou <b>coopération</b> (une carte partagée, chacun ses crédits).</div>
   <div id="mp-body"></div></div></div>
 <div class="ov" id="ov-mpend"><div class="modal" style="width:480px;text-align:center"><div id="mpend-body"></div></div></div>
 <div class="ov" id="ov-casino"><div class="modal casino" style="width:640px"><button class="mclose" data-close>✕</button>
@@ -772,7 +795,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.1';
+const VERSION = '9.2';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -2452,7 +2475,7 @@ function gain(v, p = G.actor) {
   if (G.wallets && p == null && !Net.coop) p = Net.me;   // partenaire parti : tout revient au joueur restant
   if (G.wallets) {
     if (p != null) G.wallets[p] += v;
-    else for (let i = 0; i < G.wallets.length; i++) G.wallets[i] += Math.round(v * COOP.share);
+    else for (let i = 0; i < G.wallets.length; i++) if (!(G.gone && G.gone[i])) G.wallets[i] += Math.round(v * COOP.share);
   } else G.money += v;
   G.stats.gold += v;
 }
@@ -3306,7 +3329,7 @@ const Waves = {
   // croissance polynomiale douce, puis exponentielle au-delà de la vague 40 (l'infini doit finir par céder)
   hpMul(n) {
     const k = n - 1, fork = G.map.P && G.map.P.length > 1 ? .9 : 1;   // deux chemins à couvrir : ennemis un peu moins robustes
-    return (1 + .25 * k + .022 * k * k) * Math.pow(1.05, k) * Math.pow(1.075, Math.max(0, k - 22)) * Math.pow(1.03, Math.max(0, k - 45)) * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp : 1);
+    return (1 + .25 * k + .022 * k * k) * Math.pow(1.05, k) * Math.pow(1.075, Math.max(0, k - 22)) * Math.pow(1.03, Math.max(0, k - 45)) * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp * (G.np || 2) / 2 : 1);
   },
   // hasard reproductible : une carte donnée produit toujours les mêmes vagues (aperçu fiable, Défi du jour équitable)
   rng(n, salt = 0) { return mulberry32((G.seed ^ Math.imul(n + 1, 2654435761) ^ salt) >>> 0); },
@@ -3859,7 +3882,12 @@ const Cards = {
     if (c.now) c.now();
     Skills.apply(); Towers.recalc();
   },
-  turn() { return G.wallets && Net.coop ? (G.cardN || 0) % 2 : Net.me; },
+  // coopération : les protocoles se choisissent à tour de rôle parmi les joueurs encore présents
+  turn() {
+    if (!(G.wallets && Net.coop)) return Net.me;
+    const P = []; for (let i = 0; i < G.wallets.length; i++) if (!(G.gone && G.gone[i])) P.push(i);
+    return P.length ? P[(G.cardN || 0) % P.length] : Net.me;
+  },
   pick(i) {
     const id = G.offer && G.offer[i]; if (!id) return;
     if (G.wallets && G.actor != null && G.actor !== this.turn()) return;
@@ -3907,24 +3935,29 @@ const Codex = {
 };
 
 /* ============================== RÉSEAU ==============================
-   Pair-à-pair WebRTC : un canal de données fiable et ordonné entre les deux navigateurs.
+   Pair-à-pair WebRTC, jusqu'à 4 joueurs en étoile : chaque invité est relié à l'hôte, qui relaie les messages.
    Pour se trouver, deux possibilités :
-   - code court (NEON-ABCD) : le serveur public de PeerJS ne relaie que la poignée de main,
-     ensuite tout passe en direct entre les deux machines ;
+   - code de salon (NEON-ABCD, ou un code choisi par l'hôte) : le serveur public de PeerJS ne relaie que la
+     poignée de main, ensuite tout passe en direct entre les navigateurs ;
    - connexion manuelle : offre et réponse échangées par copier-coller, sans aucun service extérieur
-     (fonctionne en réseau local sans internet). */
+     (fonctionne en réseau local sans internet), une invitation par joueur. */
 const NET_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }, { urls: 'stun:global.stun.twilio.com:3478' }];
 const NET_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const NET_PREFIX = 'neonwarfare9x';
+const NET_MAX = 4;   // joueurs par salon, hôte compris
+// messages qu'un invité adresse à tous : l'hôte les fait suivre aux autres invités
+const NET_RELAY = new Set(['chat', 'emote', 'st', 'send', 'dead', 'cur']);
 const Net = {
-  on: false, coop: false, versus: false, me: 0, role: null, pc: null, dc: null, ws: null, code: '', peer: null,
-  status: '', err: false, ping: 0, handlers: {}, timers: [], cand: [], hasRemote: false,
-  get connected() { return !!this.dc && this.dc.readyState === 'open'; },
+  on: false, coop: false, versus: false, me: 0, role: null, ws: null, code: '', custom: false,
+  status: '', err: false, ping: 0, timers: [], links: [],
+  // un lien = une connexion WebRTC ; p = numéro du joueur à l'autre bout (côté hôte), 0 = l'hôte (côté invité)
+  get connected() { return this.links.some(l => l.open); },
   supported() { return typeof RTCPeerConnection !== 'undefined' && typeof WebSocket !== 'undefined' && !this.sandboxed(); },
   // aperçus intégrés (ex. claude.ai) : les connexions directes y sont bloquées
   sandboxed() { try { return !!(window.claude && window.claude.hot) || window.top !== window.self && /claude/.test(document.referrer + location.hostname); } catch (e) { return true; } },
   setStatus(s, err = false) { this.status = s; this.err = err; if (UI.top() === 'ov-mp') UI.renderMP(); },
   later(fn, ms, every) { const id = every ? setInterval(fn, ms) : setTimeout(fn, ms); this.timers.push([id, every]); return id; },
+  cleanCode(c) { return String(c || '').toUpperCase().replace(/^\s*NEON-?/, '').replace(/[^A-Z0-9]/g, ''); },
 
   /* ----- signalisation via le serveur PeerJS (protocole JSON : OPEN, OFFER, ANSWER, CANDIDATE…) ----- */
   wsOpen(id, onOpen) {
@@ -3933,69 +3966,104 @@ const Net = {
     catch (e) { this.setStatus('Serveur de mise en relation injoignable — utilisez la connexion manuelle.', true); return; }
     this.ws = ws;
     ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } this.onSignal(m, onOpen); };
-    ws.onerror = () => { if (!this.connected) this.setStatus('Serveur de mise en relation injoignable — utilisez la connexion manuelle.', true); };
-    this.later(() => { if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'HEARTBEAT' })); }, 5000, true);
+    ws.onerror = () => { if (!this.connected && !this.on) this.setStatus('Serveur de mise en relation injoignable — utilisez la connexion manuelle.', true); };
+    // l'hôte garde son salon joignable : si le serveur coupe, il se réenregistre avec le même code
+    ws.onclose = () => { if (this.ws === ws) { this.ws = null; if (this.role === 'host' && this.on && this.code) this.later(() => this.reopen(), 2500); } };
+    const hb = this.later(() => { if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'HEARTBEAT' })); else if (ws.readyState === 3) clearInterval(hb); }, 5000, true);
   },
+  reopen() { if (this.role === 'host' && this.on && this.code && !this.ws) this.wsOpen(NET_PREFIX + this.code, () => {}); },
   // le serveur public n'accepte que des messages au format exact de la bibliothèque PeerJS
-  sig(type, dst, payload) {
+  sig(type, dst, L, payload) {
     if (!this.ws || this.ws.readyState !== 1) return;
-    payload = Object.assign(payload, { type: 'data', connectionId: this.cid });
-    if (type === 'OFFER') Object.assign(payload, { label: this.cid, reliable: true, serialization: 'binary' });
+    payload = Object.assign(payload, { type: 'data', connectionId: L.cid });
+    if (type === 'OFFER') Object.assign(payload, { label: L.cid, reliable: true, serialization: 'binary' });
     this.ws.send(JSON.stringify({ type, payload, dst }));
   },
   onSignal(m, onOpen) {
+    const p = m.payload, L = p && this.links.find(l => l.cid === p.connectionId && (this.role === 'guest' || l.src === m.src));
     switch (m.type) {
       case 'OPEN': if (onOpen) onOpen(); break;
-      case 'ID-TAKEN': if (this.role === 'host') { this.closeWs(); this.host(); } else this.setStatus('Identifiant indisponible, réessayez.', true); break;
-      case 'ERROR': this.setStatus('Serveur : ' + ((m.payload && m.payload.msg) || 'erreur inconnue') + '. Essayez la connexion manuelle.', true); break;
-      case 'EXPIRE': if (!this.connected) this.setStatus('Salon introuvable : vérifiez le code (l\'hôte doit garder la fenêtre ouverte).', true); break;
-      case 'OFFER': if (this.role === 'host' && m.payload) this.acceptOffer(m.src, m.payload); break;
-      case 'ANSWER': if (this.pc && m.payload && (!m.payload.connectionId || m.payload.connectionId === this.cid)) this.pc.setRemoteDescription(m.payload.sdp).then(() => this.flushCand()).catch(() => this.setStatus('Négociation impossible.', true)); break;
-      case 'CANDIDATE': if (m.payload && m.payload.candidate && (!m.payload.connectionId || m.payload.connectionId === this.cid)) this.addCand(m.payload.candidate); break;
+      case 'ID-TAKEN':
+        if (this.role !== 'host') { this.setStatus('Identifiant indisponible, réessayez.', true); break; }
+        if (this.on) { const w = this.ws; this.ws = null; if (w) { w.onclose = null; try { w.close(); } catch (e) { /* ignore */ } } this.later(() => this.reopen(), 4000); break; }   // l'ancienne inscription n'est pas encore expirée
+        if (this.custom) { const c = this.code; this.reset(); UI.mpState = 'home'; this.setStatus(`Le code NEON-${c} est déjà utilisé : choisissez-en un autre.`, true); }
+        else { this.closeWs(); this.host(); }
+        break;
+      case 'ERROR': this.setStatus('Serveur : ' + ((p && p.msg) || 'erreur inconnue') + '. Essayez la connexion manuelle.', true); break;
+      case 'EXPIRE': if (this.role === 'guest' && !this.connected) this.setStatus('Salon introuvable : vérifiez le code (l\'hôte doit garder la fenêtre ouverte).', true); break;
+      case 'OFFER': if (this.role === 'host' && p) this.acceptOffer(m.src, p); break;
+      case 'ANSWER': if (L && L.pc && p.sdp) L.pc.setRemoteDescription(p.sdp).then(() => this.flushCand(L)).catch(() => this.setStatus('Négociation impossible.', true)); break;
+      case 'CANDIDATE': if (L && p.candidate) this.addCand(L, p.candidate); break;
     }
   },
-  addCand(c) { if (this.pc && this.hasRemote) this.pc.addIceCandidate(c).catch(() => {}); else this.cand.push(c); },
-  flushCand() { this.hasRemote = true; for (const c of this.cand) this.pc.addIceCandidate(c).catch(() => {}); this.cand = []; },
-  makePC(onCand) {
-    const pc = this.pc = new RTCPeerConnection({ iceServers: NET_ICE });
+  addCand(L, c) { if (L.pc && L.hasRemote) L.pc.addIceCandidate(c).catch(() => {}); else L.cand.push(c); },
+  flushCand(L) { L.hasRemote = true; for (const c of L.cand) L.pc.addIceCandidate(c).catch(() => {}); L.cand = []; },
+
+  /* ----- liens ----- */
+  newLink(o) { const L = Object.assign({ pc: null, dc: null, cid: 'dc_' + Math.random().toString(36).slice(2, 13), src: null, p: 0, cand: [], hasRemote: false, open: false, ping: 0 }, o); this.links.push(L); return L; },
+  dropLink(L) {
+    const i = this.links.indexOf(L); if (i >= 0) this.links.splice(i, 1);
+    if (L.dc) { L.dc.onclose = L.dc.onmessage = null; try { L.dc.close(); } catch (e) { /* ignore */ } }
+    if (L.pc) { L.pc.onconnectionstatechange = null; try { L.pc.close(); } catch (e) { /* ignore */ } }
+    L.dc = L.pc = null; L.open = false;
+  },
+  makePC(L, onCand) {
+    const pc = L.pc = new RTCPeerConnection({ iceServers: NET_ICE });
     pc.onicecandidate = e => { if (e.candidate && onCand) onCand(e.candidate.toJSON ? e.candidate.toJSON() : e.candidate); };
-    pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed') { if (this.on) this.lost(); else this.setStatus('Connexion directe impossible entre vos deux réseaux. En réseau local, essayez la connexion manuelle.', true); } };
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState !== 'failed') return;
+      if (L.open) this.linkLost(L);
+      else if (this.role === 'host') this.dropLink(L);
+      else this.setStatus('Connexion directe impossible entre vos deux réseaux. En réseau local, essayez la connexion manuelle.', true);
+    };
     return pc;
   },
-  bindDC(dc) {
-    this.dc = dc;
-    dc.onopen = () => this.opened();
-    dc.onclose = () => { if (dc === this.dc) this.lost(); };
-    dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } this.recv(m); };
+  bindDC(L, dc) {
+    L.dc = dc;
+    dc.onopen = () => this.opened(L);
+    dc.onclose = () => { if (L.dc === dc) this.linkLost(L); };
+    dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } this.onMsg(L, m); };
+  },
+  // un lien ouvert vient de tomber
+  linkLost(L) {
+    const was = L.open;
+    this.dropLink(L);
+    if (!was) return;
+    if (this.role === 'guest') this.lost();
+    else if (L.p) MP.onLeave(L.p, 'lost');
   },
 
-  /* ----- héberger / rejoindre par code court ----- */
-  host() {
-    this.reset(); this.role = 'host'; this.me = 0;
-    this.code = Array.from({ length: 4 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
+  /* ----- héberger / rejoindre par code ----- */
+  host(code) {
+    const want = this.cleanCode(code);
+    if (code && !/^[A-Z0-9]{3,12}$/.test(want)) { this.setStatus('Code personnalisé : 3 à 12 lettres ou chiffres.', true); return false; }
+    this.reset(); this.role = 'host'; this.me = 0; this.custom = !!want;
+    this.code = want || Array.from({ length: 4 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
     this.setStatus('Ouverture du salon…');
-    this.wsOpen(NET_PREFIX + this.code, () => this.setStatus('Salon ouvert : donnez ce code à votre ami.'));
+    this.wsOpen(NET_PREFIX + this.code, () => { this.setStatus(''); this.startSession(); });
+    return true;
+  },
+  // l'hôte ouvre son salon (code ou invitation manuelle) : il y attend ses invités
+  startSession(lobby = true) {
+    if (this.on) return;
+    this.on = true;
+    this.later(() => this.pingAll(), 2000, true);
+    MP.hosted(lobby);
   },
   acceptOffer(src, p) {
-    if (this.connected) return;   // un seul invité
-    if (this.pc) {   // tentative précédente ratée (ou relance de l'invité) : on repart de zéro
-      if (this.dc) { this.dc.onclose = null; try { this.dc.close(); } catch (e) { /* ignore */ } }
-      this.pc.onconnectionstatechange = null; try { this.pc.close(); } catch (e) { /* ignore */ }
-      this.pc = this.dc = null; this.cand = []; this.hasRemote = false;
-    }
-    this.peer = src; this.cid = p.connectionId;
-    const pc = this.makePC(c => this.sig('CANDIDATE', src, { candidate: c }));
-    pc.ondatachannel = e => this.bindDC(e.channel);
-    this.setStatus('Un joueur arrive…');
-    pc.setRemoteDescription(p.sdp).then(() => { this.flushCand(); return pc.createAnswer(); })
-      .then(a => pc.setLocalDescription(a)).then(() => this.sig('ANSWER', src, { sdp: pc.localDescription }))
-      .catch(() => this.setStatus('Négociation impossible avec l\'invité.', true));
+    const old = this.links.find(l => l.src === src && !l.open);
+    if (old) this.dropLink(old);   // nouvelle tentative du même invité : on repart de zéro
+    const L = this.newLink({ src, cid: p.connectionId });
+    const pc = this.makePC(L, c => this.sig('CANDIDATE', src, L, { candidate: c }));
+    pc.ondatachannel = e => this.bindDC(L, e.channel);
+    pc.setRemoteDescription(p.sdp).then(() => { this.flushCand(L); return pc.createAnswer(); })
+      .then(a => pc.setLocalDescription(a)).then(() => this.sig('ANSWER', src, L, { sdp: pc.localDescription }))
+      .catch(() => this.dropLink(L));
   },
   join(code) {
-    code = String(code || '').toUpperCase().replace(/^NEON-?/, '').replace(/[^A-Z0-9]/g, '');
-    if (code.length !== 4) { this.setStatus('Le code fait 4 caractères (ex. NEON-K7QX).', true); return; }
-    this.reset(); this.role = 'guest'; this.me = 1; this.code = code;
-    this.cid = 'dc_' + Math.random().toString(36).slice(2, 13);
+    code = this.cleanCode(code);
+    if (code.length < 3 || code.length > 12) { this.setStatus('Le code fait de 3 à 12 caractères (ex. NEON-K7QX).', true); return; }
+    this.reset(); this.role = 'guest'; this.me = 0; this.code = code;
     const dst = NET_PREFIX + code;
     this.setStatus('Connexion au serveur…');
     this.wsOpen('nwc' + Math.random().toString(36).slice(2, 12), () => this.attempt(dst, 1));
@@ -4003,42 +4071,46 @@ const Net = {
   // une tentative de connexion de l'invité ; jusqu'à 4 essais automatiques avant de proposer le mode manuel
   attempt(dst, n) {
     if (this.connected || this.role !== 'guest') return;
-    if (this.pc) { if (this.dc) { this.dc.onclose = null; try { this.dc.close(); } catch (e) { /* ignore */ } } this.pc.onconnectionstatechange = null; try { this.pc.close(); } catch (e) { /* ignore */ } this.pc = this.dc = null; }
-    this.cand = []; this.hasRemote = false; this.cid = 'dc_' + Math.random().toString(36).slice(2, 13);
+    for (const l of this.links.slice()) this.dropLink(l);
+    const L = this.newLink({ src: dst });
     this.setStatus(n === 1 ? `Recherche du salon NEON-${this.code}…` : `Nouvelle tentative (${n}/4)…`);
-    const pc = this.makePC(c => this.sig('CANDIDATE', dst, { candidate: c }));
-    pc.onconnectionstatechange = () => { if (pc !== this.pc || pc.connectionState !== 'failed') return; if (this.on) this.lost(); else retry(); };
-    this.bindDC(pc.createDataChannel('nw', { ordered: true }));
+    const pc = this.makePC(L, c => this.sig('CANDIDATE', dst, L, { candidate: c }));
+    pc.onconnectionstatechange = () => { if (pc.connectionState !== 'failed') return; if (L.open) this.linkLost(L); else retry(); };
+    this.bindDC(L, pc.createDataChannel('nw', { ordered: true }));
     let done = false;
     const retry = () => {
-      if (done || this.connected || this.role !== 'guest') return; done = true;
+      if (done || this.connected || this.role !== 'guest' || !this.links.includes(L)) return; done = true;
       if (n < 4) this.attempt(dst, n + 1);
       else this.setStatus('Connexion impossible : vérifiez le code. Sur certains réseaux (4G, entreprise), utilisez la connexion manuelle.', true);
     };
-    pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => this.sig('OFFER', dst, { sdp: pc.localDescription }))
+    pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => this.sig('OFFER', dst, L, { sdp: pc.localDescription }))
       .catch(() => retry());
     this.later(retry, 7000 + n * 2000);
   },
 
-  /* ----- connexion manuelle : codes longs à copier-coller ----- */
+  /* ----- connexion manuelle : codes longs à copier-coller (une invitation par joueur) ----- */
   async manualHost() {
-    this.reset(); this.role = 'host'; this.me = 0;
-    const pc = this.makePC(null);
-    this.bindDC(pc.createDataChannel('nw', { ordered: true }));
+    if (this.role !== 'host') { this.reset(); this.role = 'host'; this.me = 0; this.code = ''; }
+    for (const l of this.links.filter(l => !l.open)) this.dropLink(l);   // invitation précédente non utilisée
+    const L = this.newLink({ manual: true });
+    const pc = this.makePC(L, null);
+    this.bindDC(L, pc.createDataChannel('nw', { ordered: true }));
     await pc.setLocalDescription(await pc.createOffer());
     await this.gathered(pc);
-    return this.pack(pc.localDescription);
+    this.startSession(false);
+    return { L, code: await this.pack(pc.localDescription) };
   },
   async manualJoin(code) {
-    this.reset(); this.role = 'guest'; this.me = 1;
-    const pc = this.makePC(null);
-    pc.ondatachannel = e => this.bindDC(e.channel);
+    this.reset(); this.role = 'guest'; this.me = 0;
+    const L = this.newLink({ manual: true });
+    const pc = this.makePC(L, null);
+    pc.ondatachannel = e => this.bindDC(L, e.channel);
     await pc.setRemoteDescription(await this.unpack(code));
     await pc.setLocalDescription(await pc.createAnswer());
     await this.gathered(pc);
     return this.pack(pc.localDescription);
   },
-  async manualFinish(code) { await this.pc.setRemoteDescription(await this.unpack(code)); },
+  async manualFinish(L, code) { if (!L || !L.pc) throw new Error('lien'); await L.pc.setRemoteDescription(await this.unpack(code)); },
   gathered(pc) {
     return new Promise(res => {
       if (pc.iceGatheringState === 'complete') return res();
@@ -4066,39 +4138,69 @@ const Net = {
   },
 
   /* ----- canal ouvert : messages ----- */
-  opened() {
-    this.on = true;
-    if (this.role === 'guest') this.later(() => this.closeWs(), 1500);
-    this.send({ t: 'hello', name: MP.myName(), v: VERSION });
-    this.later(() => this.send({ t: 'ping', ts: performance.now() }), 2000, true);
-    MP.connected();
+  opened(L) {
+    L.open = true;
+    if (this.role === 'guest') {
+      this.on = true; this.status = ''; this.err = false;
+      this.later(() => this.closeWs(), 1500);
+      this.raw(L, { t: 'hello', name: MP.myName(), v: VERSION });
+      this.later(() => this.pingAll(), 2000, true);
+      MP.connected();
+      return;
+    }
+    // hôte : une place libre, et pas de nouvel arrivant pendant une partie
+    const used = new Set(this.links.filter(l => l.open && l.p).map(l => l.p));
+    let p = 0; for (let i = 1; i < NET_MAX; i++) if (!used.has(i)) { p = i; break; }
+    if (!p || MP.live) {
+      this.raw(L, { t: p ? 'busy' : 'full' });
+      setTimeout(() => this.dropLink(L), 600);
+      return;
+    }
+    L.p = p;
+    this.raw(L, { t: 'welcome', you: p, code: this.code });
+    MP.admit(p);
   },
-  send(m) { if (this.connected) { try { this.dc.send(JSON.stringify(m)); } catch (e) { /* canal saturé ou fermé */ } } },
-  recv(m) {
-    if (m.t === 'f') { Lock.onFrame(m); return; }
-    if (m.t === 'ping') { this.send({ t: 'pong', ts: m.ts }); return; }
-    if (m.t === 'pong') { this.ping = Math.round(performance.now() - m.ts); return; }
+  raw(L, m) { if (L && L.open && L.dc && L.dc.readyState === 'open') { try { L.dc.send(JSON.stringify(m)); } catch (e) { /* canal saturé ou fermé */ } } },
+  // invité : vers l'hôte ; hôte : vers tous les invités
+  send(m) {
+    if (this.role === 'host') { m.p = 0; for (const L of this.links) if (L.p) this.raw(L, m); }
+    else this.raw(this.links[0], m);
+  },
+  sendTo(p, m) { if (this.role !== 'host') return; m.p = 0; this.raw(this.links.find(l => l.p === p), m); },
+  pingAll() { const ts = performance.now(); for (const L of this.links) if (L.open) this.raw(L, { t: 'ping', ts }); },
+  onMsg(L, m) {
+    if (m.t === 'ping') { this.raw(L, { t: 'pong', ts: m.ts }); return; }
+    if (m.t === 'pong') { L.ping = Math.round(performance.now() - m.ts); if (this.role === 'guest') this.ping = L.ping; else MP.setPing(L.p, L.ping); return; }
+    if (this.role === 'host') {
+      if (!L.p) return;   // pas encore admis
+      m.p = L.p;   // l'expéditeur est celui du lien, quoi qu'il prétende
+      if (m.t === 'f') { Lock.onFrame(m); return; }
+      if (NET_RELAY.has(m.t)) for (const o of this.links) if (o !== L && o.p) this.raw(o, m);
+    } else {
+      if (m.p == null) m.p = 0;
+      if (m.t === 'F') { Lock.onComb(m); return; }
+    }
     const h = MP.on[m.t]; if (h) { try { h.call(MP, m); } catch (e) { console.error(e); } }
   },
+  // invité : l'hôte est parti, la session est terminée
   lost() {
     if (!this.on) return;
     this.close();
     MP.onLost();
   },
-  closeWs() { if (this.ws) { try { this.ws.close(); } catch (e) { /* déjà fermé */ } this.ws = null; } },
+  closeWs() { const w = this.ws; this.ws = null; if (w) { w.onclose = null; try { w.close(); } catch (e) { /* déjà fermé */ } } },
   close() {
     for (const [id, every] of this.timers) every ? clearInterval(id) : clearTimeout(id);
     this.timers = [];
     this.closeWs();
-    if (this.dc) { this.dc.onclose = null; try { this.dc.close(); } catch (e) { /* ignore */ } }
-    if (this.pc) { this.pc.onconnectionstatechange = null; try { this.pc.close(); } catch (e) { /* ignore */ } }
-    this.dc = this.pc = null; this.on = false; this.coop = this.versus = false; this.cand = []; this.hasRemote = false; this.ping = 0;
+    for (const L of this.links.slice()) this.dropLink(L);
+    this.on = false; this.coop = this.versus = false; this.ping = 0;
     BG.stop();
   },
-  reset() { this.close(); this.role = null; this.code = ''; this.status = ''; this.err = false; this.me = 0; }
+  reset() { this.close(); this.role = null; this.code = ''; this.custom = false; this.status = ''; this.err = false; this.me = 0; MP.clear(); }
 };
 
-/* ---------- minuterie de secours : un onglet en arrière-plan ne doit pas geler la partie de l'autre joueur ---------- */
+/* ---------- minuterie de secours : un onglet en arrière-plan ne doit pas geler la partie des autres joueurs ---------- */
 const BG = {
   w: null, last: 0,
   start() {
@@ -4115,12 +4217,15 @@ const BG = {
   stop() { if (this.w) { this.w.terminate(); this.w = null; } }
 };
 
-/* ---------- lockstep (coopération) : chaque tick n'est calculé qu'une fois connues les actions des deux joueurs ---------- */
+/* ---------- lockstep (coopération) : chaque tick n'est calculé qu'une fois connues les actions de tous les joueurs.
+   Chaque invité envoie ses actions à l'hôte ; l'hôte les rassemble, fixe l'ordre et renvoie à tous la trame du tick. ---------- */
 const Lock = {
-  D: 6, sent: -1, remoteMax: -1, local: new Map(), remote: new Map(), out: [], hashes: new Map(), pend: new Map(), stall: 0, hold: false, desync: false,
+  D: 8, sent: -1, combMax: -1, local: new Map(), remote: new Map(), comb: new Map(), out: [], sys: [], hashes: new Map(), pend: new Map(),
+  stall: 0, hold: false, desync: false, snapWait: null,
   reset(t = 0) {
-    this.sent = t + this.D - 1; this.remoteMax = t + this.D - 1;
-    this.local.clear(); this.remote.clear(); this.out = []; this.hashes.clear(); this.pend.clear(); this.stall = 0; this.hold = false; this.desync = false;
+    this.sent = t + this.D - 1; this.combMax = t + this.D - 1;
+    this.local.clear(); this.remote.clear(); this.comb.clear(); this.out = []; this.sys = []; this.hashes.clear(); this.pend.clear();
+    this.stall = 0; this.hold = false; this.desync = false; this.snapWait = null;
   },
   // vérifications locales avant d'envoyer : retour immédiat au joueur (argent, case occupée…)
   pre(type, a) {
@@ -4144,24 +4249,43 @@ const Lock = {
     this.out.push([type, ...a]);
     return true;
   },
-  onFrame(m) { this.remote.set(m.k, m.c); if (m.k > this.remoteMax) this.remoteMax = m.k; },
-  // avant le tick t : publie nos actions pour t+D, puis vérifie que celles du partenaire pour t sont arrivées
+  // hôte : actions d'un invité pour le tick k
+  onFrame(m) {
+    let M = this.remote.get(m.p); if (!M) this.remote.set(m.p, M = new Map());
+    M.set(m.k, m.c); this.combine();
+  },
+  // invité : trame complète d'un tick, telle que fixée par l'hôte
+  onComb(m) { this.comb.set(m.k, m.c); if (m.k > this.combMax) this.combMax = m.k; },
+  // hôte : dès que les actions de tous les joueurs pour un tick sont connues, il les assemble et les diffuse
+  combine() {
+    if (Net.role !== 'host' || this.hold) return;
+    const P = MP.peersIn();
+    for (;;) {
+      const k = this.combMax + 1;
+      if (!this.local.has(k) || P.some(p => !(this.remote.get(p) || new Map()).has(k))) return;
+      const c = [], L = this.local.get(k); this.local.delete(k);
+      if (L.length) c.push([0, L]);
+      for (const p of P) { const M = this.remote.get(p), x = M.get(k); M.delete(k); if (x.length) c.push([p, x]); }
+      if (this.sys.length) c.push([0, this.sys.splice(0)]);   // événements du salon (départ d'un joueur)
+      this.comb.set(k, c); this.combMax = k;
+      Net.send({ t: 'F', k, c });
+    }
+  },
+  // avant le tick t : publie nos actions pour t+D, puis vérifie que la trame du tick t est connue
   ready(t) {
     if (this.hold) return false;
     const f = t + this.D;
     while (this.sent < f) {
       this.sent++;
       const c = this.sent === f ? this.out.splice(0) : [];
-      this.local.set(this.sent, c);
-      Net.send({ t: 'f', k: this.sent, c });
+      if (Net.role === 'host') this.local.set(this.sent, c); else Net.send({ t: 'f', k: this.sent, c });
     }
-    return this.remoteMax >= t;
+    this.combine();
+    return this.combMax >= t;
   },
   exec(t) {
-    const L = this.local.get(t) || [], Rm = this.remote.get(t) || [];
-    this.local.delete(t); this.remote.delete(t);
-    const order = Net.me === 0 ? [[0, L], [1, Rm]] : [[0, Rm], [1, L]];
-    for (const [p, cmds] of order) for (const c of cmds) Act.run(p, c[0], c.slice(1));
+    const c = this.comb.get(t) || []; this.comb.delete(t);
+    for (const [p, cmds] of c) for (const x of cmds) Act.run(p, x[0], x.slice(1));
   },
   // empreinte de l'état : comparée régulièrement pour détecter une désynchronisation
   hash() {
@@ -4173,17 +4297,17 @@ const Lock = {
   check(t) {
     if (t % 120 !== 0) return;
     const v = this.hash();
-    if (Net.me === 0) {
+    if (Net.role === 'host') {
       this.hashes.set(t, v); if (this.hashes.size > 30) this.hashes.delete(this.hashes.keys().next().value);
-      const pv = this.pend.get(t); if (pv != null) { this.pend.delete(t); if (pv !== v) MP.flagDesync(); }
+      for (const [key, pv] of this.pend) if (key.endsWith(':' + t)) { this.pend.delete(key); if (pv !== v) MP.flagDesync(); }
     }
     else Net.send({ t: 'h', k: t, v });
   }
 };
 
 /* ============================== MULTIJOUEUR : SALON, VERSUS, COOPÉRATION ============================== */
-const MP_COL = ['#00f3ff', '#ffae00'];   // couleur de chaque joueur (hôte, invité)
-// versus : paquets d'ennemis à envoyer chez l'adversaire ; chaque envoi augmente votre revenu par vague
+const MP_COL = ['#00f3ff', '#ffae00', '#ff4dd2', '#7dff4d'];   // couleur de chaque joueur (hôte, puis invités)
+// versus : paquets d'ennemis à envoyer chez un adversaire ; chaque envoi augmente votre revenu par vague
 const SENDS = {
   swarm:   { n: 'Essaim', type: 'scout', cnt: 10, cost: 45, inc: 3, from: 1 },
   drones:  { n: 'Drones', type: 'drone', cnt: 12, cost: 60, inc: 4, from: 1 },
@@ -4198,24 +4322,69 @@ const SEND_STOCK = 3;
 const EMOTES = ['Bien joué !', 'À l\'aide !', 'Attention, ça arrive !', 'GG', 'Ha ha ha', 'On tient bon !'];
 
 const MP = {
-  mode: 'versus', diff: 'standard', ready: false, peerReady: false, peerName: '', peerVer: '', chat: [], opp: null, stT: 0, cur: null, ended: false, last: null,
+  mode: 'versus', diff: 'standard', ready: false, chat: [], ended: false, last: null, live: false,
+  pl: {},        // salon : { numéro: { name, ready, v, ping } } (tenu par l'hôte, recopié chez les invités)
+  slots: [],     // joueurs de la partie en cours
+  opps: {},      // versus : état des adversaires { numéro: { lives, max, wave, kills, inc, over, place } }
+  curs: {},      // coopération : curseurs des partenaires
+  out: {},       // joueurs partis ou éliminés pendant la partie
+  target: null, banned: new Set(), endArgs: null, stT: 0,
   myName() {
     if (!Store.s.name) { Store.s.name = 'Commandant-' + Math.floor(1000 + Math.random() * 9000); Store.save(); }
     return Store.s.name;
   },
-  connected() {
-    this.ready = false; this.peerReady = false; this.chat = []; this.ended = false;
-    if (Net.role === 'host') this.sendCfg();
+  name(p) { return p === Net.me ? this.myName() : (this.pl[p] && this.pl[p].name) || `Joueur ${p + 1}`; },
+  esc(s) { return String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]); },
+  others() { return this.slots.filter(p => p !== Net.me); },
+  count() { return Object.keys(this.pl).length; },
+  // hôte : invités qui participent encore au lockstep
+  peersIn() { return this.slots.filter(p => p !== 0 && !this.out[p]); },
+  clear() { this.pl = {}; this.slots = []; this.opps = {}; this.curs = {}; this.out = {}; this.chat = []; this.ready = false; this.live = false; this.target = null; },
+
+  /* ----- salon ----- */
+  hosted(lobby) {
+    this.clear(); this.banned = new Set();
+    this.pl = { 0: { name: this.myName(), ready: true, v: VERSION, ping: 0 } };
+    if (lobby) { UI.mpState = 'lobby'; UI.openMP(); }
+  },
+  connected() {   // invité : canal ouvert vers l'hôte
+    this.clear();
     UI.mpState = 'lobby'; UI.openMP();
     Sfx.play('mission');
   },
+  admit(p) {   // hôte : un invité vient d'arriver
+    this.pl[p] = { name: 'Joueur ' + (p + 1), ready: false, v: '?', ping: 0 };
+    if (UI.mpState !== 'lobby') { UI.mpState = 'lobby'; UI.mpManual = null; }
+    Net.sendTo(p, { t: 'cfg', mode: this.mode, diff: this.diff });
+    this.syncRoster();
+    Sfx.play('mission');
+  },
+  syncRoster() {
+    if (Net.role !== 'host') return;
+    this.pl[0].name = this.myName();
+    Net.send({ t: 'roster', pl: this.pl, code: Net.code });
+    if (UI.top() === 'ov-mp') UI.renderMP();
+  },
+  setPing(p, v) { if (this.pl[p]) this.pl[p].ping = v; },
   sendCfg() { if (Net.role === 'host') Net.send({ t: 'cfg', mode: this.mode, diff: this.diff }); },
-  setMode(m) { if (Net.role !== 'host') return; this.mode = m; this.peerReady = false; this.sendCfg(); UI.renderMP(); },
-  setDiff(d) { if (Net.role !== 'host') return; this.diff = d; this.peerReady = false; this.sendCfg(); UI.renderMP(); },
+  unready() { for (const p in this.pl) if (+p) this.pl[p].ready = false; },
+  setMode(m) { if (Net.role !== 'host') return; this.mode = m; this.unready(); this.sendCfg(); this.syncRoster(); },
+  setDiff(d) { if (Net.role !== 'host') return; this.diff = d; this.unready(); this.sendCfg(); this.syncRoster(); },
   toggleReady() { this.ready = !this.ready; Net.send({ t: 'ready', v: this.ready }); UI.renderMP(); },
+  allReady() { const G2 = Object.keys(this.pl).filter(p => +p); return G2.length > 0 && G2.every(p => this.pl[p].ready); },
+  // hôte : exclure un joueur (il ne pourra pas revenir sous le même nom tant que le salon existe)
+  kick(p) {
+    if (Net.role !== 'host' || !p || !this.pl[p]) return;
+    const n = this.pl[p].name;
+    this.banned.add(n.toLowerCase());
+    Net.sendTo(p, { t: 'kick' });
+    const L = Net.links.find(l => l.p === p);
+    setTimeout(() => { if (L) { L.open = false; Net.dropLink(L); } this.onLeave(p, 'kick'); }, 250);
+    UI.toast('Joueur exclu', `${this.esc(n)} a été exclu du salon.`, '#ff2a6d', 3);
+  },
   say(txt) {
     txt = String(txt || '').trim().slice(0, 140); if (!txt) return;
-    Net.send({ t: 'chat', s: txt }); this.chat.push([0, txt]); if (this.chat.length > 40) this.chat.shift();
+    Net.send({ t: 'chat', s: txt }); this.chat.push([Net.me, txt]); if (this.chat.length > 40) this.chat.shift();
     UI.renderChat();
   },
   emote(i) {
@@ -4223,37 +4392,42 @@ const MP = {
     Net.send({ t: 'emote', i });
     UI.toast(this.myName(), EMOTES[i], MP_COL[Net.me], 2.5);
   },
-  // l'hôte lance la partie : graine, carte, difficulté, règles communes
+  // l'hôte lance la partie : graine, carte, difficulté, règles communes, liste des joueurs
   launch() {
     if (Net.role !== 'host' || !Net.connected) return;
     const coop = this.mode === 'coop';
     const dk = Store.data.doctrine, docOk = DOCTRINES[dk] && DOCTRINES[dk].lvl <= Store.data.cmd.lvl;
+    const slots = Object.keys(this.pl).map(Number).sort((a, b) => a - b);
     const o = {
       seed: (Math.random() * 2147483647) | 0, diff: this.diff, mode: this.mode, portrait: View.w < View.h * .9,
       perks: coop ? Object.assign({}, Store.data.meta.perks) : {}, doctrine: coop && docOk ? dk : 'standard',
-      events: Store.s.events !== false, autoWave: coop ? !!Store.s.autoWave : true
+      events: Store.s.events !== false, autoWave: coop ? !!Store.s.autoWave : true, slots
     };
-    Net.send({ t: 'start', o });
+    Net.send({ t: 'start', o, pl: this.pl });
     this.begin(o);
   },
   begin(o) {
     UI.closeAll();
-    this.ended = false; this.opp = null; this.last = o; this.cur = null;
+    this.ended = false; this.last = o; this.live = true; this.endArgs = null;
+    this.slots = o.slots || [0, 1]; this.opps = {}; this.curs = {}; this.out = {};
     Net.versus = o.mode === 'versus'; Net.coop = o.mode === 'coop';
+    const others = this.others();
+    this.target = others.find(p => p > Net.me); if (this.target == null) this.target = others[0];
     if (Net.coop) Lock.reset(0);
-    Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, mp: o.mode, events: o.events, autoWave: o.autoWave });
+    Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, mp: o.mode, events: o.events, autoWave: o.autoWave, slots: this.slots });
     BG.start();
     UI.mpHud(true);
-    UI.banner(Net.versus ? 'VERSUS' : 'COOPÉRATION', `${this.myName().toUpperCase()} & ${this.peerName.toUpperCase()}`, MP_COL[Net.me]);
-    if (Net.versus) UI.toast('Versus', 'Même carte, mêmes vagues. Envoyez des ennemis chez l\'adversaire depuis la barre du bas : chaque envoi augmente votre <b>revenu par vague</b>. Le dernier debout gagne !', '#ff2a6d', 8);
-    else UI.toast('Coopération', 'Une seule carte, une intégrité commune, mais <b>chacun ses crédits</b>. Les nanites, compétences et plans sont partagés. Les ennemis sont plus résistants.', '#39ff88', 8);
+    UI.banner(Net.versus ? 'VERSUS' : 'COOPÉRATION', this.slots.map(p => this.name(p).toUpperCase()).join(' · '), MP_COL[Net.me]);
+    const n = this.slots.length;
+    if (Net.versus) UI.toast('Versus', `Même carte, mêmes vagues, ${n} joueurs. Envoyez des ennemis chez ${n > 2 ? 'l\'adversaire ciblé (cliquez sur un nom à gauche pour changer de cible)' : 'l\'adversaire'} : chaque envoi augmente votre <b>revenu par vague</b>. Le dernier debout gagne !`, '#ff2a6d', 8);
+    else UI.toast('Coopération', `Une seule carte pour ${n} joueurs, une intégrité commune, mais <b>chacun ses crédits</b>. Les nanites, compétences et plans sont partagés ; les protocoles se choisissent à tour de rôle. Les ennemis sont plus résistants.`, '#39ff88', 8);
   },
-  // appelé par la boucle : statut envoyé à l'adversaire (versus), curseur au partenaire (coop)
+  // appelé par la boucle : statut envoyé aux adversaires (versus), curseur aux partenaires (coop)
   tick(now) {
     if (!Net.on || !G || Game.state !== 'play') return;
     if (now - this.stT > 700) {
       this.stT = now;
-      if (Net.versus) Net.send({ t: 'st', lives: Math.ceil(G.lives), max: G.maxLives, wave: G.waveNum, kills: G.stats.kills, inc: G.income || 0, over: G.over });
+      if (Net.versus && !G.over) Net.send({ t: 'st', lives: Math.ceil(G.lives), max: G.maxLives, wave: G.waveNum, kills: G.stats.kills, inc: G.income || 0 });
     }
     if (Net.coop && Lock.desync) this.resync();
     if (Net.coop && now - (this.curT || 0) > 90) {
@@ -4264,20 +4438,25 @@ const MP = {
       }
     }
   },
-  // versus : coût d'un envoi, qui grimpe avec la vague de l'envoyeur
+  /* ----- versus ----- */
+  alive() { return this.others().filter(p => !this.out[p] && !(this.opps[p] && this.opps[p].over)); },
+  setTarget(p) { if (this.alive().includes(p)) { this.target = p; Sfx.play('ui'); UI.refreshMP(true); } },
+  aim() { const A = this.alive(); if (!A.includes(this.target)) this.target = A.find(p => p > Net.me) ?? A[0] ?? null; return this.target; },
+  // coût d'un envoi, qui grimpe avec la vague de l'envoyeur
   sendCost(k) { return Math.round(SENDS[k].cost * (1 + .12 * (Math.max(1, G.waveNum) - 1)) / 5) * 5; },
   canSend(k) { const S = SENDS[k]; return S.from <= Math.max(1, G.waveNum) && (G.sendStock[k] == null ? SEND_STOCK : G.sendStock[k]) > 0; },
   sendPack(k) {
     if (!Net.versus || !G || G.over) return;
-    const S = SENDS[k], c = this.sendCost(k);
+    const S = SENDS[k], c = this.sendCost(k), to = this.aim();
+    if (to == null) return;
     if (S.from > Math.max(1, G.waveNum)) { Sfx.play('error'); UI.toast('Envoi verrouillé', `Disponible à partir de la vague ${S.from}.`, '#9fb0cc', 2.5); return; }
     if (!this.canSend(k)) { Sfx.play('error'); UI.toast('Stock épuisé', 'Les envois se rechargent à chaque vague repoussée.', '#9fb0cc', 2.5); return; }
     if (G.money < c) { UI.noMoney(); return; }
     G.money -= c; G.income += S.inc;
     G.sendStock[k] = (G.sendStock[k] == null ? SEND_STOCK : G.sendStock[k]) - 1;
     G.sentTotal = (G.sentTotal || 0) + S.cnt;
-    Net.send({ t: 'send', k, hp: Waves.hpMul(Math.max(1, G.waveNum)) * .85 });
-    UI.toast('Envoi : ' + S.n, `${S.cnt} × ${EDEF(S.type).name} vers ${this.peerName} · revenu <b>+${S.inc}¢</b> par vague (total ${G.income}¢)`, '#ff2a6d', 2.5);
+    Net.send({ t: 'send', k, to, hp: Waves.hpMul(Math.max(1, G.waveNum)) * .85 });
+    UI.toast('Envoi : ' + S.n, `${S.cnt} × ${EDEF(S.type).name} vers <b style="color:${MP_COL[to]}">${this.esc(this.name(to))}</b> · revenu <b>+${S.inc}¢</b> par vague (total ${G.income}¢)`, '#ff2a6d', 2.5);
     Sfx.play('missile'); UI.buildBar(); UI.refreshHUD();
   },
   incoming(m) {
@@ -4287,43 +4466,56 @@ const MP = {
     for (let i = 0; i < S.cnt; i++) G.spawnQ.push({ at: G.tick + 45 + i * 16, type: S.type, wave: 0, hpMul: m.hp, pi: i % nP, sent: true });
     G.spawnQ.sort((a, b) => a.at - b.at);
     G.recvTotal = (G.recvTotal || 0) + S.cnt;
-    UI.toast(`⚠ ${this.peerName} attaque !`, `${S.cnt} × ${EDEF(S.type).name} arrivent par l'entrée.`, '#ff2a6d', 3);
+    UI.toast(`⚠ ${this.esc(this.name(m.p))} attaque !`, `${S.cnt} × ${EDEF(S.type).name} arrivent par l'entrée.`, MP_COL[m.p] || '#ff2a6d', 3);
     Sfx.play('alarm', .7);
     for (const P of G.map.P) FX.ring(P.entry[0], P.entry[1], '#ff2a6d', 50, 26, 3);
   },
+  // un adversaire est éliminé ou parti : dernier debout ?
+  checkWin(why) {
+    if (!Net.versus && !(G && G.net === 'versus')) return;
+    if (G && !G.over && !this.ended && this.alive().length === 0) this.victory(why);
+    this.refreshEnd();
+  },
+  // partie terminée pour tous ? (éliminé : il ne reste qu'un survivant, le vainqueur)
+  matchOver() { if (!this.live || (G && G.net === 'coop')) return true; const a = this.alive().length; return a === 0 || (this.ended && G && G.over && a <= 1 && this.endArgs && !this.endArgs[0]); },
   // fin de partie
   victory(why) {
     if (!G || this.ended) return;
     this.ended = true;
     G.over = true;
-    Hist.add({ win: true, vs: this.peerName });
-    const frags = 5 + Math.floor(G.waveNum * G.diff.frag);
+    Hist.add({ win: true, vs: this.others().map(p => this.name(p)).join(', ') });
+    const frags = 5 + Math.floor(G.waveNum * G.diff.frag) + 3 * Math.max(0, this.slots.length - 2);
     Store.data.meta.frags += frags; Store.data.mpWins = (Store.data.mpWins || 0) + 1; Store.save();
     Ach.unlock('mpwin');
     Music.intensity = 0; Sfx.play('levelup');
     UI.setPlacing(null); UI.setTargeting(null); UI.deselect();
-    setTimeout(() => UI.mpEnd(true, why, frags), 900);
+    this.endArgs = [true, why, frags, 1];
+    setTimeout(() => UI.mpEnd(true, why, frags, 1), 900);
   },
   defeat() {
     // appelé par Game.gameOver en multijoueur
     if (this.ended) return;
     this.ended = true;
-    Hist.add({ win: false, vs: this.peerName });
-    if (Net.versus) Net.send({ t: 'dead', wave: G.waveNum, kills: G.stats.kills });
+    const place = Net.versus ? this.alive().length + 1 : 0;
+    Hist.add({ win: false, vs: this.others().map(p => this.name(p)).join(', ') });
+    if (Net.versus) Net.send({ t: 'dead', wave: G.waveNum, kills: G.stats.kills, place });
     const frags = Math.max(0, Math.floor((G.waveNum - 1) * G.diff.frag));
     Store.data.meta.frags += frags; Store.save();
     if (Net.coop) Ach.unlock('mpcoop');
-    setTimeout(() => UI.mpEnd(false, Net.coop ? 'coop' : 'versus', frags), 1600);
+    this.endArgs = [false, Net.coop ? 'coop' : 'versus', frags, place];
+    setTimeout(() => UI.mpEnd(false, Net.coop ? 'coop' : 'versus', frags, place), 1600);
   },
+  refreshEnd() { if (this.endArgs && UI.top() === 'ov-mpend') UI.mpEnd(...this.endArgs); },
   rematch() { if (Net.role === 'host' && Net.connected) this.launch(); },
-  // retour au salon pour les deux joueurs (changer de mode ou de difficulté sans se reconnecter)
+  // retour au salon pour tout le monde (changer de mode ou de difficulté sans se reconnecter) : décidé par l'hôte
   toLobby(notify = true) {
-    if (notify) Net.send({ t: 'lobby' });
-    Net.coop = Net.versus = false;
+    if (notify && Net.role === 'host') Net.send({ t: 'lobby' });
+    Net.coop = Net.versus = false; this.live = false;
     UI.mpHud(false);
     if (Game.state === 'play') Game.quit(false);
-    this.ready = false; this.peerReady = false;
+    this.ready = false; this.unready();
     UI.mpState = Net.on ? 'lobby' : 'home'; UI.openMP();
+    if (Net.role === 'host') this.syncRoster();
   },
   leave() {
     Net.send({ t: 'bye' });
@@ -4332,19 +4524,35 @@ const MP = {
     if (Game.state === 'play') Game.quit(false);
     UI.closeAll(); UI.showMenu();
   },
+  // hôte : un invité est parti (départ, coupure ou exclusion)
+  onLeave(p, why) {
+    if (!this.pl[p]) return;
+    const n = this.pl[p].name;
+    delete this.pl[p]; delete this.curs[p];
+    Net.send({ t: 'left', who: p, why, name: n });
+    this.on.left.call(this, { who: p, why, name: n });
+    this.syncRoster();
+    if (Lock.snapWait) { Lock.snapWait.delete(p); this.snapDone(); }
+  },
+  // invité : la connexion avec l'hôte est perdue
   onLost() {
     UI.mpHud(false);
+    this.live = false;
     if (Game.state === 'play' && G && !G.over && G.net) {
-      if (G.net === 'versus') { UI.toast('Adversaire déconnecté', 'Victoire par forfait.', '#ffd23f', 5); this.victory('forfait'); }
-      else { UI.toast('Partenaire déconnecté', 'Vous continuez seul : ses tourelles restent en place.', '#ffd23f', 6); }
+      if (G.net === 'versus') {
+        if (this.slots.length <= 2) { UI.toast('Adversaire déconnecté', 'Victoire par forfait.', '#ffd23f', 5); this.victory('forfait'); }
+        else UI.toast('Hôte déconnecté', 'Vous êtes coupé des autres joueurs : la partie continue en solo.', '#ffd23f', 6);
+      }
+      else UI.toast('Hôte déconnecté', 'Vous continuez seul : les tourelles de chacun restent en place.', '#ffd23f', 6);
       Net.coop = false; Net.versus = false;
-    } else if (UI.top() === 'ov-mp') { UI.mpState = 'home'; Net.setStatus('La connexion a été perdue.', true); }
+    } else if (UI.top() === 'ov-mp' || UI.top() === 'ov-mpend') { UI.mpState = 'home'; if (UI.top() === 'ov-mpend') UI.close('ov-mpend'); UI.openMP(); Net.setStatus(this.kicked ? 'L\'hôte vous a exclu du salon.' : 'La connexion avec l\'hôte a été perdue.', true); }
+    this.kicked = false;
   },
   // instantané de la partie entre deux vagues (coopération) : tout ce qui influe sur la simulation
   snap() {
     const s = SaveSys.pack();
     const keys = ['tick', 'nextId', 'autoT', 'autoWave', 'tokens', 'jpot', 'bets', 'curse', 'lastDur', 'lastMc', 'leakHist', 'betsWon', 'cardN', 'evCount', 'mLast',
-      'perks', 'net', 'events', 'recycling', 'combo', 'comboT', 'overdriveT', 'ev', 'evSpd', 'evQ', 'pods', 'craters', 'wallets', 'jpot', 'slot', 'income', 'sendStock'];
+      'perks', 'net', 'events', 'recycling', 'combo', 'comboT', 'overdriveT', 'ev', 'evSpd', 'evQ', 'pods', 'craters', 'wallets', 'jpot', 'slot', 'income', 'sendStock', 'np', 'gone'];
     s.x = {}; for (const k of keys) s.x[k] = G[k];
     s.x.drops = G.drops.map(d => Object.assign({}, d));
     s.tw = G.towers.map(t => [t.owner, t.heat, t.over ? 1 : 0, t.cd, t.ang, t.aimT, t.ramp, t.stun, t.fresh ? 1 : 0, t.id]);
@@ -4374,50 +4582,91 @@ const MP = {
   quiet() {
     return G.phase === 'prep' && !G.enemies.length && !G.spawnQ.length && !G.strikes.length && !G.vortices.length && !G.meteors.length && !G.bolts.length && !G.comet && !G.rift && !Shots.pool.n;
   },
-  // l'hôte renvoie l'état complet dès que la partie est calme ; l'invité l'applique au même tick
+  // l'hôte renvoie l'état complet dès que la partie est calme ; les invités l'appliquent au même tick
   resync() {
     if (Net.role !== 'host' || !Lock.desync || Lock.hold || !G || G.over || !this.quiet()) return;
-    Lock.hold = true;
+    Lock.hold = true; Lock.snapWait = new Set(this.peersIn());
     Net.send({ t: 'snap', s: this.snap() });
+    this.snapDone();
+  },
+  snapDone() {
+    if (!Lock.snapWait || Lock.snapWait.size || !G) return;
+    Lock.reset(G.tick);
+    UI.toast('Resynchronisé', 'Toutes les parties sont de nouveau identiques.', '#39ff88', 3);
   },
   flagDesync() { if (Lock.desync) return; Lock.desync = true; Net.send({ t: 'desync' }); this.on.desync.call(this); },
-  // messages reçus
+  // messages reçus (m.p : numéro de l'expéditeur)
   on: {
-    hello(m) {
-      this.peerName = String(m.name || 'Joueur').slice(0, 24); this.peerVer = m.v || '?';
-      if (m.v !== VERSION) UI.toast('Versions différentes', `Vous avez la ${VERSION}, votre ami la ${m.v}. Mettez à jour vos fichiers pour éviter les surprises.`, '#ffd23f', 6);
-      UI.renderMP();
+    hello(m) {   // hôte : présentation d'un invité
+      const P = MP.pl[m.p]; if (!P) return;
+      P.name = String(m.name || 'Joueur').slice(0, 24); P.v = m.v || '?';
+      if (MP.banned.has(P.name.toLowerCase())) { MP.kick(m.p); return; }
+      if (m.v !== VERSION) UI.toast('Versions différentes', `${MP.esc(P.name)} a la ${MP.esc(P.v)}, vous la ${VERSION}. Mettez à jour vos fichiers pour éviter les surprises.`, '#ffd23f', 6);
+      MP.syncRoster();
     },
-    cfg(m) { this.mode = m.mode; this.diff = m.diff; this.ready = false; UI.renderMP(); },
-    ready(m) { this.peerReady = !!m.v; UI.renderMP(); if (m.v) Sfx.play('ui'); },
+    welcome(m) { Net.me = m.you; Net.code = m.code || Net.code; UI.renderMP(); },
+    roster(m) {
+      MP.pl = m.pl || {}; if (m.code) Net.code = m.code;
+      if (MP.pl[Net.me]) MP.ready = !!MP.pl[Net.me].ready;
+      if (UI.top() === 'ov-mp') UI.renderMP();
+    },
+    full() { MP.kicked = false; Net.setStatus('Salon complet (4 joueurs maximum).', true); },
+    busy() { Net.setStatus('Une partie est en cours dans ce salon : réessayez quand ils seront revenus au salon.', true); },
+    kick() {
+      MP.kicked = true;
+      UI.toast('Exclu du salon', 'L\'hôte vous a exclu.', '#ff2a6d', 5);
+      if (Game.state === 'play') { UI.mpHud(false); Game.quit(false); }
+      Net.reset(); UI.closeAll(); UI.mpState = 'home'; UI.openMP(); Net.setStatus('L\'hôte vous a exclu du salon.', true);
+      MP.kicked = false;
+    },
+    cfg(m) { MP.mode = m.mode; MP.diff = m.diff; MP.ready = false; UI.renderMP(); },
+    ready(m) { if (MP.pl[m.p]) { MP.pl[m.p].ready = !!m.v; MP.syncRoster(); if (m.v) Sfx.play('ui'); } },
     chat(m) {
       const s = String(m.s || '').slice(0, 140);
-      this.chat.push([1, s]); if (this.chat.length > 40) this.chat.shift();
-      if (UI.top() === 'ov-mp') UI.renderChat(); else UI.toast(this.peerName, s.replace(/</g, '&lt;'), MP_COL[1 - Net.me], 4);
+      MP.chat.push([m.p, s]); if (MP.chat.length > 40) MP.chat.shift();
+      if (UI.top() === 'ov-mp') UI.renderChat(); else UI.toast(MP.esc(MP.name(m.p)), MP.esc(s), MP_COL[m.p], 4);
       Sfx.play('ui');
     },
-    emote(m) { if (EMOTES[m.i]) { UI.toast(this.peerName, EMOTES[m.i], MP_COL[1 - Net.me], 3); Sfx.play('mission'); } },
-    start(m) { this.begin(m.o); },
-    lobby() { this.toLobby(false); UI.toast('Multijoueur', `${this.peerName} est revenu au salon.`, '#9fb0cc', 3); },
-    st(m) { this.opp = m; },
-    send(m) { this.incoming(m); },
-    dead(m) { this.opp = Object.assign(this.opp || {}, { lives: 0, wave: m.wave, kills: m.kills, over: true }); this.victory('ko'); },
-    bye() { const ing = Game.state === 'play' && G && !G.over; Net.lost(); if (!ing && UI.top() !== 'ov-mp') UI.toast('Multijoueur', `${this.peerName} a quitté la partie.`, '#9fb0cc', 4); },
-    cur(m) { this.cur = { x: m.x, y: m.y, k: m.k, t: performance.now(), sx: this.cur ? this.cur.sx : m.x, sy: this.cur ? this.cur.sy : m.y }; },
+    emote(m) { if (EMOTES[m.i]) { UI.toast(MP.esc(MP.name(m.p)), EMOTES[m.i], MP_COL[m.p], 3); Sfx.play('mission'); } },
+    start(m) { if (m.pl) MP.pl = m.pl; MP.begin(m.o); },
+    lobby() { MP.toLobby(false); UI.toast('Multijoueur', 'L\'hôte a ramené tout le monde au salon.', '#9fb0cc', 3); },
+    st(m) { MP.opps[m.p] = Object.assign(MP.opps[m.p] || {}, m); },
+    send(m) { if (m.to === Net.me) MP.incoming(m); },
+    dead(m) {
+      MP.opps[m.p] = Object.assign(MP.opps[m.p] || {}, { lives: 0, wave: m.wave, kills: m.kills, over: true, place: m.place });
+      if (G && G.net === 'versus' && !G.over) UI.toast('Élimination', `${MP.esc(MP.name(m.p))} est éliminé à la vague ${m.wave}.`, MP_COL[m.p], 3.5);
+      MP.checkWin('ko');
+    },
+    left(m) {
+      const p = m.who, n = MP.esc(m.name || MP.name(p)), ing = MP.live && MP.slots.includes(p);
+      delete MP.curs[p];
+      if (ing && !MP.out[p]) {
+        MP.out[p] = 1;
+        if (Net.coop && Net.role === 'host') Lock.sys.push(['leave', p]);   // départ appliqué au même tick partout
+        if (G && G.net === 'versus') { MP.opps[p] = Object.assign(MP.opps[p] || {}, { over: true, forfeit: true }); MP.checkWin('forfait'); }
+      }
+      const txt = m.why === 'kick' ? `${n} a été exclu par l'hôte.` : `${n} a quitté ${ing ? 'la partie' : 'le salon'}.`;
+      if (p !== Net.me) UI.toast('Multijoueur', txt + (ing && G && G.net === 'coop' ? ' Ses tourelles restent en place.' : ''), '#9fb0cc', 4);
+    },
+    bye(m) {
+      if (Net.role === 'host') { const L = Net.links.find(l => l.p === m.p); if (L) { L.open = false; Net.dropLink(L); } MP.onLeave(m.p, 'bye'); }
+      else Net.lost();
+    },
+    cur(m) { const u = MP.curs[m.p]; MP.curs[m.p] = { x: m.x, y: m.y, k: m.k, t: performance.now(), sx: u ? u.sx : m.x, sy: u ? u.sy : m.y }; },
     h(m) {
       // l'hôte compare les empreintes d'état
       const v = Lock.hashes.get(m.k);
-      if (v == null) { Lock.pend.set(m.k, m.v); if (Lock.pend.size > 30) Lock.pend.delete(Lock.pend.keys().next().value); }
-      else if (v !== m.v) this.flagDesync();
+      if (v == null) { Lock.pend.set(m.p + ':' + m.k, m.v); if (Lock.pend.size > 120) Lock.pend.delete(Lock.pend.keys().next().value); }
+      else if (v !== m.v) MP.flagDesync();
     },
     snap(m) {
       if (!G || !Net.coop) return;
-      this.restore(m.s); Lock.reset(G.tick);
+      MP.restore(m.s); Lock.reset(G.tick);
       Net.send({ t: 'snapok' });
       UI.toast('Resynchronisé', 'Votre partie a été réalignée sur celle de l\'hôte.', '#39ff88', 3);
     },
-    snapok() { if (!G) return; Lock.reset(G.tick); UI.toast('Resynchronisé', 'Les deux parties sont de nouveau identiques.', '#39ff88', 3); },
-    desync() { Lock.desync = true; if (G && G.net) G.desync = true; UI.toast('Désynchronisation', 'Vos deux parties ont divergé (navigateurs différents ?). Elles seront réalignées automatiquement entre deux vagues.', '#ffd23f', 6); }
+    snapok(m) { if (Lock.snapWait) { Lock.snapWait.delete(m.p); MP.snapDone(); } },
+    desync() { Lock.desync = true; if (G && G.net) G.desync = true; UI.toast('Désynchronisation', 'Les parties ont divergé (navigateurs différents ?). Elles seront réalignées automatiquement entre deux vagues.', '#ffd23f', 6); }
   }
 };
 
@@ -4682,7 +4931,8 @@ const Act = {
     slot: lvl => Casino.spin(lvl),
     bet: (k, pi) => Casino.bet(k, pi),
     speed: v => Game.setSpeed(v),
-    auto: on => { G.autoWave = !!on; if (G.phase === 'prep') G.autoT = 480; UI.refreshAuto(); }
+    auto: on => { G.autoWave = !!on; if (G.phase === 'prep') G.autoT = 480; UI.refreshAuto(); },
+    leave: p => { (G.gone || (G.gone = {}))[p] = 1; }   // départ d'un joueur, appliqué au même tick chez tous
   },
   do(type, ...a) {
     if (!G || G.over) return false;
@@ -4802,8 +5052,10 @@ const Game = {
     if (G.gm === 'sandbox') { G.money = 99999; G.nanites = 999; for (const r of RECIPES) G.unlocked.add(r.r); }
     if (G.net === 'coop') {
       // un portefeuille par joueur : G.money désigne celui de l'auteur de l'action (ou du joueur local)
-      const m = Math.round(G.money * COOP.start);
-      G.wallets = [m, m]; delete G.money;
+      const m = Math.round(G.money * COOP.start), S = opts.slots || [0, 1], n = Math.max(...S) + 1;
+      G.wallets = Array(n).fill(m); delete G.money;
+      G.np = S.length; G.gone = {}; for (let i = 0; i < n; i++) if (!S.includes(i)) G.gone[i] = 1;
+      G.tokens = Array(n).fill(Casino.TOKENS);
       Object.defineProperty(G, 'money', {
         get() { return this.wallets[this.actor != null ? this.actor : Net.me]; },
         set(v) { this.wallets[this.actor != null ? this.actor : Net.me] = v; }, enumerable: true, configurable: true
@@ -5747,15 +5999,18 @@ const Render = {
       const x = tw.tx * TILE + 2, y = tw.ty * TILE + 2;
       c.fillStyle = MP_COL[tw.owner]; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8, y); c.lineTo(x, y + 8); c.closePath(); c.fill();
     }
-    const u = MP.cur; if (!u || !Net.coop || t - u.t > 2500) return;
+    if (!Net.coop) return;
+    for (const k in MP.curs) {
+    const u = MP.curs[k]; if (t - u.t > 2500) continue;
     u.sx += (u.x - u.sx) * .35; u.sy += (u.y - u.sy) * .35;
-    const col = MP_COL[1 - Net.me], tx = Math.floor(u.sx / TILE), ty = Math.floor(u.sy / TILE);
+    const col = MP_COL[k], nm = MP.name(+k), tx = Math.floor(u.sx / TILE), ty = Math.floor(u.sy / TILE);
     if (u.k) { c.strokeStyle = rgba(col, .8); c.lineWidth = 1.5; c.setLineDash([4, 3]); c.strokeRect(tx * TILE + 2, ty * TILE + 2, TILE - 4, TILE - 4); c.setLineDash([]); }
     c.strokeStyle = col; c.lineWidth = 2;
     c.beginPath(); c.arc(u.sx, u.sy, 9, 0, TAU); c.moveTo(u.sx - 15, u.sy); c.lineTo(u.sx - 5, u.sy); c.moveTo(u.sx + 5, u.sy); c.lineTo(u.sx + 15, u.sy);
     c.moveTo(u.sx, u.sy - 15); c.lineTo(u.sx, u.sy - 5); c.moveTo(u.sx, u.sy + 5); c.lineTo(u.sx, u.sy + 15); c.stroke();
     c.font = '700 11px Bahnschrift,"Segoe UI",sans-serif'; c.textAlign = 'left'; c.textBaseline = 'middle';
-    c.fillStyle = 'rgba(0,0,0,.7)'; c.fillText(MP.peerName, u.sx + 14, u.sy - 13); c.fillStyle = col; c.fillText(MP.peerName, u.sx + 13, u.sy - 14);
+    c.fillStyle = 'rgba(0,0,0,.7)'; c.fillText(nm, u.sx + 14, u.sy - 13); c.fillStyle = col; c.fillText(nm, u.sx + 13, u.sy - 14);
+    }
   },
   drawDrops(c) {
     for (const d of G.drops) {
@@ -6119,7 +6374,7 @@ const UI = {
     const h = this.hover;
     if (h.inside && !h.touch && G.drops.length && !G.over) Drops.near(h.wx, h.wy, 40);
     if (f % 20 === 0 && G.net) this.refreshMP();
-    if (f % 10 === 0) { const w = Net.coop && Lock.stall > 600; if (w !== this.last.wait) { this.last.wait = w; $('mp-wait').style.display = w ? 'block' : 'none'; if (w) $('mp-wait').textContent = `EN ATTENTE DE ${(MP.peerName || 'VOTRE PARTENAIRE').toUpperCase()}…`; } }
+    if (f % 10 === 0) { const w = Net.coop && Lock.stall > 600; if (w !== this.last.wait) { this.last.wait = w; $('mp-wait').style.display = w ? 'block' : 'none'; if (w) $('mp-wait').textContent = MP.slots.length > 2 ? 'EN ATTENTE DES AUTRES JOUEURS…' : `EN ATTENTE DE ${MP.name(MP.others()[0] || 0).toUpperCase()}…`; } }
   },
   refreshHUD() {
     const L = this.last, lives = Math.max(0, Math.ceil(G.lives)), money = Math.floor(this.holdMoney != null ? this.holdMoney : G.money);
@@ -6265,7 +6520,7 @@ const UI = {
   /* ---------- protocoles ---------- */
   openCards() {
     if (!G || !G.offer || !G.offer.length) { if (G) { G.offer = null; G.cardQ = 0; } return; }
-    if (G.wallets && Net.coop && Cards.turn() !== Net.me) { this.toast('Protocole', `${MP.peerName} choisit le protocole de cette vague.`, '#ff2bd6', 3); return; }
+    if (G.wallets && Net.coop && Cards.turn() !== Net.me) { this.toast('Protocole', `${MP.esc(MP.name(Cards.turn()))} choisit le protocole de cette vague.`, '#ff2bd6', 3); return; }
     this.setPlacing(null, true); this.setTargeting(null); this.deselect();
     this.renderCards(); this.open('ov-cards'); Sfx.play('card');
   },
@@ -6715,15 +6970,16 @@ const UI = {
     if (!G || G.over) return;
     this.setPlacing(null, true); this.setTargeting(null);
     if (G.net) {
-      $('pause-info').innerHTML = `${G.net === 'versus' ? 'VERSUS' : 'COOPÉRATION'} avec <b>${MP.peerName.replace(/</g, '&lt;')}</b> · Vague <b>${G.waveNum}</b><br><span style="color:var(--gold)">La partie continue pendant que ce menu est ouvert.</span>`;
+      $('pause-info').innerHTML = `${G.net === 'versus' ? 'VERSUS' : 'COOPÉRATION'} avec <b>${MP.others().map(p => MP.esc(MP.name(p))).join(', ')}</b> · Vague <b>${G.waveNum}</b><br><span style="color:var(--gold)">La partie continue pendant que ce menu est ouvert.</span>`;
       this.btns($('pause-btns'), [
         ['REPRENDRE', 'prim', () => this.close('ov-pause')],
         ['OPTIONS', '', () => this.openOptions()],
         ['ANALYSE DE COMBAT', '', () => this.openStats()],
         ['CASINO', '', () => this.openCasino()],
         ['MANUEL', '', () => this.openHelp()],
-        ...(Net.connected ? [['RETOUR AU SALON', '', () => this.confirm('RETOUR AU SALON ?', "La partie en cours s'arrête pour les deux joueurs.", () => MP.toLobby())]] : []),
-        ['QUITTER LA PARTIE', 'danger', () => this.confirm('QUITTER ?', G.net === 'versus' ? 'Votre adversaire gagnera par forfait.' : 'Votre partenaire continuera seul.', () => MP.leave())]
+        ...(Net.connected && Net.role === 'host' ? [['RETOUR AU SALON', '', () => this.confirm('RETOUR AU SALON ?', "La partie en cours s'arrête pour tous les joueurs.", () => MP.toLobby())]] : []),
+        ['QUITTER LA PARTIE', 'danger', () => this.confirm('QUITTER ?', G.net === 'versus' ? (MP.slots.length > 2 ? 'Vous serez éliminé.' : 'Votre adversaire gagnera par forfait.')
+          : Net.role === 'host' ? 'Vous êtes l\'hôte : les autres joueurs continueront chacun de leur côté.' : 'Les autres joueurs continueront sans vous.', () => MP.leave())]
       ]);
       this.open('ov-pause'); Sfx.play('ui'); return;
     }
@@ -7005,10 +7261,16 @@ const UI = {
     const st = Net.status ? `<div class="mp-st${Net.err ? ' err' : ''}">${Net.status}</div>` : '';
     const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
     if (this.mpState === 'lobby' && Net.on) {
-      const host = Net.role === 'host', me = MP.myName(), you = MP.peerName || '…';
-      const P = (n, i, tag, ok) => `<div class="mp-pl" style="--pc:${MP_COL[i]}"><i></i><b>${esc(n)}</b><span>${tag}</span>${ok ? '<em>PRÊT</em>' : ''}</div>`;
-      const meIdx = Net.me, ready = host ? MP.peerReady : MP.ready;
-      B.innerHTML = `<div class="mp-pls">${P(me, meIdx, host ? 'HÔTE · VOUS' : 'VOUS', !host && MP.ready)}${P(you, 1 - meIdx, (host ? 'INVITÉ' : 'HÔTE') + (Net.ping ? ` · ${Net.ping} ms` : ''), host && MP.peerReady)}</div>
+      const host = Net.role === 'host', ids = Object.keys(MP.pl).map(Number).sort((a, b) => a - b), n = ids.length;
+      const row = p => {
+        const P = MP.pl[p], me = p === Net.me, ping = host ? P.ping : me ? Net.ping : 0;
+        return `<div class="mp-pl" style="--pc:${MP_COL[p]}"><i></i><b>${esc(P.name)}</b><span>${p ? 'INVITÉ' : 'HÔTE'}${me ? ' · VOUS' : ''}${p && ping ? ` · ${ping} ms` : ''}</span>${p && P.ready ? '<em>PRÊT</em>' : ''}${host && p ? `<button class="mp-kick" data-p="${p}" title="Exclure ${esc(P.name)}">✕</button>` : ''}</div>`;
+      };
+      const free = Array.from({ length: Math.max(0, NET_MAX - n) }, () => '<div class="mp-pl free"><i></i><b>Place libre</b><span>EN ATTENTE…</span></div>').join('');
+      const ready = host ? MP.allReady() : MP.ready;
+      const code = Net.code ? `<div class="mp-lcode"><span>CODE DU SALON</span><b>NEON-${esc(Net.code)}</b><button class="btn" id="mp-copy">COPIER</button>${host ? '<button class="btn" id="mp-inv">+ INVITATION MANUELLE</button>' : ''}</div>`
+        : host ? '<div class="mp-lcode"><span>SALON LOCAL</span><button class="btn" id="mp-inv">+ INVITATION MANUELLE</button></div>' : '';
+      B.innerHTML = `${code}<div class="lbl-s" style="margin:4px 0 6px">JOUEURS · ${n} / ${NET_MAX}</div><div class="mp-pls">${ids.map(row).join('')}${free}</div>
         <div class="lbl-s" style="margin:12px 0 6px">MODE ${host ? '' : '<span style="opacity:.6">(choisi par l\'hôte)</span>'}</div>
         <div class="mp-modes">
           <button class="mp-mode${MP.mode === 'versus' ? ' on' : ''}" data-m="versus" style="--mc:#ff2a6d"><b>VERSUS</b><span>Chacun sa carte, mêmes vagues. Envoyez des ennemis chez l'adversaire pour augmenter votre revenu. Le dernier debout gagne.</span></button>
@@ -7019,23 +7281,27 @@ const UI = {
         <div class="mp-chat"><div class="mp-log" id="mp-log"></div><form id="mp-form"><input id="mp-msg" maxlength="140" placeholder="Message…" autocomplete="off"><button class="btn">ENVOYER</button></form></div>
         <div class="row" style="gap:10px;margin-top:12px">
           <button class="btn danger" id="mp-quit">QUITTER LE SALON</button>
-          ${host ? `<button class="btn prim big" id="mp-go" style="flex:1" ${ready ? '' : 'disabled'}>${ready ? 'LANCER LA PARTIE' : 'EN ATTENTE DE L\'INVITÉ…'}</button>`
+          ${host ? `<button class="btn prim big" id="mp-go" style="flex:1" ${ready ? '' : 'disabled'}>${ready ? `LANCER LA PARTIE · ${n} JOUEURS` : n < 2 ? 'EN ATTENTE DE JOUEURS…' : 'EN ATTENTE QUE TOUS SOIENT PRÊTS…'}</button>`
             : `<button class="btn ${MP.ready ? 'gold' : 'prim'} big" id="mp-ready" style="flex:1">${MP.ready ? 'PRÊT ✓ (ANNULER)' : 'JE SUIS PRÊT'}</button>`}
         </div>`;
       B.querySelectorAll('.mp-mode').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setMode(b.dataset.m); });
       B.querySelectorAll('#mp-diff button').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setDiff(b.dataset.d); });
       $('mp-quit').onclick = () => MP.leave();
       if (host) $('mp-go').onclick = () => MP.launch(); else $('mp-ready').onclick = () => { Sfx.play('ui'); MP.toggleReady(); };
+      if ($('mp-copy')) $('mp-copy').onclick = () => this.copy('NEON-' + Net.code);
+      if ($('mp-inv')) $('mp-inv').onclick = () => this.mpInvite();
+      B.querySelectorAll('.mp-kick').forEach(b => b.onclick = () => {
+        const k = +b.dataset.p, nm = MP.pl[k] ? MP.pl[k].name : '';
+        this.confirm('EXCLURE ?', `<b>${esc(nm)}</b> sera retiré du salon et ne pourra pas revenir sous ce nom.`, () => MP.kick(k));
+      });
       $('mp-form').onsubmit = e => { e.preventDefault(); const i = $('mp-msg'); MP.say(i.value); i.value = ''; };
       this.renderChat();
       return;
     }
     if (this.mpState === 'manual') { this.renderManual(B, st); return; }
     if (this.mpState === 'host') {
-      B.innerHTML = `<div class="mp-code"><span>CODE DU SALON</span><b>${Net.code ? 'NEON-' + Net.code : '…'}</b><button class="btn" id="mp-copy" ${Net.code ? '' : 'disabled'}>COPIER</button></div>${st}
-        <div class="note" style="text-align:center">Votre ami ouvre <b>Multijoueur → Rejoindre</b> et tape ce code. Gardez cette fenêtre ouverte.</div>
+      B.innerHTML = `<div class="mp-code"><span>OUVERTURE DU SALON</span><b>${Net.code ? 'NEON-' + esc(Net.code) : '…'}</b></div>${st}
         <div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="mp-back">ANNULER</button></div>`;
-      if (Net.code) $('mp-copy').onclick = () => this.copy('NEON-' + Net.code);
       $('mp-back').onclick = () => { Net.reset(); this.mpState = 'home'; this.renderMP(); };
       return;
     }
@@ -7046,14 +7312,20 @@ const UI = {
     }
     B.innerHTML = `<div class="opt" style="border:0;padding-top:0"><span>Votre nom<small>Visible par l'autre joueur</small></span><input id="mp-name" class="mp-in" maxlength="24" value="${esc(MP.myName())}"></div>
       <div class="mp-two">
-        <div class="mp-box"><h3>HÉBERGER</h3><p>Créez un salon et donnez son code à votre ami.</p><button class="btn prim big" id="mp-host">CRÉER UN SALON</button></div>
-        <div class="mp-box"><h3>REJOINDRE</h3><p>Entrez le code reçu de l'hôte.</p><input id="mp-code" class="mp-in big" maxlength="9" placeholder="NEON-XXXX" autocomplete="off"><button class="btn prim big" id="mp-join">REJOINDRE</button></div>
+        <div class="mp-box"><h3>HÉBERGER</h3><p>Créez un salon (jusqu'à ${NET_MAX} joueurs) et donnez son code à vos amis. Code au hasard, ou choisissez le vôtre.</p><input id="mp-hcode" class="mp-in big" maxlength="17" placeholder="Code perso (facultatif)" autocomplete="off" value="${esc(Store.s.roomCode || '')}"><button class="btn prim big" id="mp-host">CRÉER UN SALON</button></div>
+        <div class="mp-box"><h3>REJOINDRE</h3><p>Entrez le code reçu de l'hôte.</p><input id="mp-code" class="mp-in big" maxlength="17" placeholder="NEON-XXXX" autocomplete="off"><button class="btn prim big" id="mp-join">REJOINDRE</button></div>
       </div>${st}
       <div class="note" style="margin-top:12px">Le code court passe par un service public gratuit de mise en relation (PeerJS) : seule la poignée de main y transite, la partie se joue ensuite en direct entre vos deux navigateurs.
-        Pas d'internet, ou ça ne passe pas ? <a href="#" id="mp-man">Connexion manuelle (réseau local)</a>.</div>`;
+        Pas d'internet, ou ça ne passe pas ? <a href="#" id="mp-man">Connexion manuelle (réseau local)</a>. L'hôte peut exclure un joueur depuis le salon.</div>`;
     const nm = $('mp-name');
     nm.onchange = () => { Store.s.name = nm.value.trim().slice(0, 24) || MP.myName(); Store.save(); };
-    $('mp-host').onclick = () => { nm.onchange(); this.mpState = 'host'; Net.host(); this.renderMP(); };
+    $('mp-host').onclick = () => {
+      nm.onchange();
+      const want = Net.cleanCode($('mp-hcode').value); Store.s.roomCode = want; Store.save();
+      if (Net.host(want)) this.mpState = 'host';
+      this.renderMP();
+    };
+    $('mp-hcode').onkeydown = e => { if (e.key === 'Enter') $('mp-host').click(); };
     $('mp-join').onclick = () => { nm.onchange(); this.mpState = 'join'; Net.join($('mp-code').value); if (Net.err) this.mpState = 'home'; this.renderMP(); };
     $('mp-code').onkeydown = e => { if (e.key === 'Enter') $('mp-join').click(); };
     $('mp-man').onclick = e => { e.preventDefault(); nm.onchange(); this.mpState = 'manual'; this.mpManual = null; Net.reset(); this.renderMP(); };
@@ -7061,15 +7333,11 @@ const UI = {
   renderManual(B, st) {
     const M = this.mpManual;
     if (!M) {
-      B.innerHTML = `<div class="note" style="margin-bottom:12px">Sans aucun serveur : chacun copie un code et l'envoie à l'autre (message, mail, clé USB…). Fonctionne entre deux ordinateurs du même réseau, même sans internet.</div>
+      B.innerHTML = `<div class="note" style="margin-bottom:12px">Sans aucun serveur : chacun copie un code et l'envoie à l'autre (message, mail, clé USB…). Fonctionne entre ordinateurs du même réseau, même sans internet. Une invitation par joueur : pour un 3e ou un 4e joueur, l'hôte crée une nouvelle invitation depuis le salon.</div>
         <div class="mp-two"><div class="mp-box"><h3>JE CRÉE</h3><p>Génère un code d'invitation.</p><button class="btn prim big" id="mm-h">CRÉER L'INVITATION</button></div>
         <div class="mp-box"><h3>J'AI REÇU UNE INVITATION</h3><p>Collez-la pour générer votre réponse.</p><textarea id="mm-in" class="mp-ta" placeholder="NW1.…"></textarea><button class="btn prim big" id="mm-j">GÉNÉRER LA RÉPONSE</button></div></div>${st}
         <div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="mp-back">RETOUR</button></div>`;
-      $('mm-h').onclick = async () => {
-        this.mpManual = { step: 'hwait' }; Net.setStatus('Préparation de l\'invitation…');
-        try { this.mpManual.code = await Net.manualHost(); Net.setStatus(''); } catch (e) { Net.setStatus('Impossible de créer l\'invitation.', true); }
-        this.renderMP();
-      };
+      $('mm-h').onclick = () => this.mpInvite();
       $('mm-j').onclick = async () => {
         const v = $('mm-in').value; this.mpManual = { step: 'jwait' }; Net.setStatus('Préparation de la réponse…');
         try { this.mpManual.code = await Net.manualJoin(v); Net.setStatus('Envoyez cette réponse à l\'hôte, puis patientez.'); } catch (e) { this.mpManual = null; Net.setStatus('Invitation illisible : copiez-la en entier.', true); }
@@ -7082,9 +7350,21 @@ const UI = {
         ${host ? `<div class="lbl-s" style="margin-top:12px">2. COLLEZ LA RÉPONSE DE VOTRE AMI</div><textarea id="mm-ans" class="mp-ta" placeholder="NW1.…"></textarea><button class="btn prim big" id="mm-fin" style="width:100%">SE CONNECTER</button>` : ''}
         ${st}<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="mp-back">ANNULER</button></div>`;
       $('mm-copy').onclick = () => this.copy(M.code || '', $('mm-out'));
-      if (host) $('mm-fin').onclick = async () => { try { await Net.manualFinish($('mm-ans').value); Net.setStatus('Connexion…'); } catch (e) { Net.setStatus('Réponse illisible : copiez-la en entier.', true); } };
+      if (host) $('mm-fin').onclick = async () => { try { await Net.manualFinish(M.L, $('mm-ans').value); Net.setStatus('Connexion…'); } catch (e) { Net.setStatus('Réponse illisible : copiez-la en entier.', true); } };
     }
-    $('mp-back').onclick = () => { Net.reset(); this.mpManual = null; this.mpState = M ? 'manual' : 'home'; this.renderMP(); };
+    $('mp-back').onclick = () => {
+      // l'hôte d'un salon déjà ouvert revient simplement au salon
+      if (Net.role === 'host' && Net.on && (Net.code || MP.count() > 1)) { for (const l of Net.links.filter(l => !l.open)) Net.dropLink(l); this.mpManual = null; this.mpState = 'lobby'; this.renderMP(); return; }
+      Net.reset(); this.mpManual = null; this.mpState = M ? 'manual' : 'home'; this.renderMP();
+    };
+  },
+  // hôte : une nouvelle invitation manuelle (un joueur de plus)
+  async mpInvite() {
+    if (Net.role === 'host' && MP.count() >= NET_MAX) { this.toast('Salon complet', `${NET_MAX} joueurs maximum.`, '#ff2a6d', 3); return; }
+    this.mpState = 'manual'; this.mpManual = { step: 'hwait' }; Net.setStatus('Préparation de l\'invitation…');
+    try { const r = await Net.manualHost(); this.mpManual.L = r.L; this.mpManual.code = r.code; Net.setStatus(''); }
+    catch (e) { Net.setStatus('Impossible de créer l\'invitation.', true); }
+    this.renderMP();
   },
   copy(txt, sel) {
     const done = () => this.toast('Copié', 'Collez-le dans votre message.', '#39ff88', 2);
@@ -7094,7 +7374,7 @@ const UI = {
   renderChat() {
     const L = $('mp-log'); if (!L) return;
     const esc = s => String(s).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
-    L.innerHTML = MP.chat.length ? MP.chat.map(([who, s]) => `<div><b style="color:${MP_COL[who ? 1 - Net.me : Net.me]}">${esc(who ? MP.peerName : MP.myName())}</b> ${esc(s)}</div>`).join('')
+    L.innerHTML = MP.chat.length ? MP.chat.map(([p, s]) => `<div><b style="color:${MP_COL[p]}">${esc(MP.name(p))}</b> ${esc(s)}</div>`).join('')
       : '<div style="opacity:.5">Discutez ici avant de lancer la partie.</div>';
     L.scrollTop = L.scrollHeight;
   },
@@ -7103,48 +7383,71 @@ const UI = {
     const el = $('mp');
     el.classList.toggle('hidden', !on);
     if (!on) return;
-    el.style.setProperty('--pc', MP_COL[1 - Net.me]);
+    el.style.setProperty('--pc', MP_COL[Net.me]);
     $('mp-em').innerHTML = EMOTES.map((e, i) => `<button data-i="${i}">${e}</button>`).join('');
     $('mp-em').querySelectorAll('button').forEach(b => b.onclick = () => { MP.emote(+b.dataset.i); });
     this.refreshMP(true);
   },
-  refreshMP(force) {
+  refreshMP() {
     const el = $('mp'); if (el.classList.contains('hidden') || !G) return;
-    const o = MP.opp, n = MP.peerName || '…';
-    let h = `<div class="mp-h"><i></i><b>${Net.versus ? 'VS ' : 'AVEC '}${n.replace(/</g, '&lt;')}</b><span>${Net.on ? (Net.ping ? Net.ping + ' ms' : '') : 'DÉCONNECTÉ'}</span></div>`;
-    if (Net.versus || G.net === 'versus') {
-      const p = o ? Math.max(0, o.lives / (o.max || 1)) : 1;
-      h += `<div class="mp-bar"><s style="width:${(p * 100).toFixed(1)}%"></s></div>
-        <div class="mp-row"><span>Intégrité</span><b>${o ? o.lives : '?'}</b><span>Vague</span><b>${o ? o.wave : '?'}</b></div>
-        <div class="mp-row"><span>Votre revenu</span><b style="color:var(--gold)">+${G.income || 0}¢</b><span>Envoyés</span><b>${G.sentTotal || 0}</b></div>
+    const esc = s => MP.esc(s), vs = Net.versus || G.net === 'versus';
+    let h = `<div class="mp-h"><i></i><b>${vs ? 'VERSUS' : 'COOP'} · ${MP.slots.length} JOUEURS</b><span>${Net.on ? (Net.ping ? Net.ping + ' ms' : '') : 'DÉCONNECTÉ'}</span></div>`;
+    if (vs) {
+      const tg = MP.aim(), many = MP.others().length > 1;
+      for (const p of MP.others()) {
+        const o = MP.opps[p] || {}, out = o.over || MP.out[p], pc = out ? 0 : o.max ? Math.max(0, o.lives / o.max) : 1;
+        h += `<div class="mp-op${p === tg && many ? ' tg' : ''}${out ? ' out' : ''}" data-p="${p}" style="--oc:${MP_COL[p]}"${many && !out ? ' title="Cibler ce joueur"' : ''}>
+          <div class="mp-on"><i></i><b>${esc(MP.name(p))}</b><span>${out ? (o.forfeit ? 'PARTI' : 'ÉLIMINÉ') : `${o.lives != null ? o.lives + ' ♥ · ' : ''}V${o.wave != null ? o.wave : '?'}${p === tg && many ? ' · ◎ CIBLE' : ''}`}</span></div>
+          <div class="mp-bar"><s style="width:${(pc * 100).toFixed(1)}%"></s></div></div>`;
+      }
+      h += `<div class="mp-row"><span>Votre revenu</span><b style="color:var(--gold)">+${G.income || 0}¢</b><span>Envoyés</span><b>${G.sentTotal || 0}</b></div>
         <button class="btn danger" id="mp-sendgo" style="width:100%;margin-top:5px;padding:5px">ENVOYER DES ENNEMIS ▸</button>`;
     } else if (G.wallets) {
-      h += `<div class="mp-row"><span>Ses crédits</span><b style="color:var(--gold)">${fmt(G.wallets[1 - Net.me])}¢</b><span>Ses tourelles</span><b>${G.towers.filter(t => t.owner === 1 - Net.me).length}</b></div>`;
+      for (const p of MP.others()) {
+        const gone = (G.gone && G.gone[p]) || MP.out[p];
+        h += `<div class="mp-op${gone ? ' out' : ''}" style="--oc:${MP_COL[p]}"><div class="mp-on"><i></i><b>${esc(MP.name(p))}</b><span>${gone ? 'PARTI' : `${fmt(G.wallets[p] || 0)}¢ · ${G.towers.filter(t => t.owner === p).length} tour.`}</span></div></div>`;
+      }
+      if (Net.coop) h += `<div class="mp-row"><span>Protocole</span><b style="color:${MP_COL[Cards.turn()]}">${esc(MP.name(Cards.turn()))}</b></div>`;
     }
     $('mp-info').innerHTML = h;
+    $('mp-info').querySelectorAll('.mp-op[data-p]').forEach(r => r.onclick = () => MP.setTarget(+r.dataset.p));
     const sg = $('mp-sendgo');
     if (sg) sg.onclick = () => { const c = this.cards['send:swarm']; if (c) { const bar = $('bar'); bar.scrollLeft = c.el.offsetLeft - bar.offsetLeft - 20; c.el.classList.add('fresh'); setTimeout(() => c.el.classList.remove('fresh'), 1500); } };
   },
-  mpEnd(win, why, frags) {
+  mpEnd(win, why, frags, place) {
     if (!G) return;
-    const s = G.stats, o = MP.opp, host = Net.role === 'host' && Net.connected;
-    const title = Net.coop || why === 'coop' ? 'DÉFAITE COMMUNE' : win ? 'VICTOIRE !' : 'DÉFAITE';
+    const s = G.stats, host = Net.role === 'host' && Net.connected, n = MP.slots.length, vs = G.net === 'versus', esc = x => MP.esc(x);
+    const one = MP.others()[0], o = MP.opps[one], left = MP.alive().length, over = MP.matchOver();
+    const ord = k => k === 1 ? '1er' : k + 'e';
+    const title = why === 'coop' ? 'DÉFAITE COMMUNE' : win ? 'VICTOIRE !' : n > 2 && place ? `ÉLIMINÉ · ${ord(place)} / ${n}` : 'DÉFAITE';
     const col = win ? 'var(--gold)' : 'var(--dang)';
-    const sub = why === 'forfait' ? `${MP.peerName} a quitté la partie.` : why === 'ko' ? `Le noyau de ${MP.peerName} a cédé à la vague ${o ? o.wave : '?'}.`
-      : why === 'coop' ? `Votre défense commune est tombée à la vague ${G.waveNum}.` : `Votre noyau a cédé à la vague ${G.waveNum}.`;
-    $('mpend-body').innerHTML = `<h2 style="color:${col};text-shadow:0 0 18px ${col}">${title}</h2><div class="sub">${sub}</div>
+    const sub = why === 'forfait' ? (n > 2 ? 'Vos adversaires ont quitté la partie.' : `${esc(MP.name(one))} a quitté la partie.`)
+      : why === 'ko' ? (n > 2 ? `Dernier debout parmi ${n} joueurs !` : `Le noyau de ${esc(MP.name(one))} a cédé à la vague ${o && o.wave != null ? o.wave : '?'}.`)
+      : why === 'coop' ? `Votre défense commune est tombée à la vague ${G.waveNum}.`
+      : `Votre noyau a cédé à la vague ${G.waveNum}.${vs && !over ? ` Encore ${left} joueur${left > 1 ? 's' : ''} en lice…` : ''}`;
+    // classement du versus à plusieurs
+    let rank = '';
+    if (vs && n > 2) {
+      const L = MP.slots.map(p => {
+        const me = p === Net.me, op = MP.opps[p] || {};
+        const pl = me ? (win ? 1 : place) : op.place || (op.forfeit ? null : op.over ? null : (over ? 1 : null));
+        return { p, pl, txt: me ? (win ? 'vainqueur' : `vague ${G.waveNum}`) : op.forfeit ? 'parti' : op.over ? `vague ${op.wave != null ? op.wave : '?'}` : over ? 'vainqueur' : 'en lice' };
+      }).sort((a, b) => (a.pl || 99) - (b.pl || 99));
+      rank = `<div class="mp-rank">${L.map(r => `<div style="--oc:${MP_COL[r.p]}"><em>${r.pl ? ord(r.pl) : '–'}</em><i></i><b>${esc(MP.name(r.p))}${r.p === Net.me ? ' (vous)' : ''}</b><span>${r.txt}</span></div>`).join('')}</div>`;
+    }
+    $('mpend-body').innerHTML = `<h2 style="color:${col};text-shadow:0 0 18px ${col}">${title}</h2><div class="sub">${sub}</div>${rank}
       <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
       ${G.net === 'versus' ? `<div>Ennemis envoyés <b>${G.sentTotal || 0}</b></div><div>Ennemis reçus <b>${G.recvTotal || 0}</b></div>` : `<div>Tourelles <b>${G.towers.length}</b></div><div>Boss vaincus <b>${s.bosses}</b></div>`}</div>
       <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span></div>
       <div class="gocode"><span>CODE DE CARTE</span><input id="mpe-code" readonly value="${Hist.code()}" aria-label="Code de carte"><button class="btn" id="mpe-cc">COPIER</button></div>
-      <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="mpe-quit">QUITTER</button>${Net.connected ? '<button class="btn" id="mpe-lobby">SALON</button>' : ''}<button class="btn" id="mpe-stats">STATS</button>
-      ${host ? '<button class="btn prim big" id="mpe-again">REVANCHE !</button>' : Net.connected ? '<span class="note" style="align-self:center">L\'hôte peut relancer une partie…</span>' : ''}</div>`;
+      <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="mpe-quit">QUITTER</button>${host && over ? '<button class="btn" id="mpe-lobby">SALON</button>' : ''}<button class="btn" id="mpe-stats">STATS</button>
+      ${host ? (over ? '<button class="btn prim big" id="mpe-again">REVANCHE !</button>' : '<button class="btn prim big" disabled>PARTIE EN COURS…</button>') : Net.connected ? '<span class="note" style="align-self:center">L\'hôte peut relancer une partie…</span>' : ''}</div>`;
     $('mpe-quit').onclick = () => MP.leave();
     $('mpe-code').onfocus = () => $('mpe-code').select();
     $('mpe-cc').onclick = () => this.copy($('mpe-code').value, $('mpe-code'));
     if ($('mpe-lobby')) $('mpe-lobby').onclick = () => MP.toLobby();
     $('mpe-stats').onclick = () => this.openStats();
-    if (host) $('mpe-again').onclick = () => MP.rematch();
+    if ($('mpe-again')) $('mpe-again').onclick = () => MP.rematch();
     this.open('ov-mpend');
   },
   /* ---------- casino ---------- */
@@ -7418,7 +7721,8 @@ const UI = {
         <li><b>Analyse de combat</b> (<kbd>G</kbd>) : graphiques de la partie en cours — dégâts, éliminations, tirs et rentabilité de chaque tourelle, et dégâts par vague. Le <b>Codex</b> réunit les fiches de tout ce que vous avez rencontré.</li>
         <li>La partie est <b>sauvegardée automatiquement</b> entre les vagues.</li></ul>
       <h3>MULTIJOUEUR</h3><ul>
-        <li><b>Menu → Multijoueur</b> : l'hôte crée un salon et donne son code (NEON-XXXX), l'autre joueur le saisit. Sans internet, la <b>connexion manuelle</b> échange deux codes par copier-coller (réseau local).</li>
+        <li><b>Menu → Multijoueur</b> : de 2 à 4 joueurs. L'hôte crée un salon, avec un code au hasard (NEON-XXXX) ou <b>un code de son choix</b>, et le donne aux autres. Dans le salon, l'hôte peut <b>exclure</b> un joueur (✕). Sans internet, la <b>connexion manuelle</b> échange deux codes par copier-coller (une invitation par joueur).</li>
+        <li><b>Versus à plusieurs</b> : cliquez sur un adversaire dans le panneau de gauche pour en faire la <b>cible</b> de vos envois. Le dernier debout gagne ; le classement s'affiche en fin de partie.</li>
         <li><b style="color:#ff2a6d">Versus</b> : même carte et mêmes vagues, chacun chez soi. La barre du bas propose des <b>envois</b> d'ennemis chez l'adversaire : ils coûtent des crédits mais augmentent votre <b>revenu par vague</b>. Vitesse 1x, vagues automatiques. Le dernier debout gagne.</li>
         <li><b style="color:#39ff88">Coopération</b> : une seule carte, une intégrité commune, mais chacun ses crédits (60 % des primes chacun). Nanites, compétences, plans et capacités sont partagés ; les protocoles se choisissent à tour de rôle. Seul le constructeur d'une tourelle peut la vendre. Le curseur de votre partenaire est visible sur la carte.</li>
         <li>En multijoueur, les menus ne mettent pas la partie en pause.</li></ul>

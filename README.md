@@ -2,7 +2,7 @@
 
 Tower defense néon **tenant dans un seul fichier HTML** : aucune dépendance, aucun asset externe,
 fonctionne hors-ligne. Double-cliquez sur `neon-warfare.html` et jouez dans n'importe quel navigateur
-récent (PC, tablette ou téléphone). Se joue **seul ou à deux** (versus ou coopération, en réseau).
+récent (PC, tablette ou téléphone). Se joue **seul ou de 2 à 4 joueurs** (versus ou coopération, en réseau).
 
 ## Jouer
 
@@ -16,17 +16,20 @@ La partie est sauvegardée automatiquement entre deux vagues (dans le `localStor
 
 ## Multijoueur
 
-**Menu → Multijoueur.** L'hôte crée un salon et donne son code (`NEON-XXXX`), l'autre joueur le tape.
-La partie se joue ensuite **en direct entre les deux navigateurs** (WebRTC) : le serveur public gratuit
-de PeerJS ne sert qu'à la mise en relation. Sans internet (réseau local), la **connexion manuelle**
-échange deux codes par copier-coller, sans aucun serveur.
+**Menu → Multijoueur**, **de 2 à 4 joueurs**. L'hôte crée un salon avec un code au hasard (`NEON-XXXX`) ou
+**un code de son choix** (3 à 12 lettres ou chiffres, ex. `NEON-TIMOTI42`), puis les autres le tapent.
+Dans le salon, l'hôte voit les joueurs, leur ping, qui est prêt, et peut **exclure** quelqu'un (✕) :
+l'exclu ne peut pas revenir sous le même nom tant que le salon existe.
+La partie se joue ensuite **en direct** (WebRTC, chaque invité relié à l'hôte, qui relaie) : le serveur
+public gratuit de PeerJS ne sert qu'à la mise en relation. Sans internet (réseau local), la **connexion
+manuelle** échange deux codes par copier-coller, sans aucun serveur (une invitation par joueur).
 
 | Mode | Principe |
 |---|---|
-| **Versus** | même carte et mêmes vagues, chacun chez soi. Envoyez des paquets d'ennemis chez l'adversaire depuis la barre du bas : ils coûtent des crédits mais augmentent votre **revenu par vague**. Le dernier debout gagne. |
-| **Coopération** | une seule carte, une intégrité commune, **chacun ses crédits** ; nanites, compétences, plans et capacités partagés, protocoles à tour de rôle. Les deux machines calculent la même partie en *lockstep* (actions horodatées) et se resynchronisent toutes seules en cas d'écart. |
+| **Versus** | même carte et mêmes vagues, chacun chez soi. Envoyez des paquets d'ennemis chez l'adversaire **ciblé** (cliquez sur un nom dans le panneau de gauche) : ils coûtent des crédits mais augmentent votre **revenu par vague**. Le dernier debout gagne ; classement affiché en fin de partie. |
+| **Coopération** | une seule carte, une intégrité commune, **chacun ses crédits** ; nanites, compétences, plans et capacités partagés, protocoles à tour de rôle. Ennemis plus résistants selon le nombre de joueurs. Toutes les machines calculent la même partie en *lockstep* (l'hôte fixe l'ordre des actions de chacun) et se resynchronisent toutes seules en cas d'écart ; un joueur qui part laisse ses tourelles. |
 
-Les deux joueurs doivent avoir la même version du fichier. Le multijoueur ne fonctionne pas dans un
+Tous les joueurs doivent avoir la même version du fichier. Le multijoueur ne fonctionne pas dans un
 aperçu intégré (ex. claude.ai) : ouvrez le fichier directement dans Chrome, Edge ou Firefox, ou servez-le
 en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 
@@ -110,6 +113,8 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.2** : multijoueur jusqu'à 4 joueurs (versus en mêlée avec ciblage et classement, coopération à 4),
+  code de salon personnalisé, exclusion de joueurs par l'hôte, invitations manuelles multiples.
 - **v9.1** : méga-boss Léviathan (vague 50) et Oméga (vague 100), 26 nouveaux protocoles dont les légendaires,
   code de carte copiable et « Rejouer cette carte » en fin de partie, difficulté relevée (PV, élites, boss multiples dès la vague 20).
 - **v9.0** : multijoueur en réseau (versus et coopération), musique Arena 80s, événements aléatoires,
