@@ -444,6 +444,8 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 #mp-em button:hover{border-color:var(--accent)}
 #mp-wait{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:40;display:none;pointer-events:none;padding:10px 18px;border-radius:10px;background:rgba(3,6,12,.85);border:1px solid var(--gold);color:var(--gold);font-weight:800;letter-spacing:.2em;font-size:12px;animation:blink 1s infinite alternate}
 .bcard.send .tr{color:#ff2a6d}
+.bcard.sab{background:linear-gradient(170deg,rgba(255,138,61,.14),rgba(255,255,255,.02))}
+.bcard.sab .tr{color:var(--tc);font-size:8px;letter-spacing:.08em}
 @media (max-width:640px){#mp{width:min(190px,48vw);left:6px}}
 /* casino */
 .casino .jpot{text-align:center;font-size:11px;letter-spacing:.3em;color:var(--dim);font-weight:700;margin-bottom:8px}
@@ -795,7 +797,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.3';
+const VERSION = '9.4';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -2753,6 +2755,7 @@ const Enemies = {
   kill(e, src) {
     if (!e.alive) return;
     e.alive = false;
+    if (e.from != null) MP.survived(e, false);
     const w = G.waves[e.wave];
     if (w) w.left--;
     if (src) { src.kills++; if (src.ts) src.ts.kills++; }
@@ -2819,6 +2822,7 @@ const Enemies = {
   },
   leak(e) {
     e.alive = false;
+    if (e.from != null) MP.survived(e, true);
     const w = G.waves[e.wave];
     if (w) { w.left--; w.leaks++; if (e.boss) w.bossSlow = true; }
     const [x, y] = G.map.P[e.pi].exit;
@@ -3416,6 +3420,7 @@ const Waves = {
     while (Q.length && Q[0].at <= G.tick) {
       const s = Q.shift();
       const e = Enemies.spawn(s.type, { hpMul: s.hpMul, elite: s.elite, wave: s.wave, pi: s.pi || 0, dist: s.dist });
+      if (s.from != null) { e.from = s.from; e.u = s.u; }
       if (s.bmul) { e.bounty *= s.bmul; if (s.dist) { FX.spark(e.x, e.y, '#c43dff', 10, 3); e.px = e.x; e.py = e.y; } }
     }
     for (const k in G.waves) { const w = G.waves[k]; if (w.left <= 0) this.cleared(w); }
@@ -3949,7 +3954,7 @@ const NET_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const NET_PREFIX = 'neonwarfare9x';
 const NET_MAX = 4;   // joueurs par salon, hôte compris
 // messages qu'un invité adresse à tous : l'hôte les fait suivre aux autres invités
-const NET_RELAY = new Set(['chat', 'emote', 'st', 'send', 'dead', 'cur']);
+const NET_RELAY = new Set(['chat', 'emote', 'st', 'send', 'dead', 'cur', 'surv']);
 const Net = {
   on: false, coop: false, versus: false, me: 0, role: null, ws: null, code: '', custom: false,
   status: '', err: false, ping: 0, timers: [], links: [],
@@ -4319,8 +4324,15 @@ const SENDS = {
   ghost:   { n: 'Spectres', type: 'spectre', cnt: 6, cost: 160, inc: 9, from: 6 },
   medic:   { n: 'Médics', type: 'medic', cnt: 5, cost: 150, inc: 8, from: 6 },
   carrier: { n: 'Porteurs', type: 'carrier', cnt: 3, cost: 240, inc: 13, from: 8 },
-  titan:   { n: 'Colosse', type: 'colosse', cnt: 1, cost: 1100, inc: 40, from: 10 }
+  titan:   { n: 'Colosse', type: 'colosse', cnt: 1, cost: 1100, inc: 40, from: 10 },
+  // sabotages : des météores qui s'abattent sur les tourelles de l'adversaire (un par vague)
+  meteor:  { n: 'Pluie de météores', sab: 1, i: '☄', c: '#ff8a3d', cnt: 6, cost: 260, inc: 6, from: 4, stock: 1,
+             d: '6 météores visent les meilleures tourelles de l\'adversaire : sonnées 4 à 6 s et en surchauffe. Les 2 plus gros leur font <b>perdre un niveau</b>.' },
+  crusher: { n: 'Météore géant', sab: 2, i: '✹', c: '#ff2a6d', cnt: 1, cost: 750, inc: 15, from: 10, stock: 1,
+             d: 'Un météore colossal s\'écrase sur la tourelle la plus chère de l\'adversaire et la <b>pulvérise</b> (case en ruines), en sonnant ses voisines 8 s. Il a 4 s pour la vendre avant l\'impact.' }
 };
+// versus : un ennemi envoyé rapporte à son expéditeur selon le temps qu'il survit chez l'adversaire
+const SURV = { full: 20, share: .6, leak: .5 };   // 60 % de son prix s'il tient 20 s, +50 % s'il atteint le noyau
 const SEND_STOCK = 3;
 const EMOTES = ['Bien joué !', 'À l\'aide !', 'Attention, ça arrive !', 'GG', 'Ha ha ha', 'On tient bon !'];
 
@@ -4342,7 +4354,7 @@ const MP = {
   count() { return Object.keys(this.pl).length; },
   // hôte : invités qui participent encore au lockstep
   peersIn() { return this.slots.filter(p => p !== 0 && !this.out[p]); },
-  clear() { this.pl = {}; this.slots = []; this.opps = {}; this.curs = {}; this.out = {}; this.chat = []; this.ready = false; this.live = false; this.target = null; },
+  clear() { this.pl = {}; this.slots = []; this.opps = {}; this.curs = {}; this.out = {}; this.chat = []; this.ready = false; this.live = false; this.target = null; this.survAcc = {}; },
 
   /* ----- salon ----- */
   hosted(lobby) {
@@ -4412,7 +4424,7 @@ const MP = {
   begin(o) {
     UI.closeAll();
     this.ended = false; this.last = o; this.live = true; this.endArgs = null;
-    this.slots = o.slots || [0, 1]; this.opps = {}; this.curs = {}; this.out = {};
+    this.slots = o.slots || [0, 1]; this.opps = {}; this.curs = {}; this.out = {}; this.survAcc = {};
     Net.versus = o.mode === 'versus'; Net.coop = o.mode === 'coop';
     const others = this.others();
     this.target = others.find(p => p > Net.me); if (this.target == null) this.target = others[0];
@@ -4431,6 +4443,7 @@ const MP = {
     if (now - this.stT > 700) {
       this.stT = now;
       if (Net.versus && !G.over) Net.send({ t: 'st', lives: Math.ceil(G.lives), max: G.maxLives, wave: G.waveNum, kills: G.stats.kills, inc: G.income || 0 });
+      if (Net.versus) this.flushSurv();
     }
     if (Net.coop && Lock.desync) this.resync();
     if (Net.coop && now - (this.curT || 0) > 90) {
@@ -4447,7 +4460,8 @@ const MP = {
   aim() { const A = this.alive(); if (!A.includes(this.target)) this.target = A.find(p => p > Net.me) ?? A[0] ?? null; return this.target; },
   // coût d'un envoi, qui grimpe avec la vague de l'envoyeur
   sendCost(k) { return Math.round(SENDS[k].cost * (1 + .12 * (Math.max(1, G.waveNum) - 1)) / 5) * 5; },
-  canSend(k) { const S = SENDS[k]; return S.from <= Math.max(1, G.waveNum) && (G.sendStock[k] == null ? SEND_STOCK : G.sendStock[k]) > 0; },
+  stock(k) { return G.sendStock[k] == null ? (SENDS[k].stock || SEND_STOCK) : G.sendStock[k]; },
+  canSend(k) { const S = SENDS[k]; return S.from <= Math.max(1, G.waveNum) && this.stock(k) > 0; },
   sendPack(k) {
     if (!Net.versus || !G || G.over) return;
     const S = SENDS[k], c = this.sendCost(k), to = this.aim();
@@ -4456,22 +4470,54 @@ const MP = {
     if (!this.canSend(k)) { Sfx.play('error'); UI.toast('Stock épuisé', 'Les envois se rechargent à chaque vague repoussée.', '#9fb0cc', 2.5); return; }
     if (G.money < c) { UI.noMoney(); return; }
     G.money -= c; G.income += S.inc;
-    G.sendStock[k] = (G.sendStock[k] == null ? SEND_STOCK : G.sendStock[k]) - 1;
-    G.sentTotal = (G.sentTotal || 0) + S.cnt;
-    Net.send({ t: 'send', k, to, hp: Waves.hpMul(Math.max(1, G.waveNum)) * VERSUS.sendHp });
-    UI.toast('Envoi : ' + S.n, `${S.cnt} × ${EDEF(S.type).name} vers <b style="color:${MP_COL[to]}">${this.esc(this.name(to))}</b> · revenu <b>+${S.inc}¢</b> par vague (total ${G.income}¢)`, '#ff2a6d', 2.5);
+    G.sendStock[k] = this.stock(k) - 1;
+    if (!S.sab) G.sentTotal = (G.sentTotal || 0) + S.cnt;
+    Net.send({ t: 'send', k, to, hp: Waves.hpMul(Math.max(1, G.waveNum)) * VERSUS.sendHp, u: Math.round(c / S.cnt) });
+    UI.toast((S.sab ? 'Sabotage : ' : 'Envoi : ') + S.n, `${S.sab ? S.n : S.cnt + ' × ' + EDEF(S.type).name} vers <b style="color:${MP_COL[to]}">${this.esc(this.name(to))}</b> · revenu <b>+${S.inc}¢</b> par vague (total ${G.income}¢)${S.sab ? '' : ' · plus ils survivent, plus ils rapportent'}`, S.sab ? S.c : '#ff2a6d', 2.5);
     Sfx.play('missile'); UI.buildBar(); UI.refreshHUD();
   },
   incoming(m) {
     if (!G || G.over || !Net.versus) return;
     const S = SENDS[m.k]; if (!S) return;
+    if (S.sab) { this.sabotage(S, m.p); return; }
     const nP = G.map.P.length;
-    for (let i = 0; i < S.cnt; i++) G.spawnQ.push({ at: G.tick + 45 + i * 16, type: S.type, wave: 0, hpMul: m.hp, pi: i % nP, sent: true });
+    for (let i = 0; i < S.cnt; i++) G.spawnQ.push({ at: G.tick + 45 + i * 16, type: S.type, wave: 0, hpMul: m.hp, pi: i % nP, sent: true, from: m.p, u: m.u || 0 });
     G.spawnQ.sort((a, b) => a.at - b.at);
     G.recvTotal = (G.recvTotal || 0) + S.cnt;
     UI.toast(`⚠ ${this.esc(this.name(m.p))} attaque !`, `${S.cnt} × ${EDEF(S.type).name} arrivent par l'entrée.`, MP_COL[m.p] || '#ff2a6d', 3);
     Sfx.play('alarm', .7);
     for (const P of G.map.P) FX.ring(P.entry[0], P.entry[1], '#ff2a6d', 50, 26, 3);
+  },
+  // sabotage reçu : météores visant nos tourelles les plus efficaces (ou la plus chère pour le géant)
+  sabotage(S, from) {
+    const who = `<b style="color:${MP_COL[from]}">${this.esc(this.name(from))}</b>`, M = G.map, T = G.towers.filter(t => !t.dead);
+    if (S.sab === 2) {
+      const t = T.reduce((a, b) => (!a || b.invested > a.invested ? b : a), null);
+      if (!t) return;
+      G.meteors.push({ x: t.cx, y: t.cy, t: 240, warn: 240, big: true, sab: 2, tid: t.id });
+      UI.toast(`✹ MÉTÉORE GÉANT de ${who} !`, `Il va pulvériser votre <b style="color:${t.d.color}">${t.d.name}</b> dans 4 s. Vendez-la vite pour sauver des crédits !`, S.c, 5);
+      Render.flash(.3, S.c);
+    } else {
+      const L = T.slice().sort((a, b) => b.dealt - a.dealt);
+      for (let i = 0; i < S.cnt; i++) {
+        const t = L[i];
+        const x = t ? t.cx + rnd(-10, 10) : rnd(.5, M.C - .5) * TILE, y = t ? t.cy + rnd(-10, 10) : rnd(.5, M.R - .5) * TILE;
+        G.meteors.push({ x, y, t: 100 + i * 26, big: i < 2, sab: 1 });
+      }
+      UI.toast(`☄ ${who} vous bombarde !`, 'Une pluie de météores fonce sur vos meilleures tourelles.', S.c, 4);
+    }
+    Sfx.play('alarm', .8);
+  },
+  // un ennemi reçu meurt ou passe : son expéditeur touche une prime selon le temps qu'il a tenu
+  survived(e, leaked) {
+    const sec = (G.tick - e.t0) / 60, v = e.u * (SURV.share * Math.min(1, sec / SURV.full) + (leaked ? SURV.leak : 0));
+    if (v <= 0) return;
+    const A = this.survAcc || (this.survAcc = {});
+    A[e.from] = (A[e.from] || 0) + v;
+  },
+  flushSurv() {
+    const A = this.survAcc; if (!A) return;
+    for (const p in A) { const v = Math.floor(A[p]); if (v > 0) { Net.send({ t: 'surv', to: +p, v }); A[p] -= v; } }
   },
   // un adversaire est éliminé ou parti : dernier debout ?
   checkWin(why) {
@@ -4635,6 +4681,12 @@ const MP = {
     lobby() { MP.toLobby(false); UI.toast('Multijoueur', 'L\'hôte a ramené tout le monde au salon.', '#9fb0cc', 3); },
     st(m) { MP.opps[m.p] = Object.assign(MP.opps[m.p] || {}, m); },
     send(m) { if (m.to === Net.me) MP.incoming(m); },
+    surv(m) {   // primes de survie de nos envois
+      if (m.to !== Net.me || !G || G.over || G.net !== 'versus') return;
+      const v = Math.max(0, Math.round(m.v)); if (!v) return;
+      G.money += v; G.stats.gold += v; G.survGain = (G.survGain || 0) + v;
+      UI.survT = performance.now(); UI.survV = (UI.survV || 0) + v;
+    },
     dead(m) {
       MP.opps[m.p] = Object.assign(MP.opps[m.p] || {}, { lives: 0, wave: m.wave, kills: m.kills, over: true, place: m.place });
       if (G && G.net === 'versus' && !G.over) UI.toast('Élimination', `${MP.esc(MP.name(m.p))} est éliminé à la vague ${m.wave}.`, MP_COL[m.p], 3.5);
@@ -4747,6 +4799,7 @@ const Events = {
       const m = G.meteors[i];
       if (--m.t > 0) { if (m.t === 60) Sfx.play('meteor'); continue; }
       G.meteors.splice(i, 1);
+      if (m.sab) { this.sabHit(m); continue; }
       this.blast(m.x, m.y, m.big ? 95 : 68, (m.big ? 340 : 190) * hm, m.big ? 240 : 150, '#ff8a3d', m.big);
       const tx = Math.floor(m.x / TILE), ty = Math.floor(m.y / TILE), M = G.map, idx = ty * M.C + tx;
       if (tx >= 0 && ty >= 0 && tx < M.C && ty < M.R && M.cells[idx] === 0 && !G.tgrid[idx] && sr() < (m.big ? .6 : .22)) { M.cells[idx] = 2; Render.dirtyMap = true; }
@@ -4780,6 +4833,34 @@ const Events = {
     }
     if (G.rift && --G.rift.t <= 0) G.rift = null;
     for (let i = G.craters.length - 1; i >= 0; i--) if (--G.craters[i].life <= 0) G.craters.splice(i, 1);
+  },
+  // météore de sabotage (versus) : ne touche que les tourelles
+  sabHit(m) {
+    const M = G.map, r = m.big ? 95 : 68, r2 = (r * .75) * (r * .75), stun = m.sab === 2 ? 480 : m.big ? 360 : 240, col = m.sab === 2 ? '#ff2a6d' : '#ff8a3d';
+    let changed = false;
+    for (const t of G.towers.slice()) {
+      const dd = d2(t.cx, t.cy, m.x, m.y);
+      if (m.sab === 2 && t.id === m.tid && dd < 30 * 30) {   // pulvérisée
+        FX.spark(t.cx, t.cy, t.d.color, 40, 6, 50, 3); FX.float(t.cx, t.cy - 22, 'PULVÉRISÉE', col, 16);
+        if (UI.sel === t) UI.deselect();
+        Towers.remove(t); changed = true;
+        M.cells[t.ty * M.C + t.tx] = 2; Render.dirtyMap = true;
+      } else if (dd <= r2) {
+        t.stun = Math.max(t.stun, stun); if (t.d.heat) t.heat = 99;
+        if (m.sab === 1 && m.big && t.level > 1) {
+          t.invested = Math.round(t.invested * (t.level - 1) / t.level); t.level--; changed = true;
+          FX.float(t.cx, t.cy - 22, 'NIV -1', col, 14);
+        } else FX.float(t.cx, t.cy - 18, 'SONNÉE', '#fff35c', 10);
+      }
+    }
+    if (changed) { Towers.recalc(); if (UI.sel) UI.renderPanel(); }
+    const tx = Math.floor(m.x / TILE), ty = Math.floor(m.y / TILE), idx = ty * M.C + tx;
+    if (m.sab === 1 && tx >= 0 && ty >= 0 && tx < M.C && ty < M.R && M.cells[idx] === 0 && !G.tgrid[idx] && Math.random() < .5) { M.cells[idx] = 2; Render.dirtyMap = true; }
+    G.craters.push({ x: m.x, y: m.y, r: m.big ? 52 : 34, life: 1200 });
+    FX.ring(m.x, m.y, col, r * 1.2, 26, 4); FX.ring(m.x, m.y, '#ffffff', r * .6, 16, 2); FX.spark(m.x, m.y, col, m.big ? 40 : 22, m.big ? 6 : 4, 40, 3);
+    if (Render.hq) for (let i = 0; i < 6; i++) FX.smoke(m.x + rnd(-16, 16), m.y + rnd(-16, 16), 70, rnd(6, 10));
+    Render.shake(m.sab === 2 ? 26 : m.big ? 14 : 8); Render.flash(m.sab === 2 ? .55 : m.big ? .25 : .1, col);
+    Sfx.play('boom', m.big ? 1 : .7);
   },
   // impact de zone : blesse les ennemis, sonne et fait chauffer les tourelles proches
   blast(x, y, r, dmg, stun, col, big) {
@@ -5962,12 +6043,19 @@ const Render = {
   drawEventsOver(c, t) {
     // astéroïdes : cible au sol puis rocher en flammes
     for (const m of G.meteors) {
-      if (m.t > 70) continue;
-      const k = m.t / 70, r = m.big ? 95 : 68;
-      c.strokeStyle = rgba('#ff8a3d', .35 + .55 * (1 - k)); c.lineWidth = 2; c.setLineDash([7, 6]); c.lineDashOffset = t * .05;
+      const W = m.warn || 70;
+      if (m.t > W) continue;
+      const k = m.t / W, r = m.big ? 95 : 68, mc = m.sab ? '#ff2a6d' : '#ff8a3d';
+      c.strokeStyle = rgba(mc, .35 + .55 * (1 - k)); c.lineWidth = m.sab === 2 ? 3 : 2; c.setLineDash([7, 6]); c.lineDashOffset = t * .05;
       c.beginPath(); c.arc(m.x, m.y, r * (.6 + .4 * k), 0, TAU); c.stroke(); c.setLineDash([]);
-      c.fillStyle = rgba('#ff8a3d', .08 + .12 * (1 - k)); c.beginPath(); c.arc(m.x, m.y, r * .6, 0, TAU); c.fill();
-      const hx = m.x + 260 * k, hy = m.y - 420 * k, sz = m.big ? 11 : 7;
+      c.fillStyle = rgba(mc, .08 + .12 * (1 - k)); c.beginPath(); c.arc(m.x, m.y, r * .6, 0, TAU); c.fill();
+      if (m.sab === 2) {
+        c.font = '900 22px Bahnschrift,"Segoe UI",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillStyle = 'rgba(0,0,0,.7)'; c.fillText(Math.ceil(m.t / 60), m.x + 1, m.y - 37); c.fillStyle = '#ff2a6d'; c.fillText(Math.ceil(m.t / 60), m.x, m.y - 38);
+        c.strokeStyle = rgba('#ff2a6d', .9); c.lineWidth = 2; c.strokeRect(m.x - 22, m.y - 22, 44, 44);
+      }
+      if (m.t > 70) continue;   // le rocher n'apparaît qu'à la fin de l'avertissement
+      const kk = m.t / 70, hx = m.x + 260 * kk, hy = m.y - 420 * kk, sz = m.sab === 2 ? 18 : m.big ? 11 : 7;
       const g = c.createLinearGradient(hx, hy, hx + 70, hy - 113);
       g.addColorStop(0, 'rgba(255,190,90,.9)'); g.addColorStop(1, 'rgba(255,90,20,0)');
       c.strokeStyle = g; c.lineWidth = sz * 1.6; c.lineCap = 'round';
@@ -6619,12 +6707,19 @@ const UI = {
     if (G.net === 'versus') {
       sepEl();
       for (const k in SENDS) {
-        const S = SENDS[k], key = 'send:' + k, el = document.createElement('div'), col = EDEF(S.type).color;
-        el.className = 'bcard send'; el.style.setProperty('--tc', '#ff2a6d');
-        el.innerHTML = `<span class="hk"></span><span class="tr">×${S.cnt}</span><canvas></canvas><span class="pr"></span>`;
-        Spr.enemyIcon(el.querySelector('canvas'), S.type, 44);
+        const S = SENDS[k], key = 'send:' + k, el = document.createElement('div'), col = S.sab ? S.c : EDEF(S.type).color, st = S.stock || SEND_STOCK;
+        el.className = 'bcard send' + (S.sab ? ' sab' : ''); el.style.setProperty('--tc', S.sab ? S.c : '#ff2a6d');
+        el.innerHTML = `<span class="hk"></span><span class="tr">${S.sab ? 'SABOT.' : '×' + S.cnt}</span><canvas></canvas><span class="pr"></span>`;
+        if (S.sab) {   // icône : rocher en flammes
+          const cv = el.querySelector('canvas'), x = cv.getContext('2d'); cv.width = cv.height = 88;
+          const g = x.createRadialGradient(44, 44, 4, 44, 44, 40); g.addColorStop(0, rgba(S.c, .55)); g.addColorStop(1, rgba(S.c, 0));
+          x.fillStyle = g; x.fillRect(0, 0, 88, 88);
+          x.font = `900 ${S.sab === 2 ? 54 : 46}px "Segoe UI Symbol",sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+          x.shadowColor = S.c; x.shadowBlur = 14; x.fillStyle = '#fff2c4'; x.fillText(S.i, 44, 48);
+        } else Spr.enemyIcon(el.querySelector('canvas'), S.type, 44);
         el.onclick = () => MP.sendPack(k);
-        el.onpointerenter = e => { if (e.pointerType !== 'touch') this.showTipAt(`<h4>ENVOI · ${S.n.toUpperCase()}</h4><div class="d">${S.cnt} × <b style="color:${col}">${EDEF(S.type).name}</b> apparaissent chez l'adversaire, à la puissance de votre vague actuelle.</div><div class="d" style="margin-top:4px;color:var(--gold)">Revenu +${S.inc}¢ à chaque vague repoussée.</div><div class="d" style="margin-top:4px">${SEND_STOCK} envois par vague${S.from > 1 ? ` · dès la vague ${S.from}` : ''}.</div>`, el.getBoundingClientRect(), '#ff2a6d'); };
+        const what = S.sab ? `<div class="d">${S.d}</div>` : `<div class="d">${S.cnt} × <b style="color:${col}">${EDEF(S.type).name}</b> apparaissent chez l'adversaire, à la puissance de votre vague actuelle. Chacun vous rapporte jusqu'à <b>60 %</b> de son prix s'il survit 20 s, et <b>+50 %</b> s'il atteint le noyau.</div>`;
+        el.onpointerenter = e => { if (e.pointerType !== 'touch') this.showTipAt(`<h4>${S.sab ? 'SABOTAGE' : 'ENVOI'} · ${S.n.toUpperCase()}</h4>${what}<div class="d" style="margin-top:4px;color:var(--gold)">Revenu +${S.inc}¢ à chaque vague repoussée.</div><div class="d" style="margin-top:4px">${st} envoi${st > 1 ? 's' : ''} par vague${S.from > 1 ? ` · dès la vague ${S.from}` : ''}.</div>`, el.getBoundingClientRect(), col); };
         el.onpointerleave = () => this.hideTip();
         bar.appendChild(el);
         this.cards[key] = { el, pr: el.querySelector('.pr'), hk: el.querySelector('.hk'), cost: -1, off: null, send: k };
@@ -6637,7 +6732,7 @@ const UI = {
     for (const k in this.cards) {
       const c = this.cards[k], cost = c.send ? MP.sendCost(c.send) : c.trap ? Traps.cost(c.trap) : Towers.costOf(k);
       if (c.cost !== cost) { c.cost = cost; c.pr.textContent = cost; }
-      if (c.send) { const st = G.sendStock[c.send] == null ? SEND_STOCK : G.sendStock[c.send]; if (c.hk.textContent !== String(st)) c.hk.textContent = SENDS[c.send].from > Math.max(1, G.waveNum) ? 'V' + SENDS[c.send].from : st; }
+      if (c.send) { const st = MP.stock(c.send); if (c.hk.textContent !== String(st)) c.hk.textContent = SENDS[c.send].from > Math.max(1, G.waveNum) ? 'V' + SENDS[c.send].from : st; }
       const off = G.money < cost || (!!c.send && !MP.canSend(c.send));   // toujours un booléen : toggle(x, undefined) inverserait la classe
       if (off !== c.off) { c.off = off; c.el.classList.toggle('off', off); }
       c.el.classList.toggle('sel', this.placing === k);
@@ -7407,6 +7502,7 @@ const UI = {
           <div class="mp-bar"><s style="width:${(pc * 100).toFixed(1)}%"></s></div></div>`;
       }
       h += `<div class="mp-row"><span>Votre revenu</span><b style="color:var(--gold)">+${G.income || 0}¢</b><span>Envoyés</span><b>${G.sentTotal || 0}</b></div>
+        <div class="mp-row"><span>Primes de survie</span><b style="color:var(--gold)">${fmt(G.survGain || 0)}¢</b>${this.survV && performance.now() - this.survT < 2500 ? `<span></span><b style="color:#39ff88">+${fmt(this.survV)}¢</b>` : ''}</div>
         <button class="btn danger" id="mp-sendgo" style="width:100%;margin-top:5px;padding:5px">ENVOYER DES ENNEMIS ▸</button>`;
     } else if (G.wallets) {
       for (const p of MP.others()) {
@@ -7415,6 +7511,7 @@ const UI = {
       }
       if (Net.coop) h += `<div class="mp-row"><span>Protocole</span><b style="color:${MP_COL[Cards.turn()]}">${esc(MP.name(Cards.turn()))}</b></div>`;
     }
+    if (this.survV && performance.now() - this.survT >= 2500) this.survV = 0;
     $('mp-info').innerHTML = h;
     $('mp-info').querySelectorAll('.mp-op[data-p]').forEach(r => r.onclick = () => MP.setTarget(+r.dataset.p));
     const sg = $('mp-sendgo');
@@ -7443,7 +7540,7 @@ const UI = {
     }
     $('mpend-body').innerHTML = `<h2 style="color:${col};text-shadow:0 0 18px ${col}">${title}</h2><div class="sub">${sub}</div>${rank}
       <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
-      ${G.net === 'versus' ? `<div>Ennemis envoyés <b>${G.sentTotal || 0}</b></div><div>Ennemis reçus <b>${G.recvTotal || 0}</b></div>` : `<div>Tourelles <b>${G.towers.length}</b></div><div>Boss vaincus <b>${s.bosses}</b></div>`}</div>
+      ${G.net === 'versus' ? `<div>Ennemis envoyés <b>${G.sentTotal || 0}</b></div><div>Ennemis reçus <b>${G.recvTotal || 0}</b></div><div>Primes de survie <b>${fmt(G.survGain || 0)}¢</b></div><div>Revenu final <b>+${G.income || 0}¢</b></div>` : `<div>Tourelles <b>${G.towers.length}</b></div><div>Boss vaincus <b>${s.bosses}</b></div>`}</div>
       <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span></div>
       <div class="gocode"><span>CODE DE CARTE</span><input id="mpe-code" readonly value="${Hist.code()}" aria-label="Code de carte"><button class="btn" id="mpe-cc">COPIER</button></div>
       <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="mpe-quit">QUITTER</button>${host && over ? '<button class="btn" id="mpe-lobby">SALON</button>' : ''}<button class="btn" id="mpe-stats">STATS</button>
@@ -7729,7 +7826,7 @@ const UI = {
       <h3>MULTIJOUEUR</h3><ul>
         <li><b>Menu → Multijoueur</b> : de 2 à 4 joueurs. L'hôte crée un salon, avec un code au hasard (NEON-XXXX) ou <b>un code de son choix</b>, et le donne aux autres. Dans le salon, l'hôte peut <b>exclure</b> un joueur (✕). Sans internet, la <b>connexion manuelle</b> échange deux codes par copier-coller (une invitation par joueur).</li>
         <li><b>Versus à plusieurs</b> : cliquez sur un adversaire dans le panneau de gauche pour en faire la <b>cible</b> de vos envois. Le dernier debout gagne ; le classement s'affiche en fin de partie.</li>
-        <li><b style="color:#ff2a6d">Versus</b> : même carte et mêmes vagues, chacun chez soi. La barre du bas propose des <b>envois</b> d'ennemis chez l'adversaire : ils coûtent des crédits mais augmentent votre <b>revenu par vague</b>. Vitesse 1x, vagues automatiques avec 10 s de préparation. Plus dur qu'en solo : ennemis +30 % de PV et plus d'élites, intégrité -30 %, crédits de départ -15 %, et dès la vague 13 une <b>escalade</b> de +5 % de PV par vague. Le dernier debout gagne.</li>
+        <li><b style="color:#ff2a6d">Versus</b> : même carte et mêmes vagues, chacun chez soi. La barre du bas propose des <b>envois</b> d'ennemis chez l'adversaire : ils coûtent des crédits mais augmentent votre <b>revenu par vague</b>, et chaque ennemi envoyé vous rapporte une <b>prime de survie</b> (jusqu'à 60 % de son prix s'il tient 20 s, +50 % s'il atteint le noyau adverse). Et deux <b style="color:#ff8a3d">sabotages</b>, une fois par vague : la <b>pluie de météores</b> (dès la vague 4) sonne ses meilleures tourelles et en rétrograde deux d'un niveau ; le <b>météore géant</b> (dès la vague 10) pulvérise sa tourelle la plus chère, sauf s'il la vend dans les 4 s. Vitesse 1x, vagues automatiques avec 10 s de préparation. Plus dur qu'en solo : ennemis +30 % de PV et plus d'élites, intégrité -30 %, crédits de départ -15 %, et dès la vague 13 une <b>escalade</b> de +5 % de PV par vague. Le dernier debout gagne.</li>
         <li><b style="color:#39ff88">Coopération</b> : une seule carte, une intégrité commune, mais chacun ses crédits (60 % des primes chacun). Nanites, compétences, plans et capacités sont partagés ; les protocoles se choisissent à tour de rôle. Seul le constructeur d'une tourelle peut la vendre. Le curseur de votre partenaire est visible sur la carte.</li>
         <li>En multijoueur, les menus ne mettent pas la partie en pause.</li></ul>
       <h3>CASINO NÉON</h3><ul>
