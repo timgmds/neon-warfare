@@ -26,7 +26,7 @@ manuelle** échange deux codes par copier-coller, sans aucun serveur (une invita
 
 | Mode | Principe |
 |---|---|
-| **Versus** | même carte et mêmes vagues, chacun chez soi. Envoyez des paquets d'ennemis chez l'adversaire **ciblé** (cliquez sur un nom dans le panneau de gauche) : ils coûtent des crédits mais augmentent votre **revenu par vague**. Le dernier debout gagne ; classement affiché en fin de partie. |
+| **Versus** | même carte et mêmes vagues, chacun chez soi. Envoyez des paquets d'ennemis chez l'adversaire **ciblé** (cliquez sur un nom dans le panneau de gauche) : ils coûtent des crédits mais augmentent votre **revenu par vague**. Le dernier debout gagne ; classement affiché en fin de partie. Plus dur qu'en solo : ennemis +30 % de PV, plus d'élites, intégrité -30 %, crédits de départ -15 %, 10 s de préparation, et **escalade** de +5 % de PV par vague dès la vague 13. |
 | **Coopération** | une seule carte, une intégrité commune, **chacun ses crédits** ; nanites, compétences, plans et capacités partagés, protocoles à tour de rôle. Ennemis plus résistants selon le nombre de joueurs. Toutes les machines calculent la même partie en *lockstep* (l'hôte fixe l'ordre des actions de chacun) et se resynchronisent toutes seules en cas d'écart ; un joueur qui part laisse ses tourelles. |
 
 Tous les joueurs doivent avoir la même version du fichier. Le multijoueur ne fonctionne pas dans un
@@ -113,6 +113,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.3** : versus nettement plus dur (ennemis renforcés, escalade dès la vague 13, préparation courte, envois plus costauds).
 - **v9.2** : multijoueur jusqu'à 4 joueurs (versus en mêlée avec ciblage et classement, coopération à 4),
   code de salon personnalisé, exclusion de joueurs par l'hôte, invitations manuelles multiples.
 - **v9.1** : méga-boss Léviathan (vague 50) et Oméga (vague 100), 26 nouveaux protocoles dont les légendaires,

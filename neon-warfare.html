@@ -795,7 +795,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.2';
+const VERSION = '9.3';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -2471,6 +2471,8 @@ const Status = {
 /* crédits : un seul portefeuille en solo ; en coopération chaque joueur a le sien (G.wallets).
    gain(v, p) : p = joueur bénéficiaire ; null = revenu commun, partagé entre les joueurs. */
 const COOP = { share: .6, hp: 1.75, start: .75 };
+/* versus : plus brutal qu'en solo, et une escalade (+5 % de PV par vague après la 12) pour que la partie finisse toujours par trancher */
+const VERSUS = { hp: 1.3, esc: 1.05, escFrom: 12, lives: .7, money: .85, elite: 1.5, sendHp: 1.1, prep: 600, first: 1200 };
 function gain(v, p = G.actor) {
   if (G.wallets && p == null && !Net.coop) p = Net.me;   // partenaire parti : tout revient au joueur restant
   if (G.wallets) {
@@ -3329,7 +3331,7 @@ const Waves = {
   // croissance polynomiale douce, puis exponentielle au-delà de la vague 40 (l'infini doit finir par céder)
   hpMul(n) {
     const k = n - 1, fork = G.map.P && G.map.P.length > 1 ? .9 : 1;   // deux chemins à couvrir : ennemis un peu moins robustes
-    return (1 + .25 * k + .022 * k * k) * Math.pow(1.05, k) * Math.pow(1.075, Math.max(0, k - 22)) * Math.pow(1.03, Math.max(0, k - 45)) * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp * (G.np || 2) / 2 : 1);
+    return (1 + .25 * k + .022 * k * k) * Math.pow(1.05, k) * Math.pow(1.075, Math.max(0, k - 22)) * Math.pow(1.03, Math.max(0, k - 45)) * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp * (G.np || 2) / 2 : G.net === 'versus' ? VERSUS.hp * Math.pow(VERSUS.esc, Math.max(0, n - VERSUS.escFrom)) : 1);
   },
   // hasard reproductible : une carte donnée produit toujours les mêmes vagues (aperçu fiable, Défi du jour équitable)
   rng(n, salt = 0) { return mulberry32((G.seed ^ Math.imul(n + 1, 2654435761) ^ salt) >>> 0); },
@@ -3373,7 +3375,7 @@ const Waves = {
     const w = { n, left: 0, leaks: 0, hpMul: hpm, t0: G.tick };
     G.waves[n] = w;
     const base = G.tick + 40, gap = Math.max(11, 30 - n * .35) * P.gapMul, R = this.rng(n, 0x5eed);
-    const eliteP = n >= (G.mut.elite > 1 ? 4 : 6) ? Math.min(.3, .05 + n * .004) * G.mut.elite : 0;
+    const eliteP = n >= (G.mut.elite > 1 ? 4 : 6) ? Math.min(.3, .05 + n * .004) * G.mut.elite * (G.net === 'versus' ? VERSUS.elite : 1) : 0;
     let t = base, pi = 0;
     const nP = G.map.P.length;
     for (let i = 0; i < P.list.length; i++) {
@@ -3402,6 +3404,7 @@ const Waves = {
       UI.banner(`VAGUE ${n}`, P.name.toUpperCase(), null);
       Sfx.play('wave');
     }
+    if (G.net === 'versus' && n === VERSUS.escFrom + 1 && !G.demo) UI.toast('ESCALADE', 'À partir de maintenant, les ennemis gagnent <b>+5 % de PV à chaque vague</b>. Tenez plus longtemps que les autres !', '#ff2a6d', 6);
     G.preview = this.plan(n + 1);
     Events.onLaunch(n);
     UI.onPreview();
@@ -3457,7 +3460,7 @@ const Waves = {
     if (w.n % 2 === 0) Cards.offer();   // un protocole toutes les 2 vagues : des choix qui pèsent, sans inflation
     while (G.cx.bc > 0) { G.cx.bc--; Cards.offer(); }   // Pacte des titans
     if (Object.keys(G.waves).length === 0 && G.spawnQ.length === 0) {
-      G.phase = 'prep'; G.autoT = G.net === 'versus' ? 900 : 480; Music.intensity = 0;
+      G.phase = 'prep'; G.autoT = G.net === 'versus' ? VERSUS.prep : 480; Music.intensity = 0;
       if (G.net === 'versus') UI.buildBar();
       SaveSys.save();
     }
@@ -4455,7 +4458,7 @@ const MP = {
     G.money -= c; G.income += S.inc;
     G.sendStock[k] = (G.sendStock[k] == null ? SEND_STOCK : G.sendStock[k]) - 1;
     G.sentTotal = (G.sentTotal || 0) + S.cnt;
-    Net.send({ t: 'send', k, to, hp: Waves.hpMul(Math.max(1, G.waveNum)) * .85 });
+    Net.send({ t: 'send', k, to, hp: Waves.hpMul(Math.max(1, G.waveNum)) * VERSUS.sendHp });
     UI.toast('Envoi : ' + S.n, `${S.cnt} × ${EDEF(S.type).name} vers <b style="color:${MP_COL[to]}">${this.esc(this.name(to))}</b> · revenu <b>+${S.inc}¢</b> par vague (total ${G.income}¢)`, '#ff2a6d', 2.5);
     Sfx.play('missile'); UI.buildBar(); UI.refreshHUD();
   },
@@ -5060,7 +5063,10 @@ const Game = {
         get() { return this.wallets[this.actor != null ? this.actor : Net.me]; },
         set(v) { this.wallets[this.actor != null ? this.actor : Net.me] = v; }, enumerable: true, configurable: true
       });
-    } else if (G.net === 'versus') { G.income = 0; G.sendStock = {}; G.autoWave = true; G.autoT = 1500; }
+    } else if (G.net === 'versus') {
+      G.income = 0; G.sendStock = {}; G.autoWave = true; G.autoT = VERSUS.first;
+      G.money = Math.round(G.money * VERSUS.money); G.maxLives = G.lives = Math.max(5, Math.round(G.lives * VERSUS.lives));
+    }
     Skills.apply();
     G.preview = Waves.plan(1);
     Missions.fill();
@@ -6920,7 +6926,7 @@ const UI = {
       const go = () => { this.closeAll(); Game.newGame('standard', { daily: true }); };
       if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par le Défi du jour.', go); else go();
     }]);
-    list.push([`MULTIJOUEUR<small>versus ou coopération, à deux</small>`, 'nano', () => this.openMP()]);
+    list.push([`MULTIJOUEUR<small>versus ou coopération, de 2 à 4</small>`, 'nano', () => this.openMP()]);
     list.push([`HÉRITAGE<small>${Store.data.meta.frags} fragments</small>`, 'gold', () => this.openMeta()]);
     list.push([`PALMARÈS<small>${Object.keys(Store.data.ach).filter(k => ACH[k]).length} / ${Object.keys(ACH).length} succès · historique</small>`, '', () => this.openAch()]);
     const cx = Codex.progress();
@@ -7273,7 +7279,7 @@ const UI = {
       B.innerHTML = `${code}<div class="lbl-s" style="margin:4px 0 6px">JOUEURS · ${n} / ${NET_MAX}</div><div class="mp-pls">${ids.map(row).join('')}${free}</div>
         <div class="lbl-s" style="margin:12px 0 6px">MODE ${host ? '' : '<span style="opacity:.6">(choisi par l\'hôte)</span>'}</div>
         <div class="mp-modes">
-          <button class="mp-mode${MP.mode === 'versus' ? ' on' : ''}" data-m="versus" style="--mc:#ff2a6d"><b>VERSUS</b><span>Chacun sa carte, mêmes vagues. Envoyez des ennemis chez l'adversaire pour augmenter votre revenu. Le dernier debout gagne.</span></button>
+          <button class="mp-mode${MP.mode === 'versus' ? ' on' : ''}" data-m="versus" style="--mc:#ff2a6d"><b>VERSUS</b><span>Chacun sa carte, mêmes vagues, sans pitié : ennemis renforcés, préparation courte, puis escalade dès la vague 13. Envoyez des ennemis chez l'adversaire pour augmenter votre revenu. Le dernier debout gagne.</span></button>
           <button class="mp-mode${MP.mode === 'coop' ? ' on' : ''}" data-m="coop" style="--mc:#39ff88"><b>COOPÉRATION</b><span>Une carte partagée, intégrité commune, chacun ses crédits. Ennemis plus résistants : il faut s'organiser.</span></button>
         </div>
         <div class="lbl-s" style="margin:12px 0 6px">MENACE</div>
@@ -7723,7 +7729,7 @@ const UI = {
       <h3>MULTIJOUEUR</h3><ul>
         <li><b>Menu → Multijoueur</b> : de 2 à 4 joueurs. L'hôte crée un salon, avec un code au hasard (NEON-XXXX) ou <b>un code de son choix</b>, et le donne aux autres. Dans le salon, l'hôte peut <b>exclure</b> un joueur (✕). Sans internet, la <b>connexion manuelle</b> échange deux codes par copier-coller (une invitation par joueur).</li>
         <li><b>Versus à plusieurs</b> : cliquez sur un adversaire dans le panneau de gauche pour en faire la <b>cible</b> de vos envois. Le dernier debout gagne ; le classement s'affiche en fin de partie.</li>
-        <li><b style="color:#ff2a6d">Versus</b> : même carte et mêmes vagues, chacun chez soi. La barre du bas propose des <b>envois</b> d'ennemis chez l'adversaire : ils coûtent des crédits mais augmentent votre <b>revenu par vague</b>. Vitesse 1x, vagues automatiques. Le dernier debout gagne.</li>
+        <li><b style="color:#ff2a6d">Versus</b> : même carte et mêmes vagues, chacun chez soi. La barre du bas propose des <b>envois</b> d'ennemis chez l'adversaire : ils coûtent des crédits mais augmentent votre <b>revenu par vague</b>. Vitesse 1x, vagues automatiques avec 10 s de préparation. Plus dur qu'en solo : ennemis +30 % de PV et plus d'élites, intégrité -30 %, crédits de départ -15 %, et dès la vague 13 une <b>escalade</b> de +5 % de PV par vague. Le dernier debout gagne.</li>
         <li><b style="color:#39ff88">Coopération</b> : une seule carte, une intégrité commune, mais chacun ses crédits (60 % des primes chacun). Nanites, compétences, plans et capacités sont partagés ; les protocoles se choisissent à tour de rôle. Seul le constructeur d'une tourelle peut la vendre. Le curseur de votre partenaire est visible sur la carte.</li>
         <li>En multijoueur, les menus ne mettent pas la partie en pause.</li></ul>
       <h3>CASINO NÉON</h3><ul>
