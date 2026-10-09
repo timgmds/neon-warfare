@@ -69,6 +69,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | `Q` `W` `E` (`A` `Z` `E` en AZERTY) | Capacités |
 | `U` / `X` | Améliorer / vendre la tourelle sélectionnée |
 | `T` / `O` | Changer le ciblage / surcadence |
+| `D` | Débrouiller contre crédits la tourelle sélectionnée, ou toutes les tourelles brouillées |
 | `R` | Recycler le débris sélectionné |
 | `F` / `P` | Vitesse (1×, 2×, 3×) / pause |
 | `K` / `L` / `G` / `C` / `H` | Arbre / Labo de fusion / Analyse de combat / Casino / Manuel |
@@ -115,6 +116,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.6** : tourelles brouillées (IEM, météores, sabotages) débrouillables contre crédits (panneau, bouton flottant, touche `D`) ; un soutien brouillé suspend son bonus puis repart (il restait bloqué).
 - **v9.5** : multijoueur fiabilisé, mise en relation par quatre serveurs en parallèle (PeerJS + MQTT), messages d'erreur précis.
 - **v9.4** : sabotages par météores en versus, primes de survie des ennemis envoyés.
 - **v9.3** : versus nettement plus dur (ennemis renforcés, escalade dès la vague 13, préparation courte, envois plus costauds).
