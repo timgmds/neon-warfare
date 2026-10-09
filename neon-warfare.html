@@ -400,6 +400,8 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .mp-lcode span{font-size:10px;letter-spacing:.3em;color:var(--dim);font-weight:700}
 .mp-lcode b{font:900 20px var(--mono);letter-spacing:.1em;color:var(--gold);text-shadow:0 0 12px rgba(255,210,63,.5);overflow-wrap:anywhere;min-width:0}
 .mp-lcode .btn{padding:5px 10px;font-size:11px}
+.mp-sig{flex:1 1 100%;font-size:10px;color:var(--ok);letter-spacing:.04em}
+.mp-sig.err{color:var(--dang)}
 .mp-rank{display:flex;flex-direction:column;gap:5px;margin:12px auto 4px;max-width:360px;text-align:left}
 .mp-rank div{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px}
 .mp-rank em{font-style:normal;font:700 13px var(--mono);color:var(--gold);width:30px}
@@ -797,7 +799,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.4';
+const VERSION = '9.5';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -3945,18 +3947,50 @@ const Codex = {
 /* ============================== RÉSEAU ==============================
    Pair-à-pair WebRTC, jusqu'à 4 joueurs en étoile : chaque invité est relié à l'hôte, qui relaie les messages.
    Pour se trouver, deux possibilités :
-   - code de salon (NEON-ABCD, ou un code choisi par l'hôte) : le serveur public de PeerJS ne relaie que la
-     poignée de main, ensuite tout passe en direct entre les navigateurs ;
+   - code de salon (NEON-ABCD, ou un code choisi par l'hôte) : quatre serveurs publics gratuits (PeerJS et trois
+     serveurs MQTT) relaient la poignée de main en parallèle, ensuite tout passe en direct entre les navigateurs ;
    - connexion manuelle : offre et réponse échangées par copier-coller, sans aucun service extérieur
      (fonctionne en réseau local sans internet), une invitation par joueur. */
 const NET_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }, { urls: 'stun:global.stun.twilio.com:3478' }];
 const NET_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const NET_PREFIX = 'neonwarfare9x';
+// serveurs MQTT publics (WebSocket) utilisés en plus de PeerJS pour la mise en relation
+const NET_MQTT = [
+  { n: 'Mosquitto', url: 'wss://test.mosquitto.org:8081/mqtt' },
+  { n: 'Shiftr', url: 'wss://public.cloud.shiftr.io/mqtt', user: 'public', pass: 'public' },
+  { n: 'EMQX', url: 'wss://broker.emqx.io:8084/mqtt' }
+];
+const NET_TOPIC = 'neonwarfare/v9/';
+// mini-client MQTT 3.1.1 : connexion, abonnement et publication en QoS 0, rien de plus
+const Mqtt = {
+  enc: new TextEncoder(), dec: new TextDecoder(),
+  vint(n) { const o = []; do { let b = n % 128; n = Math.floor(n / 128); if (n) b |= 128; o.push(b); } while (n); return o; },
+  str(s) { const b = this.enc.encode(s); return [b.length >> 8, b.length & 255, ...b]; },
+  pkt(h, body) { return new Uint8Array([h, ...this.vint(body.length), ...body]); },
+  connect(id, user, pass) { return this.pkt(0x10, [...this.str('MQTT'), 4, 0x02 | (user ? 0x80 : 0) | (pass ? 0x40 : 0), 0, 60, ...this.str(id), ...(user ? this.str(user) : []), ...(pass ? this.str(pass) : [])]); },
+  sub(topics) { return this.pkt(0x82, [0, 1, ...topics.flatMap(t => [...this.str(t), 0])]); },
+  pub(topic, txt) { return this.pkt(0x30, [...this.str(topic), ...this.enc.encode(txt)]); },
+  unpub(b) { const n = (b[0] << 8) | b[1]; return [this.dec.decode(b.subarray(2, 2 + n)), this.dec.decode(b.subarray(2 + n))]; },
+  // découpe le flux reçu en paquets complets (un paquet peut arriver en plusieurs morceaux)
+  read(ch, chunk) {
+    let b = new Uint8Array(ch.buf.length + chunk.length); b.set(ch.buf); b.set(chunk, ch.buf.length);
+    const out = [];
+    while (b.length >= 2) {
+      let rem = 0, mul = 1, i = 1, ok = false;
+      for (; i < 5 && i < b.length; i++) { rem += (b[i] & 127) * mul; mul *= 128; if (!(b[i] & 128)) { ok = true; break; } }
+      if (!ok || b.length < i + 1 + rem) break;
+      out.push([b[0] >> 4, b.subarray(i + 1, i + 1 + rem)]);
+      b = b.subarray(i + 1 + rem);
+    }
+    ch.buf = b;
+    return out;
+  }
+};
 const NET_MAX = 4;   // joueurs par salon, hôte compris
 // messages qu'un invité adresse à tous : l'hôte les fait suivre aux autres invités
 const NET_RELAY = new Set(['chat', 'emote', 'st', 'send', 'dead', 'cur', 'surv']);
 const Net = {
-  on: false, coop: false, versus: false, me: 0, role: null, ws: null, code: '', custom: false,
+  on: false, coop: false, versus: false, me: 0, role: null, chans: [], gid: '', sess: '', gotAnswer: false, code: '', custom: false,
   status: '', err: false, ping: 0, timers: [], links: [],
   // un lien = une connexion WebRTC ; p = numéro du joueur à l'autre bout (côté hôte), 0 = l'hôte (côté invité)
   get connected() { return this.links.some(l => l.open); },
@@ -3967,45 +4001,129 @@ const Net = {
   later(fn, ms, every) { const id = every ? setInterval(fn, ms) : setTimeout(fn, ms); this.timers.push([id, every]); return id; },
   cleanCode(c) { return String(c || '').toUpperCase().replace(/^\s*NEON-?/, '').replace(/[^A-Z0-9]/g, ''); },
 
-  /* ----- signalisation via le serveur PeerJS (protocole JSON : OPEN, OFFER, ANSWER, CANDIDATE…) ----- */
-  wsOpen(id, onOpen) {
-    let ws;
-    try { ws = new WebSocket(`wss://0.peerjs.com/peerjs?key=peerjs&id=${encodeURIComponent(id)}&token=${Math.random().toString(36).slice(2)}&version=1.5.4`); }
-    catch (e) { this.setStatus('Serveur de mise en relation injoignable — utilisez la connexion manuelle.', true); return; }
-    this.ws = ws;
-    ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } this.onSignal(m, onOpen); };
-    ws.onerror = () => { if (!this.connected && !this.on) this.setStatus('Serveur de mise en relation injoignable — utilisez la connexion manuelle.', true); };
-    // l'hôte garde son salon joignable : si le serveur coupe, il se réenregistre avec le même code
-    ws.onclose = () => { if (this.ws === ws) { this.ws = null; if (this.role === 'host' && this.on && this.code) this.later(() => this.reopen(), 2500); } };
-    const hb = this.later(() => { if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'HEARTBEAT' })); else if (ws.readyState === 3) clearInterval(hb); }, 5000, true);
+  /* ----- mise en relation : 4 serveurs publics en parallèle (PeerJS + 3 serveurs MQTT), le premier qui répond suffit.
+     Ils ne transportent que l'offre et la réponse WebRTC (descriptions complètes, sans candidats séparés) ;
+     ensuite tout passe en direct entre les navigateurs. Si un réseau bloque l'un d'eux, les autres prennent le relais. ----- */
+  sigOpen() {
+    this.sigClose();
+    this.gid = this.gid || Math.random().toString(36).slice(2, 12);
+    this.chans = [this.chanPeer()].concat(NET_MQTT.map(c => this.chanMqtt(c)));
+    let n = 0;
+    this.later(() => { n++; for (const c of this.chans) if (c.n === 'PeerJS' || n % 6 === 0) c.ping(); }, 5000, true);
+    this.later(() => this.sigCheck(), 8000);
   },
-  reopen() { if (this.role === 'host' && this.on && this.code && !this.ws) this.wsOpen(NET_PREFIX + this.code, () => {}); },
-  // le serveur public n'accepte que des messages au format exact de la bibliothèque PeerJS
-  sig(type, dst, L, payload) {
-    if (!this.ws || this.ws.readyState !== 1) return;
-    payload = Object.assign(payload, { type: 'data', connectionId: L.cid });
-    if (type === 'OFFER') Object.assign(payload, { label: L.cid, reliable: true, serialization: 'binary' });
-    this.ws.send(JSON.stringify({ type, payload, dst }));
+  sigClose() { for (const c of this.chans) c.close(); this.chans = []; },
+  sigUp() { return this.chans.filter(c => c.up).length; },
+  sigSend(to, m) { for (const c of this.chans) if (c.up) c.send(to, m); },
+  // aucun serveur joignable au bout de quelques secondes : on le dit clairement
+  sigCheck() {
+    if (this.sigUp() || this.connected) return;
+    if (this.role === 'host' && !this.on) { UI.mpState = 'home'; this.setStatus('Aucun serveur de mise en relation n\'est joignable depuis ce réseau (pare-feu, bloqueur de publicités, réseau filtré ?). Essayez un autre réseau ou la connexion manuelle.', true); }
+    else if (this.role === 'guest') this.setStatus('Aucun serveur de mise en relation n\'est joignable depuis ce réseau (pare-feu, bloqueur de publicités, réseau filtré ?). Essayez un autre réseau ou la connexion manuelle.', true);
   },
-  onSignal(m, onOpen) {
-    const p = m.payload, L = p && this.links.find(l => l.cid === p.connectionId && (this.role === 'guest' || l.src === m.src));
-    switch (m.type) {
-      case 'OPEN': if (onOpen) onOpen(); break;
-      case 'ID-TAKEN':
-        if (this.role !== 'host') { this.setStatus('Identifiant indisponible, réessayez.', true); break; }
-        if (this.on) { const w = this.ws; this.ws = null; if (w) { w.onclose = null; try { w.close(); } catch (e) { /* ignore */ } } this.later(() => this.reopen(), 4000); break; }   // l'ancienne inscription n'est pas encore expirée
-        if (this.custom) { const c = this.code; this.reset(); UI.mpState = 'home'; this.setStatus(`Le code NEON-${c} est déjà utilisé : choisissez-en un autre.`, true); }
-        else { this.closeWs(); this.host(); }
-        break;
-      case 'ERROR': this.setStatus('Serveur : ' + ((p && p.msg) || 'erreur inconnue') + '. Essayez la connexion manuelle.', true); break;
-      case 'EXPIRE': if (this.role === 'guest' && !this.connected) this.setStatus('Salon introuvable : vérifiez le code (l\'hôte doit garder la fenêtre ouverte).', true); break;
-      case 'OFFER': if (this.role === 'host' && p) this.acceptOffer(m.src, p); break;
-      case 'ANSWER': if (L && L.pc && p.sdp) L.pc.setRemoteDescription(p.sdp).then(() => this.flushCand(L)).catch(() => this.setStatus('Négociation impossible.', true)); break;
-      case 'CANDIDATE': if (L && p.candidate) this.addCand(L, p.candidate); break;
+  chanUp(ch) {
+    ch.fails = 0;
+    if (this.role === 'host') { if (!this.on) { this.setStatus(''); this.startSession(); } else if (UI.top() === 'ov-mp' && UI.mpState === 'lobby') UI.renderMP(); }
+    else if (this.role === 'guest' && !this.connected) {
+      const L = this.links[0];
+      if (!L) this.attempt(1);
+      else if (L.offer) ch.send('h', { type: 'OFFER', cid: L.cid, sdp: L.offer });   // serveur arrivé après l'envoi de l'offre
     }
   },
+  // un serveur a coupé : nouvel essai tant qu'on en a besoin (de plus en plus espacé)
+  chanDown(ch) {
+    if (ch.dead) return;
+    if (!(this.role === 'host' || (this.role === 'guest' && !this.connected))) return;
+    ch.fails = (ch.fails || 0) + 1;
+    this.later(() => { if (!ch.dead && !ch.ws) ch.open(); }, Math.min(15000, 2000 * ch.fails));
+    if (this.role === 'host' && UI.top() === 'ov-mp' && UI.mpState === 'lobby') UI.renderMP();
+  },
+  // un autre salon utilise déjà ce code
+  taken() {
+    if (this.role !== 'host' || MP.count() > 1) return;   // des invités sont déjà là : on garde le salon
+    if (this.custom) { const c = this.code; this.reset(); UI.mpState = 'home'; this.setStatus(`Le code NEON-${c} est déjà utilisé : choisissez-en un autre.`, true); }
+    else { UI.mpState = 'host'; this.host(); }
+  },
+  onSig(m, from) {
+    if (!m || !m.cid || !m.sdp) return;
+    if (this.role === 'host' && m.type === 'OFFER' && from) this.acceptOffer(from, m.cid, m.sdp);
+    else if (this.role === 'guest' && m.type === 'ANSWER') {
+      const L = this.links.find(l => l.cid === m.cid);
+      if (!L || !L.pc || L.hasRemote) return;   // même réponse reçue par plusieurs serveurs
+      L.hasRemote = true; this.gotAnswer = true;
+      L.pc.setRemoteDescription(m.sdp).catch(() => { L.hasRemote = false; });
+    }
+  },
+  // serveur PeerJS : il n'accepte que des messages au format exact de la bibliothèque PeerJS
+  chanPeer() {
+    const ch = { n: 'PeerJS', up: false, ws: null, dead: false, was: false };
+    ch.open = () => {
+      const id = this.role === 'host' ? NET_PREFIX + this.code : 'nwc' + this.gid;
+      let ws;
+      try { ws = new WebSocket(`wss://0.peerjs.com/peerjs?key=peerjs&id=${encodeURIComponent(id)}&token=${Math.random().toString(36).slice(2)}&version=1.5.4`); }
+      catch (e) { this.chanDown(ch); return; }
+      ch.ws = ws;
+      ws.onmessage = ev => {
+        let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+        const p = m.payload;
+        if (m.type === 'OPEN') { ch.up = true; ch.was = true; this.chanUp(ch); }
+        else if (m.type === 'ID-TAKEN') { if (this.role === 'host' && !ch.was) this.taken(); else try { ws.close(); } catch (e) { /* ignore */ } }   // ancienne inscription pas encore expirée : on réessaiera
+        else if (m.type === 'OFFER' && p) this.onSig({ type: 'OFFER', cid: p.connectionId, sdp: p.sdp }, String(m.src || '').replace(/^nwc/, ''));
+        else if (m.type === 'ANSWER' && p) this.onSig({ type: 'ANSWER', cid: p.connectionId, sdp: p.sdp }, 'h');
+      };
+      ws.onclose = () => { if (ch.ws !== ws) return; ch.ws = null; ch.up = false; this.chanDown(ch); };
+    };
+    ch.send = (to, m) => {
+      if (!ch.ws || ch.ws.readyState !== 1) return;
+      const payload = { sdp: m.sdp, type: 'data', connectionId: m.cid };
+      if (m.type === 'OFFER') Object.assign(payload, { label: m.cid, reliable: true, serialization: 'binary' });
+      ch.ws.send(JSON.stringify({ type: m.type, payload, dst: to === 'h' ? NET_PREFIX + this.code : 'nwc' + to }));
+    };
+    ch.ping = () => { if (ch.ws && ch.ws.readyState === 1) ch.ws.send('{"type":"HEARTBEAT"}'); };
+    ch.close = () => { ch.dead = true; ch.up = false; const w = ch.ws; ch.ws = null; if (w) { w.onclose = null; try { w.close(); } catch (e) { /* ignore */ } } };
+    ch.open();
+    return ch;
+  },
+  // serveur MQTT public : l'hôte écoute « …/CODE/h », chaque invité « …/CODE/g/<id> » ; « …/CODE/who » détecte un code déjà pris
+  chanMqtt(cfg) {
+    const ch = { n: cfg.n, up: false, ws: null, dead: false, buf: null };
+    const base = NET_TOPIC + this.code + '/', mine = this.role === 'host' ? base + 'h' : base + 'g/' + this.gid, who = base + 'who';
+    ch.open = () => {
+      let ws;
+      try { ws = new WebSocket(cfg.url, 'mqtt'); } catch (e) { this.chanDown(ch); return; }
+      ws.binaryType = 'arraybuffer'; ch.ws = ws; ch.buf = new Uint8Array(0);
+      ws.onopen = () => ws.send(Mqtt.connect('nw' + Math.random().toString(36).slice(2, 12), cfg.user, cfg.pass));
+      ws.onmessage = ev => {
+        for (const [type, body] of Mqtt.read(ch, new Uint8Array(ev.data))) {
+          if (type === 2) {   // CONNACK
+            if (body[1] !== 0) { try { ws.close(); } catch (e) { /* ignore */ } return; }
+            ws.send(Mqtt.sub(this.role === 'host' ? [mine, who] : [mine]));
+          } else if (type === 9) {   // SUBACK : prêt
+            ch.up = true;
+            if (this.role === 'host') ws.send(Mqtt.pub(who, JSON.stringify({ type: 'WHO', s: this.sess })));
+            this.chanUp(ch);
+          } else if (type === 3) {   // PUBLISH reçu
+            const [topic, txt] = Mqtt.unpub(body);
+            let m; try { m = JSON.parse(txt); } catch (e) { continue; }
+            if (topic === who) {
+              if (m.type === 'WHO' && m.s !== this.sess && this.on) ws.send(Mqtt.pub(who, JSON.stringify({ type: 'HERE', to: m.s })));
+              else if (m.type === 'HERE' && m.to === this.sess) this.taken();
+            } else if (topic === mine) this.onSig(m, m.from);
+          }
+        }
+      };
+      ws.onclose = () => { if (ch.ws !== ws) return; ch.ws = null; ch.up = false; this.chanDown(ch); };
+    };
+    ch.send = (to, m) => { if (ch.up && ch.ws && ch.ws.readyState === 1) ch.ws.send(Mqtt.pub(to === 'h' ? base + 'h' : base + 'g/' + to, JSON.stringify(Object.assign({ from: this.role === 'host' ? 'h' : this.gid }, m)))); };
+    ch.ping = () => { if (ch.ws && ch.ws.readyState === 1) ch.ws.send(new Uint8Array([0xC0, 0])); };
+    ch.close = () => {
+      ch.dead = true; ch.up = false; const w = ch.ws; ch.ws = null;
+      if (w) { w.onclose = null; try { if (w.readyState === 1) w.send(new Uint8Array([0xE0, 0])); w.close(); } catch (e) { /* ignore */ } }
+    };
+    ch.open();
+    return ch;
+  },
   addCand(L, c) { if (L.pc && L.hasRemote) L.pc.addIceCandidate(c).catch(() => {}); else L.cand.push(c); },
-  flushCand(L) { L.hasRemote = true; for (const c of L.cand) L.pc.addIceCandidate(c).catch(() => {}); L.cand = []; },
 
   /* ----- liens ----- */
   newLink(o) { const L = Object.assign({ pc: null, dc: null, cid: 'dc_' + Math.random().toString(36).slice(2, 13), src: null, p: 0, cand: [], hasRemote: false, open: false, ping: 0 }, o); this.links.push(L); return L; },
@@ -4047,8 +4165,9 @@ const Net = {
     if (code && !/^[A-Z0-9]{3,12}$/.test(want)) { this.setStatus('Code personnalisé : 3 à 12 lettres ou chiffres.', true); return false; }
     this.reset(); this.role = 'host'; this.me = 0; this.custom = !!want;
     this.code = want || Array.from({ length: 4 }, () => NET_ALPHA[Math.floor(Math.random() * NET_ALPHA.length)]).join('');
+    this.sess = Math.random().toString(36).slice(2, 12);
     this.setStatus('Ouverture du salon…');
-    this.wsOpen(NET_PREFIX + this.code, () => { this.setStatus(''); this.startSession(); });
+    this.sigOpen();
     return true;
   },
   // l'hôte ouvre son salon (code ou invitation manuelle) : il y attend ses invités
@@ -4058,42 +4177,51 @@ const Net = {
     this.later(() => this.pingAll(), 2000, true);
     MP.hosted(lobby);
   },
-  acceptOffer(src, p) {
-    const old = this.links.find(l => l.src === src && !l.open);
-    if (old) this.dropLink(old);   // nouvelle tentative du même invité : on repart de zéro
-    const L = this.newLink({ src, cid: p.connectionId });
-    const pc = this.makePC(L, c => this.sig('CANDIDATE', src, L, { candidate: c }));
+  acceptOffer(gid, cid, sdp) {
+    const dup = this.links.find(l => l.cid === cid);
+    if (dup) { if (dup.answer && !dup.open) this.sigSend(gid, { type: 'ANSWER', cid, sdp: dup.answer }); return; }   // même offre reçue par un autre serveur
+    for (const l of this.links.filter(l => l.src === gid && !l.open)) this.dropLink(l);   // nouvelle tentative du même invité
+    const L = this.newLink({ src: gid, cid });
+    const pc = this.makePC(L, null);
     pc.ondatachannel = e => this.bindDC(L, e.channel);
-    pc.setRemoteDescription(p.sdp).then(() => { this.flushCand(L); return pc.createAnswer(); })
-      .then(a => pc.setLocalDescription(a)).then(() => this.sig('ANSWER', src, L, { sdp: pc.localDescription }))
+    pc.setRemoteDescription(sdp).then(() => pc.createAnswer()).then(a => pc.setLocalDescription(a)).then(() => this.gathered(pc, 2500))
+      .then(() => {
+        if (!this.links.includes(L)) return;
+        const d = pc.localDescription; L.answer = { type: d.type, sdp: d.sdp };
+        this.sigSend(gid, { type: 'ANSWER', cid, sdp: L.answer });
+      })
       .catch(() => this.dropLink(L));
   },
   join(code) {
     code = this.cleanCode(code);
     if (code.length < 3 || code.length > 12) { this.setStatus('Le code fait de 3 à 12 caractères (ex. NEON-K7QX).', true); return; }
-    this.reset(); this.role = 'guest'; this.me = 0; this.code = code;
-    const dst = NET_PREFIX + code;
-    this.setStatus('Connexion au serveur…');
-    this.wsOpen('nwc' + Math.random().toString(36).slice(2, 12), () => this.attempt(dst, 1));
+    this.reset(); this.role = 'guest'; this.me = 0; this.code = code; this.gotAnswer = false;
+    this.setStatus('Connexion aux serveurs de mise en relation…');
+    this.sigOpen();
   },
   // une tentative de connexion de l'invité ; jusqu'à 4 essais automatiques avant de proposer le mode manuel
-  attempt(dst, n) {
+  attempt(n) {
     if (this.connected || this.role !== 'guest') return;
     for (const l of this.links.slice()) this.dropLink(l);
-    const L = this.newLink({ src: dst });
-    this.setStatus(n === 1 ? `Recherche du salon NEON-${this.code}…` : `Nouvelle tentative (${n}/4)…`);
-    const pc = this.makePC(L, c => this.sig('CANDIDATE', dst, L, { candidate: c }));
-    pc.onconnectionstatechange = () => { if (pc.connectionState !== 'failed') return; if (L.open) this.linkLost(L); else retry(); };
-    this.bindDC(L, pc.createDataChannel('nw', { ordered: true }));
+    const L = this.newLink({ src: 'h' }), up = this.sigUp();
+    this.setStatus(n === 1 ? `Recherche du salon NEON-${this.code}… (${up} serveur${up > 1 ? 's' : ''} de mise en relation)` : `Nouvelle tentative (${n}/4)…`);
+    const pc = this.makePC(L, null);
     let done = false;
     const retry = () => {
       if (done || this.connected || this.role !== 'guest' || !this.links.includes(L)) return; done = true;
-      if (n < 4) this.attempt(dst, n + 1);
-      else this.setStatus('Connexion impossible : vérifiez le code. Sur certains réseaux (4G, entreprise), utilisez la connexion manuelle.', true);
+      if (n < 4) this.attempt(n + 1);
+      else this.setStatus(this.gotAnswer
+        ? 'Le salon a répondu, mais la connexion directe est impossible entre vos deux réseaux (box, 4G, réseau d\'entreprise). Essayez un autre réseau (partage de connexion du téléphone) ou la connexion manuelle en réseau local.'
+        : `Salon NEON-${this.code} introuvable : vérifiez le code et que l'hôte garde la fenêtre du salon ouverte.`, true);
     };
-    pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => this.sig('OFFER', dst, L, { sdp: pc.localDescription }))
-      .catch(() => retry());
-    this.later(retry, 7000 + n * 2000);
+    pc.onconnectionstatechange = () => { if (pc.connectionState !== 'failed') return; if (L.open) this.linkLost(L); else retry(); };
+    this.bindDC(L, pc.createDataChannel('nw', { ordered: true }));
+    pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => this.gathered(pc, 2500)).then(() => {
+      if (!this.links.includes(L)) return;
+      const d = pc.localDescription; L.offer = { type: d.type, sdp: d.sdp };
+      this.sigSend('h', { type: 'OFFER', cid: L.cid, sdp: L.offer });
+    }).catch(() => retry());
+    this.later(retry, 9000 + n * 2000);
   },
 
   /* ----- connexion manuelle : codes longs à copier-coller (une invitation par joueur) ----- */
@@ -4119,10 +4247,10 @@ const Net = {
     return this.pack(pc.localDescription);
   },
   async manualFinish(L, code) { if (!L || !L.pc) throw new Error('lien'); await L.pc.setRemoteDescription(await this.unpack(code)); },
-  gathered(pc) {
+  gathered(pc, ms = 4000) {
     return new Promise(res => {
       if (pc.iceGatheringState === 'complete') return res();
-      const t = setTimeout(res, 4000);
+      const t = setTimeout(res, ms);
       pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete') { clearTimeout(t); res(); } });
     });
   },
@@ -4150,7 +4278,7 @@ const Net = {
     L.open = true;
     if (this.role === 'guest') {
       this.on = true; this.status = ''; this.err = false;
-      this.later(() => this.closeWs(), 1500);
+      this.later(() => this.sigClose(), 1500);
       this.raw(L, { t: 'hello', name: MP.myName(), v: VERSION });
       this.later(() => this.pingAll(), 2000, true);
       MP.connected();
@@ -4196,16 +4324,15 @@ const Net = {
     this.close();
     MP.onLost();
   },
-  closeWs() { const w = this.ws; this.ws = null; if (w) { w.onclose = null; try { w.close(); } catch (e) { /* déjà fermé */ } } },
   close() {
     for (const [id, every] of this.timers) every ? clearInterval(id) : clearTimeout(id);
     this.timers = [];
-    this.closeWs();
+    this.sigClose();
     for (const L of this.links.slice()) this.dropLink(L);
     this.on = false; this.coop = this.versus = false; this.ping = 0;
     BG.stop();
   },
-  reset() { this.close(); this.role = null; this.code = ''; this.custom = false; this.status = ''; this.err = false; this.me = 0; MP.clear(); }
+  reset() { this.close(); this.role = null; this.code = ''; this.custom = false; this.status = ''; this.err = false; this.me = 0; this.gid = ''; this.gotAnswer = false; MP.clear(); }
 };
 
 /* ---------- minuterie de secours : un onglet en arrière-plan ne doit pas geler la partie des autres joueurs ---------- */
@@ -7369,7 +7496,7 @@ const UI = {
       };
       const free = Array.from({ length: Math.max(0, NET_MAX - n) }, () => '<div class="mp-pl free"><i></i><b>Place libre</b><span>EN ATTENTE…</span></div>').join('');
       const ready = host ? MP.allReady() : MP.ready;
-      const code = Net.code ? `<div class="mp-lcode"><span>CODE DU SALON</span><b>NEON-${esc(Net.code)}</b><button class="btn" id="mp-copy">COPIER</button>${host ? '<button class="btn" id="mp-inv">+ INVITATION MANUELLE</button>' : ''}</div>`
+      const code = Net.code ? `<div class="mp-lcode"><span>CODE DU SALON</span><b>NEON-${esc(Net.code)}</b><button class="btn" id="mp-copy">COPIER</button>${host ? '<button class="btn" id="mp-inv">+ INVITATION MANUELLE</button>' : ''}${host && Net.chans.length ? `<small class="mp-sig${Net.sigUp() ? '' : ' err'}">${Net.sigUp()}/${Net.chans.length} serveurs de mise en relation en ligne</small>` : ''}</div>`
         : host ? '<div class="mp-lcode"><span>SALON LOCAL</span><button class="btn" id="mp-inv">+ INVITATION MANUELLE</button></div>' : '';
       B.innerHTML = `${code}<div class="lbl-s" style="margin:4px 0 6px">JOUEURS · ${n} / ${NET_MAX}</div><div class="mp-pls">${ids.map(row).join('')}${free}</div>
         <div class="lbl-s" style="margin:12px 0 6px">MODE ${host ? '' : '<span style="opacity:.6">(choisi par l\'hôte)</span>'}</div>
@@ -7416,7 +7543,7 @@ const UI = {
         <div class="mp-box"><h3>HÉBERGER</h3><p>Créez un salon (jusqu'à ${NET_MAX} joueurs) et donnez son code à vos amis. Code au hasard, ou choisissez le vôtre.</p><input id="mp-hcode" class="mp-in big" maxlength="17" placeholder="Code perso (facultatif)" autocomplete="off" value="${esc(Store.s.roomCode || '')}"><button class="btn prim big" id="mp-host">CRÉER UN SALON</button></div>
         <div class="mp-box"><h3>REJOINDRE</h3><p>Entrez le code reçu de l'hôte.</p><input id="mp-code" class="mp-in big" maxlength="17" placeholder="NEON-XXXX" autocomplete="off"><button class="btn prim big" id="mp-join">REJOINDRE</button></div>
       </div>${st}
-      <div class="note" style="margin-top:12px">Le code court passe par un service public gratuit de mise en relation (PeerJS) : seule la poignée de main y transite, la partie se joue ensuite en direct entre vos deux navigateurs.
+      <div class="note" style="margin-top:12px">Le code passe par quatre services publics gratuits de mise en relation en parallèle (PeerJS et trois serveurs MQTT) : si votre réseau en bloque un, les autres prennent le relais. Seule la poignée de main y transite, la partie se joue ensuite en direct entre les navigateurs.
         Pas d'internet, ou ça ne passe pas ? <a href="#" id="mp-man">Connexion manuelle (réseau local)</a>. L'hôte peut exclure un joueur depuis le salon.</div>`;
     const nm = $('mp-name');
     nm.onchange = () => { Store.s.name = nm.value.trim().slice(0, 24) || MP.myName(); Store.save(); };

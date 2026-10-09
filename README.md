@@ -20,8 +20,10 @@ La partie est sauvegardée automatiquement entre deux vagues (dans le `localStor
 **un code de son choix** (3 à 12 lettres ou chiffres, ex. `NEON-TIMOTI42`), puis les autres le tapent.
 Dans le salon, l'hôte voit les joueurs, leur ping, qui est prêt, et peut **exclure** quelqu'un (✕) :
 l'exclu ne peut pas revenir sous le même nom tant que le salon existe.
-La partie se joue ensuite **en direct** (WebRTC, chaque invité relié à l'hôte, qui relaie) : le serveur
-public gratuit de PeerJS ne sert qu'à la mise en relation. Sans internet (réseau local), la **connexion
+La partie se joue ensuite **en direct** (WebRTC, chaque invité relié à l'hôte, qui relaie). La mise en
+relation passe par **quatre serveurs publics gratuits en parallèle** (PeerJS et trois serveurs MQTT : Mosquitto,
+Shiftr, EMQX) : si un réseau ou un navigateur en bloque un, les autres prennent le relais, et le salon de l'hôte
+affiche combien sont en ligne. Si aucun n'est joignable, le jeu le dit clairement. Sans internet (réseau local), la **connexion
 manuelle** échange deux codes par copier-coller, sans aucun serveur (une invitation par joueur).
 
 | Mode | Principe |
@@ -113,6 +115,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.5** : multijoueur fiabilisé, mise en relation par quatre serveurs en parallèle (PeerJS + MQTT), messages d'erreur précis.
 - **v9.4** : sabotages par météores en versus, primes de survie des ennemis envoyés.
 - **v9.3** : versus nettement plus dur (ennemis renforcés, escalade dès la vague 13, préparation courte, envois plus costauds).
 - **v9.2** : multijoueur jusqu'à 4 joueurs (versus en mêlée avec ciblage et classement, coopération à 4),
