@@ -41,6 +41,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 |---|---|
 | **24 tourelles** | 8 de base, 2 de soutien (Ventilo, Ordi) et **14 fusions** sur 3 paliers (T2 → T3 → Apocalypse T4) |
 | **Spécialisations** | au niveau 5 (niveau 3 pour le soutien), chaque tourelle choisit **1 voie sur 2** qui change son comportement |
+| **Fin de partie** | après la vague 30 : **niveaux Oméga** 11 à 15 (+35 % de dégâts par niveau) et **Recherche Oméga** (+8 % de dégâts pour toutes les tourelles par rang, sans limite, en nanites) ; badge ⚔ qui estime le temps de tir nécessaire contre la vague suivante. Au-delà de la vague 50, les PV progressent de 13 % par vague, de quoi viser la vague 100 |
 | **Fusion des canons** | plans achetés au Labo avec des nanites, puis **fusion sur le terrain** de deux tourelles adjacentes |
 | **Arbre de compétences** | 18 compétences en 3 branches, dont 2 qui débloquent des capacités |
 | **Capacités** | Frappe Orbitale (ciblée), Cryo-Bombe, Surcharge |
@@ -116,6 +117,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.7** : fin de partie rééquilibrée : PV +13 %/vague après la 50 (au lieu d'environ +19 %), niveaux Oméga 11 à 15, Recherche Oméga sans limite, badge de puissance de feu dans l'aperçu de vague.
 - **v9.6** : tourelles brouillées (IEM, météores, sabotages) débrouillables contre crédits (panneau, bouton flottant, touche `D`) ; un soutien brouillé suspend son bonus puis repart (il restait bloqué).
 - **v9.5** : multijoueur fiabilisé, mise en relation par quatre serveurs en parallèle (PeerJS + MQTT), messages d'erreur précis.
 - **v9.4** : sabotages par météores en versus, primes de survie des ennemis envoyés.
