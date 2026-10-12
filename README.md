@@ -23,7 +23,13 @@ l'exclu ne peut pas revenir sous le même nom tant que le salon existe.
 La partie se joue ensuite **en direct** (WebRTC, chaque invité relié à l'hôte, qui relaie). La mise en
 relation passe par **quatre serveurs publics gratuits en parallèle** (PeerJS et trois serveurs MQTT : Mosquitto,
 Shiftr, EMQX) : si un réseau ou un navigateur en bloque un, les autres prennent le relais, et le salon de l'hôte
-affiche combien sont en ligne. Si aucun n'est joignable, le jeu le dit clairement. Sans internet (réseau local), la **connexion
+affiche combien sont en ligne. Si aucun n'est joignable, le jeu le dit clairement.
+
+**Relais de secours** : si la liaison directe est impossible entre deux réseaux (certaines box, 4G, réseaux
+d'entreprise), la partie passe par les serveurs MQTT, en parallèle. Si la liaison directe tombe en cours de partie,
+le relais prend la suite sans perte : chaque message est numéroté et renvoyé tant qu'il n'est pas confirmé. La
+liaison directe est ensuite retentée automatiquement. En coopération, l'avance de chaque invité s'adapte à sa
+latence pour éviter les saccades. Un joueur qui ne donne plus aucune nouvelle pendant 20 s est considéré comme parti. Sans internet (réseau local), la **connexion
 manuelle** échange deux codes par copier-coller, sans aucun serveur (une invitation par joueur).
 
 | Mode | Principe |
@@ -117,6 +123,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.8** : multijoueur fiabilisé : relais de secours par les serveurs MQTT (liaison directe impossible ou coupée), messages numérotés et renvoyés sans perte, liaison directe retentée, avance du lockstep adaptée à la latence.
 - **v9.7** : fin de partie rééquilibrée : PV +13 %/vague après la 50 (au lieu d'environ +19 %), niveaux Oméga 11 à 15, Recherche Oméga sans limite, badge de puissance de feu dans l'aperçu de vague.
 - **v9.6** : tourelles brouillées (IEM, météores, sabotages) débrouillables contre crédits (panneau, bouton flottant, touche `D`) ; un soutien brouillé suspend son bonus puis repart (il restait bloqué).
 - **v9.5** : multijoueur fiabilisé, mise en relation par quatre serveurs en parallèle (PeerJS + MQTT), messages d'erreur précis.

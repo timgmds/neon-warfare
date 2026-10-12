@@ -415,6 +415,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .mp-pl b{font-size:14px;letter-spacing:.06em;overflow-wrap:anywhere;min-width:0}
 .mp-pl span{margin-left:auto;font-size:9px;letter-spacing:.2em;color:var(--dim);white-space:nowrap}
 .mp-pl em{font-style:normal;font-size:9px;font-weight:800;letter-spacing:.15em;color:#000;background:var(--ok);border-radius:4px;padding:2px 6px}
+.mp-pl span em.rl{background:none;color:var(--gold);padding:0;font-size:inherit;letter-spacing:inherit}
 .mp-pl.free{border-style:dashed;border-color:rgba(255,255,255,.15);opacity:.55}
 .mp-pl.free i{background:rgba(255,255,255,.2);box-shadow:none}
 .mp-kick{flex:0 0 auto;width:24px;height:24px;border-radius:6px;border:1px solid rgba(255,42,109,.6);background:rgba(255,42,109,.1);color:#ff6b93;font:700 12px var(--font);cursor:pointer;padding:0}
@@ -823,7 +824,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.7';
+const VERSION = '9.8';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -4025,6 +4026,7 @@ const Codex = {
    Pour se trouver, deux possibilités :
    - code de salon (NEON-ABCD, ou un code choisi par l'hôte) : quatre serveurs publics gratuits (PeerJS et trois
      serveurs MQTT) relaient la poignée de main en parallèle, ensuite tout passe en direct entre les navigateurs ;
+     si la liaison directe est impossible ou tombe en cours de partie, les serveurs MQTT servent de relais ;
    - connexion manuelle : offre et réponse échangées par copier-coller, sans aucun service extérieur
      (fonctionne en réseau local sans internet), une invitation par joueur. */
 const NET_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: 'stun:stun.cloudflare.com:3478' }, { urls: 'stun:global.stun.twilio.com:3478' }];
@@ -4063,11 +4065,12 @@ const Mqtt = {
   }
 };
 const NET_MAX = 4;   // joueurs par salon, hôte compris
+const NET_LOST = 20000;   // sans aucune nouvelle d'un joueur (ni direct, ni relais) pendant 20 s : il est considéré comme parti
 // messages qu'un invité adresse à tous : l'hôte les fait suivre aux autres invités
 const NET_RELAY = new Set(['chat', 'emote', 'st', 'send', 'dead', 'cur', 'surv']);
 const Net = {
   on: false, coop: false, versus: false, me: 0, role: null, chans: [], gid: '', sess: '', gotAnswer: false, code: '', custom: false,
-  status: '', err: false, ping: 0, timers: [], links: [],
+  status: '', err: false, ping: 0, timers: [], links: [], pumpT: 0, pingT: 0,
   // un lien = une connexion WebRTC ; p = numéro du joueur à l'autre bout (côté hôte), 0 = l'hôte (côté invité)
   get connected() { return this.links.some(l => l.open); },
   supported() { return typeof RTCPeerConnection !== 'undefined' && typeof WebSocket !== 'undefined' && !this.sandboxed(); },
@@ -4108,10 +4111,10 @@ const Net = {
   },
   // un serveur a coupé : nouvel essai tant qu'on en a besoin (de plus en plus espacé)
   chanDown(ch) {
-    if (ch.dead) return;
-    if (!(this.role === 'host' || (this.role === 'guest' && !this.connected))) return;
+    if (ch.dead || !this.role) return;
     ch.fails = (ch.fails || 0) + 1;
-    this.later(() => { if (!ch.dead && !ch.ws) ch.open(); }, Math.min(15000, 2000 * ch.fails));
+    // pendant une session, un serveur peut servir de relais : on le rouvre vite
+    this.later(() => { if (!ch.dead && !ch.ws) ch.open(); }, Math.min(this.on ? 4000 : 15000, 2000 * ch.fails));
     if (this.role === 'host' && UI.top() === 'ov-mp' && UI.mpState === 'lobby') UI.renderMP();
   },
   // un autre salon utilise déjà ce code
@@ -4121,13 +4124,24 @@ const Net = {
     else { UI.mpState = 'host'; this.host(); }
   },
   onSig(m, from) {
-    if (!m || !m.cid || !m.sdp) return;
+    if (!m) return;
+    if (m.type === 'D') { this.onRelay(m, from); return; }
+    if (m.type === 'R') { if (this.role === 'host' && from && m.cid) this.relayAccept(from, m.cid); return; }
+    if (!m.cid || !m.sdp) return;
     if (this.role === 'host' && m.type === 'OFFER' && from) this.acceptOffer(from, m.cid, m.sdp);
     else if (this.role === 'guest' && m.type === 'ANSWER') {
+      const re = /^(.+)_r\d+$/.exec(m.cid);
+      if (re) {   // réponse à une tentative de rétablir la liaison directe
+        const L = this.links.find(l => l.cid === re[1]);
+        if (L && L.up && L.up.cid === m.cid && !L.up.has) { L.up.has = true; L.up.pc.setRemoteDescription(m.sdp).catch(() => {}); }
+        return;
+      }
       const L = this.links.find(l => l.cid === m.cid);
       if (!L || !L.pc || L.hasRemote) return;   // même réponse reçue par plusieurs serveurs
       L.hasRemote = true; this.gotAnswer = true;
       L.pc.setRemoteDescription(m.sdp).catch(() => { L.hasRemote = false; });
+      // le salon a répondu : si la liaison directe ne s'ouvre pas vite, on passe par le relais
+      this.later(() => { if (!L.open && L.fallback) L.fallback(); }, 5000);
     }
   },
   // serveur PeerJS : il n'accepte que des messages au format exact de la bibliothèque PeerJS
@@ -4150,7 +4164,7 @@ const Net = {
       ws.onclose = () => { if (ch.ws !== ws) return; ch.ws = null; ch.up = false; this.chanDown(ch); };
     };
     ch.send = (to, m) => {
-      if (!ch.ws || ch.ws.readyState !== 1) return;
+      if (!ch.ws || ch.ws.readyState !== 1 || (m.type !== 'OFFER' && m.type !== 'ANSWER')) return;
       const payload = { sdp: m.sdp, type: 'data', connectionId: m.cid };
       if (m.type === 'OFFER') Object.assign(payload, { label: m.cid, reliable: true, serialization: 'binary' });
       ch.ws.send(JSON.stringify({ type: m.type, payload, dst: to === 'h' ? NET_PREFIX + this.code : 'nwc' + to }));
@@ -4199,40 +4213,214 @@ const Net = {
     ch.open();
     return ch;
   },
-  addCand(L, c) { if (L.pc && L.hasRemote) L.pc.addIceCandidate(c).catch(() => {}); else L.cand.push(c); },
-
   /* ----- liens ----- */
-  newLink(o) { const L = Object.assign({ pc: null, dc: null, cid: 'dc_' + Math.random().toString(36).slice(2, 13), src: null, p: 0, cand: [], hasRemote: false, open: false, ping: 0 }, o); this.links.push(L); return L; },
+  newLink(o) {
+    const L = Object.assign({ pc: null, dc: null, cid: 'dc_' + Math.random().toString(36).slice(2, 13), src: null, p: 0, hasRemote: false, open: false, ping: 0,
+      dcUp: false, stale: false, tx: 1, rx: 1, q: [], buf: new Map(), lastRx: performance.now(), ackDue: false, ackT: 0, up: null }, o);
+    this.links.push(L); return L;
+  },
   dropLink(L) {
     const i = this.links.indexOf(L); if (i >= 0) this.links.splice(i, 1);
-    if (L.dc) { L.dc.onclose = L.dc.onmessage = null; try { L.dc.close(); } catch (e) { /* ignore */ } }
+    if (L.dc) { L.dc.onclose = L.dc.onmessage = L.dc.onopen = null; try { L.dc.close(); } catch (e) { /* ignore */ } }
     if (L.pc) { L.pc.onconnectionstatechange = null; try { L.pc.close(); } catch (e) { /* ignore */ } }
-    L.dc = L.pc = null; L.open = false;
+    if (L.up) { try { L.up.pc.close(); } catch (e) { /* ignore */ } }
+    L.dc = L.pc = L.up = null; L.open = false; L.dcUp = false;
   },
-  makePC(L, onCand) {
-    const pc = L.pc = new RTCPeerConnection({ iceServers: NET_ICE });
-    pc.onicecandidate = e => { if (e.candidate && onCand) onCand(e.candidate.toJSON ? e.candidate.toJSON() : e.candidate); };
-    pc.onconnectionstatechange = () => {
-      if (pc.connectionState !== 'failed') return;
-      if (L.open) this.linkLost(L);
-      else if (this.role === 'host') this.dropLink(L);
-      else this.setStatus('Connexion directe impossible entre vos deux réseaux. En réseau local, essayez la connexion manuelle.', true);
-    };
+  makePC(L, upgrade = false) {
+    const pc = new RTCPeerConnection({ iceServers: NET_ICE });
+    if (!upgrade) L.pc = pc;
+    pc.onconnectionstatechange = () => this.pcState(L, pc);
     return pc;
   },
-  bindDC(L, dc) {
-    L.dc = dc;
-    dc.onopen = () => this.opened(L);
-    dc.onclose = () => { if (L.dc === dc) this.linkLost(L); };
-    dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } this.onMsg(L, m); };
+  pcState(L, pc) {
+    const st = pc.connectionState;
+    if (L.pc !== pc) {   // tentative de rétablissement de la liaison directe qui échoue
+      if ((st === 'failed' || st === 'closed') && L.up && L.up.pc === pc) { L.up = null; try { pc.close(); } catch (e) { /* ignore */ } }
+      return;
+    }
+    if (L.open) {
+      if (st === 'failed' || st === 'closed') this.dcDown(L);
+      else if (st === 'disconnected') this.setStale(L);
+      return;
+    }
+    if (st !== 'failed') return;
+    if (this.role === 'host') this.dropLink(L);
+    else if (L.fallback) L.fallback();
   },
-  // un lien ouvert vient de tomber
+  bindDC(L, dc, pc) {
+    if (L.pc === pc) L.dc = dc;
+    dc.onopen = () => {
+      if (!this.links.includes(L)) { try { dc.close(); } catch (e) { /* ignore */ } return; }
+      if (L.pc !== pc) {   // liaison directe rétablie : elle remplace l'ancienne
+        const od = L.dc, op = L.pc;
+        if (od && od !== dc) { od.onclose = od.onmessage = od.onopen = null; try { od.close(); } catch (e) { /* ignore */ } }
+        if (op) { op.onconnectionstatechange = null; try { op.close(); } catch (e) { /* ignore */ } }
+        L.pc = pc;
+      }
+      if (L.up && L.up.pc === pc) L.up = null;
+      else if (L.up) { try { L.up.pc.close(); } catch (e) { /* ignore */ } L.up = null; }
+      L.dc = dc; L.dcUp = true; L.dcWas = true; L.stale = false;
+      if (!L.open) { this.opened(L); return; }
+      // retour à la liaison directe : ce qui n'est pas encore confirmé repart par là
+      for (const e of L.q) if (!this.dcSend(L, e)) break;
+      if (L.relayT) { L.relayT = 0; if (MP.live) UI.toast('Liaison directe rétablie', 'La partie ne passe plus par le serveur relais.', '#39ff88', 3); }
+    };
+    dc.onclose = () => {
+      if (L.dc !== dc || !L.open) return;
+      // fermeture nette alors que le réseau tenait : l'autre a sans doute fermé son onglet → délai de grâce court
+      const clean = !!L.pc && L.pc.connectionState === 'connected';
+      this.dcDown(L);
+      if (clean) L.graceT = performance.now();
+    };
+    dc.onmessage = e => {
+      let x; try { x = JSON.parse(e.data); } catch (err) { return; }
+      if (x.t) { this.legacy(L); return; }
+      this.recv(L, x.s, x.a, x.m, true);
+    };
+  },
+  // la liaison directe d'un lien ouvert est tombée : le relais prend la suite, les messages non confirmés repartent par là
+  dcDown(L) {
+    const dc = L.dc, pc = L.pc, was = L.dcUp || !!L.dcWas;
+    L.dc = L.pc = null; L.dcUp = false; L.stale = false;
+    if (dc) { dc.onclose = dc.onmessage = dc.onopen = null; try { dc.close(); } catch (e) { /* ignore */ } }
+    if (pc) { pc.onconnectionstatechange = null; try { pc.close(); } catch (e) { /* ignore */ } }
+    if (!L.open) return;
+    for (const e of L.q) e.at = 0;
+    if (!L.relayT) {
+      L.relayT = performance.now();
+      if (was && MP.live) UI.toast('Liaison directe coupée', this.relayUp() ? 'La partie continue via un serveur relais ; la liaison directe sera retentée.' : 'Tentative de reconnexion…', '#ffd23f', 4);
+    }
+    this.planUpgrade(L);
+  },
+  // liaison directe douteuse (plus de nouvelles, état « déconnecté ») : on double les envois par le relais
+  setStale(L) { if (L.stale || !L.dcUp) return; L.stale = true; for (const e of L.q) e.at = 0; },
+  // un lien ouvert ne donne plus aucune nouvelle (ni direct, ni relais) depuis trop longtemps
   linkLost(L) {
     const was = L.open;
     this.dropLink(L);
     if (!was) return;
     if (this.role === 'guest') this.lost();
     else if (L.p) MP.onLeave(L.p, 'lost');
+  },
+  // l'autre joueur a une ancienne version du jeu (messages sans numéro)
+  legacy(L) {
+    if (L.legacy) return; L.legacy = true;
+    const txt = `Versions différentes : tous les joueurs doivent avoir la version ${VERSION} du jeu.`;
+    if (this.role === 'host') {
+      try { L.dc.send(JSON.stringify({ t: 'chat', p: 0, s: '⚠ ' + txt })); L.dc.send(JSON.stringify({ t: 'busy', p: 0 })); } catch (e) { /* ignore */ }
+      setTimeout(() => { const p = L.p; L.open = false; this.dropLink(L); if (p) MP.onLeave(p, 'bye'); }, 1200);
+    } else {
+      this.reset(); UI.mpState = 'home'; UI.closeAll(); UI.openMP();
+      this.setStatus('L\'hôte utilise une autre version du jeu. ' + txt, true);
+    }
+  },
+
+  /* ----- transport fiable : chaque message est numéroté et gardé jusqu'à son accusé de réception.
+     Il part par la liaison directe (WebRTC) quand elle marche, sinon par le relais : les serveurs MQTT, en parallèle,
+     le premier arrivé l'emporte. Si la liaison directe tombe en pleine partie, les messages non confirmés repartent
+     par le relais : rien n'est perdu ni rejoué deux fois. ----- */
+  relayUp() { return this.chans.some(c => c.up && c.n !== 'PeerJS'); },
+  dcOk(L) { return L.dcUp && !!L.dc && L.dc.readyState === 'open'; },
+  useRelay(L) { return !this.dcOk(L) || L.stale; },
+  relayed() { return this.links.some(l => l.open && this.useRelay(l)); },
+  raw(L, m) {
+    if (!L || !L.open) return;
+    const e = { s: L.tx++, m, at: 0, t0: performance.now() };
+    L.q.push(e);
+    if (this.dcOk(L)) this.dcSend(L, e);
+  },
+  dcSend(L, e) {
+    try { L.dc.send(JSON.stringify({ s: e.s, a: L.rx - 1, m: e.m })); L.ackDue = false; return true; }
+    catch (x) { this.dcDown(L); return false; }
+  },
+  recv(L, s, a, m, viaDc) {
+    const now = performance.now();
+    L.lastRx = now;
+    if (a != null) { let i = 0; while (i < L.q.length && L.q[i].s <= a) i++; if (i) L.q.splice(0, i); }
+    if (viaDc && L.stale && (!L.q.length || now - L.q[0].t0 < 1500)) L.stale = false;
+    if (s == null) return;
+    L.ackDue = true;
+    if (s < L.rx) return;   // doublon (arrivé par les deux chemins, ou renvoyé)
+    if (s > L.rx) { if (L.buf.size < 5000) L.buf.set(s, m); return; }
+    L.rx++; this.onMsg(L, m);
+    while (L.open && L.buf.has(L.rx)) { const x = L.buf.get(L.rx); L.buf.delete(L.rx); L.rx++; this.onMsg(L, x); }
+  },
+  // relais : lot de messages reçu par un serveur MQTT
+  onRelay(m, from) {
+    const L = this.links.find(l => l.cid === m.c);
+    if (!L || (this.role === 'host' && L.src !== from)) return;
+    if (!L.open) { if (this.role !== 'guest' || !L.relayWait) return; L.relayWait = false; this.opened(L); }
+    this.recv(L, null, m.a, null, false);
+    if (Array.isArray(m.b)) for (const x of m.b) { if (!L.open || !Array.isArray(x)) break; this.recv(L, x[0], null, x[1], false); }
+  },
+  // envoi par le relais de ce qui est nouveau, ou pas confirmé à temps (délai calé sur la meilleure latence mesurée)
+  flush(L, now) {
+    if (!this.relayUp()) return;
+    const b = [], rto = clamp((L.rttMin || 400) * 1.5 + 100, 200, 1000);
+    for (const e of L.q) { if (e.at && now - e.at < rto) continue; e.at = now; b.push([e.s, e.m]); if (b.length >= 150) break; }
+    if (!b.length && !L.ackDue) return;
+    L.ackDue = false; L.ackT = now;
+    this.sigSend(this.role === 'host' ? L.src : 'h', { type: 'D', c: L.cid, a: L.rx - 1, b });
+  },
+  flushAll() { const now = performance.now(); for (const L of this.links) if (L.open && this.useRelay(L)) this.flush(L, now); },
+  // appelé en continu (boucle d'affichage, minuterie de secours) : relais, accusés, pings, surveillance des liens
+  pump(now = performance.now()) {
+    if (!this.role || !this.links.length || now - this.pumpT < 45) return;
+    this.pumpT = now;
+    for (const L of this.links.slice()) {
+      if (!L.open) continue;
+      if (now - L.lastRx > NET_LOST || (L.graceT && L.lastRx < L.graceT && now - L.graceT > 6000)) { this.linkLost(L); continue; }
+      // liaison directe muette, ou messages non confirmés depuis longtemps : on double par le relais
+      if (this.dcOk(L) && !L.stale && (now - L.lastRx > 5000 || (L.q.length && now - L.q[0].t0 > 4000))) this.setStale(L);
+      if (this.useRelay(L)) this.flush(L, now);
+      else if (L.ackDue && now - L.ackT > 120) { L.ackDue = false; L.ackT = now; try { L.dc.send(JSON.stringify({ a: L.rx - 1 })); } catch (e) { this.dcDown(L); } }
+    }
+    if (now - this.pingT > 2000) { this.pingT = now; this.pingAll(); }
+  },
+  // invité : liaison directe impossible alors que le salon a répondu → on demande à l'hôte de passer par le relais
+  relayStart(L, fail) {
+    L.relayWait = true;
+    this.setStatus('Connexion directe impossible entre vos réseaux : passage par un serveur relais…');
+    let k = 0;
+    const go = () => {
+      if (L.open || !L.relayWait || !this.links.includes(L)) return;
+      if (++k > 10) { L.relayWait = false; fail(); return; }
+      this.sigSend('h', { type: 'R', cid: L.cid });
+      this.later(go, 1000);
+    };
+    go();
+  },
+  // hôte : un invité demande le relais pour ce lien
+  relayAccept(gid, cid) {
+    let L = this.links.find(l => l.cid === cid);
+    if (L && (L.open || L.src !== gid)) return;
+    if (!L) L = this.newLink({ src: gid, cid });
+    this.opened(L);
+  },
+  // invité : sur relais, on retente régulièrement une liaison directe (plus rapide)
+  planUpgrade(L) {
+    if (this.role !== 'guest' || L.upPlan || L.manual || !this.code) return;
+    L.upPlan = true;
+    const waits = [10000, 20000, 40000, 80000, 160000];
+    let k = 0;
+    const go = () => {
+      if (!L.open || !this.links.includes(L) || this.dcOk(L) || k >= waits.length) { L.upPlan = false; return; }
+      this.upgrade(L, ++k);
+      this.later(go, waits[k] || 1);
+    };
+    this.later(go, waits[0]);
+  },
+  upgrade(L, k) {
+    if (L.up) { try { L.up.pc.close(); } catch (e) { /* ignore */ } }
+    const cid = L.cid + '_r' + k, pc = this.makePC(L, true);
+    L.up = { cid, pc, has: false };
+    this.bindDC(L, pc.createDataChannel('nw', { ordered: true }), pc);
+    pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => this.gathered(pc, 2500)).then(() => {
+      if (!L.up || L.up.pc !== pc) return;
+      const d = pc.localDescription;
+      this.sigSend('h', { type: 'OFFER', cid, sdp: { type: d.type, sdp: d.sdp } });
+    }).catch(() => {});
+    this.later(() => { if (L.up && L.up.pc === pc) { L.up = null; try { pc.close(); } catch (e) { /* ignore */ } } }, 15000);
   },
 
   /* ----- héberger / rejoindre par code ----- */
@@ -4250,23 +4438,41 @@ const Net = {
   startSession(lobby = true) {
     if (this.on) return;
     this.on = true;
-    this.later(() => this.pingAll(), 2000, true);
+    this.keepAlive();
     MP.hosted(lobby);
   },
+  // pings, relais et surveillance continuent même onglet masqué (minuterie de secours dans un Worker)
+  keepAlive() { BG.start(); this.later(() => this.pump(), 250, true); },
   acceptOffer(gid, cid, sdp) {
+    const re = /^(.+)_r\d+$/.exec(cid);
+    if (re) {   // un invité sur relais retente la liaison directe
+      const L = this.links.find(l => l.cid === re[1] && l.open && l.src === gid);
+      if (!L) return;
+      if (L.up && L.up.cid === cid) { if (L.up.answer) this.sigSend(gid, { type: 'ANSWER', cid, sdp: L.up.answer }); return; }
+      if (L.up) { try { L.up.pc.close(); } catch (e) { /* ignore */ } }
+      const pc = this.makePC(L, true); L.up = { cid, pc };
+      pc.ondatachannel = e => this.bindDC(L, e.channel, pc);
+      pc.setRemoteDescription(sdp).then(() => pc.createAnswer()).then(a => pc.setLocalDescription(a)).then(() => this.gathered(pc, 2500)).then(() => {
+        if (!L.up || L.up.pc !== pc) return;
+        const d = pc.localDescription; L.up.answer = { type: d.type, sdp: d.sdp };
+        this.sigSend(gid, { type: 'ANSWER', cid, sdp: L.up.answer });
+      }).catch(() => {});
+      this.later(() => { if (L.up && L.up.pc === pc) { L.up = null; try { pc.close(); } catch (e) { /* ignore */ } } }, 20000);
+      return;
+    }
     const dup = this.links.find(l => l.cid === cid);
     if (dup) { if (dup.answer && !dup.open) this.sigSend(gid, { type: 'ANSWER', cid, sdp: dup.answer }); return; }   // même offre reçue par un autre serveur
     for (const l of this.links.filter(l => l.src === gid && !l.open)) this.dropLink(l);   // nouvelle tentative du même invité
     const L = this.newLink({ src: gid, cid });
-    const pc = this.makePC(L, null);
-    pc.ondatachannel = e => this.bindDC(L, e.channel);
+    const pc = this.makePC(L);
+    pc.ondatachannel = e => this.bindDC(L, e.channel, pc);
     pc.setRemoteDescription(sdp).then(() => pc.createAnswer()).then(a => pc.setLocalDescription(a)).then(() => this.gathered(pc, 2500))
       .then(() => {
-        if (!this.links.includes(L)) return;
+        if (!this.links.includes(L) || L.pc !== pc) return;
         const d = pc.localDescription; L.answer = { type: d.type, sdp: d.sdp };
         this.sigSend(gid, { type: 'ANSWER', cid, sdp: L.answer });
       })
-      .catch(() => this.dropLink(L));
+      .catch(() => { if (!L.open) this.dropLink(L); });
   },
   join(code) {
     code = this.cleanCode(code);
@@ -4275,29 +4481,32 @@ const Net = {
     this.setStatus('Connexion aux serveurs de mise en relation…');
     this.sigOpen();
   },
-  // une tentative de connexion de l'invité ; jusqu'à 4 essais automatiques avant de proposer le mode manuel
+  // une tentative de connexion de l'invité ; jusqu'à 4 essais automatiques ; liaison directe impossible → relais
   attempt(n) {
     if (this.connected || this.role !== 'guest') return;
     for (const l of this.links.slice()) this.dropLink(l);
     const L = this.newLink({ src: 'h' }), up = this.sigUp();
     this.setStatus(n === 1 ? `Recherche du salon NEON-${this.code}… (${up} serveur${up > 1 ? 's' : ''} de mise en relation)` : `Nouvelle tentative (${n}/4)…`);
-    const pc = this.makePC(L, null);
+    const pc = this.makePC(L);
     let done = false;
     const retry = () => {
-      if (done || this.connected || this.role !== 'guest' || !this.links.includes(L)) return; done = true;
+      if (done || L.open || L.relayWait || this.connected || this.role !== 'guest' || !this.links.includes(L)) return; done = true;
       if (n < 4) this.attempt(n + 1);
       else this.setStatus(this.gotAnswer
-        ? 'Le salon a répondu, mais la connexion directe est impossible entre vos deux réseaux (box, 4G, réseau d\'entreprise). Essayez un autre réseau (partage de connexion du téléphone) ou la connexion manuelle en réseau local.'
+        ? 'Le salon a répondu, mais aucune connexion n\'a pu s\'établir, ni directe, ni par un serveur relais. Essayez un autre réseau (partage de connexion du téléphone) ou la connexion manuelle en réseau local.'
         : `Salon NEON-${this.code} introuvable : vérifiez le code et que l'hôte garde la fenêtre du salon ouverte.`, true);
     };
-    pc.onconnectionstatechange = () => { if (pc.connectionState !== 'failed') return; if (L.open) this.linkLost(L); else retry(); };
-    this.bindDC(L, pc.createDataChannel('nw', { ordered: true }));
+    L.fallback = () => {
+      if (L.open || L.relayWait || done || !this.links.includes(L)) return;
+      if (L.hasRemote && this.relayUp()) this.relayStart(L, retry); else retry();
+    };
+    this.bindDC(L, pc.createDataChannel('nw', { ordered: true }), pc);
     pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => this.gathered(pc, 2500)).then(() => {
       if (!this.links.includes(L)) return;
       const d = pc.localDescription; L.offer = { type: d.type, sdp: d.sdp };
       this.sigSend('h', { type: 'OFFER', cid: L.cid, sdp: L.offer });
     }).catch(() => retry());
-    this.later(retry, 9000 + n * 2000);
+    this.later(() => L.fallback(), 9000 + n * 2000);
   },
 
   /* ----- connexion manuelle : codes longs à copier-coller (une invitation par joueur) ----- */
@@ -4305,8 +4514,8 @@ const Net = {
     if (this.role !== 'host') { this.reset(); this.role = 'host'; this.me = 0; this.code = ''; }
     for (const l of this.links.filter(l => !l.open)) this.dropLink(l);   // invitation précédente non utilisée
     const L = this.newLink({ manual: true });
-    const pc = this.makePC(L, null);
-    this.bindDC(L, pc.createDataChannel('nw', { ordered: true }));
+    const pc = this.makePC(L);
+    this.bindDC(L, pc.createDataChannel('nw', { ordered: true }), pc);
     await pc.setLocalDescription(await pc.createOffer());
     await this.gathered(pc);
     this.startSession(false);
@@ -4315,8 +4524,8 @@ const Net = {
   async manualJoin(code) {
     this.reset(); this.role = 'guest'; this.me = 0;
     const L = this.newLink({ manual: true });
-    const pc = this.makePC(L, null);
-    pc.ondatachannel = e => this.bindDC(L, e.channel);
+    const pc = this.makePC(L);
+    pc.ondatachannel = e => this.bindDC(L, e.channel, pc);
     await pc.setRemoteDescription(await this.unpack(code));
     await pc.setLocalDescription(await pc.createAnswer());
     await this.gathered(pc);
@@ -4351,12 +4560,14 @@ const Net = {
 
   /* ----- canal ouvert : messages ----- */
   opened(L) {
-    L.open = true;
+    L.open = true; L.lastRx = performance.now();
+    if (L.dcUp) L.dcWas = true;
+    else L.relayT = performance.now();   // ouvert par le relais
     if (this.role === 'guest') {
       this.on = true; this.status = ''; this.err = false;
-      this.later(() => this.sigClose(), 1500);
+      this.keepAlive();
       this.raw(L, { t: 'hello', name: MP.myName(), v: VERSION });
-      this.later(() => this.pingAll(), 2000, true);
+      if (!L.dcUp) this.planUpgrade(L);
       MP.connected();
       return;
     }
@@ -4372,7 +4583,6 @@ const Net = {
     this.raw(L, { t: 'welcome', you: p, code: this.code });
     MP.admit(p);
   },
-  raw(L, m) { if (L && L.open && L.dc && L.dc.readyState === 'open') { try { L.dc.send(JSON.stringify(m)); } catch (e) { /* canal saturé ou fermé */ } } },
   // invité : vers l'hôte ; hôte : vers tous les invités
   send(m) {
     if (this.role === 'host') { m.p = 0; for (const L of this.links) if (L.p) this.raw(L, m); }
@@ -4382,7 +4592,12 @@ const Net = {
   pingAll() { const ts = performance.now(); for (const L of this.links) if (L.open) this.raw(L, { t: 'ping', ts }); },
   onMsg(L, m) {
     if (m.t === 'ping') { this.raw(L, { t: 'pong', ts: m.ts }); return; }
-    if (m.t === 'pong') { L.ping = Math.round(performance.now() - m.ts); if (this.role === 'guest') this.ping = L.ping; else MP.setPing(L.p, L.ping); return; }
+    if (m.t === 'pong') {
+      L.ping = Math.round(performance.now() - m.ts);
+      L.rttMin = Math.min(L.ping, (L.rttMin || L.ping) * 1.1);   // latence de base, hors renvois
+      if (this.role === 'guest') { this.ping = L.ping; L.srtt = L.srtt ? L.srtt * .7 + L.ping * .3 : L.ping; Lock.tune(L.srtt); } else MP.setPing(L.p, L.ping, this.useRelay(L));
+      return;
+    }
     if (this.role === 'host') {
       if (!L.p) return;   // pas encore admis
       m.p = L.p;   // l'expéditeur est celui du lien, quoi qu'il prétende
@@ -4421,6 +4636,7 @@ const BG = {
       this.last = performance.now();
       this.w.onmessage = () => {
         const now = performance.now(), dt = Math.min(250, now - this.last); this.last = now;
+        Net.pump(now);
         if (document.hidden && Net.on && Game.state === 'play' && G) { simStep(dt); MP.tick(now); }
       };
     } catch (e) { this.w = null; }
@@ -4431,12 +4647,17 @@ const BG = {
 /* ---------- lockstep (coopération) : chaque tick n'est calculé qu'une fois connues les actions de tous les joueurs.
    Chaque invité envoie ses actions à l'hôte ; l'hôte les rassemble, fixe l'ordre et renvoie à tous la trame du tick. ---------- */
 const Lock = {
-  D: 8, sent: -1, combMax: -1, local: new Map(), remote: new Map(), comb: new Map(), out: [], sys: [], hashes: new Map(), pend: new Map(),
+  D: 8, dg: 8, sent: -1, combMax: -1, local: new Map(), remote: new Map(), comb: new Map(), out: [], sys: [], hashes: new Map(), pend: new Map(),
   stall: 0, hold: false, desync: false, snapWait: null,
   reset(t = 0) {
     this.sent = t + this.D - 1; this.combMax = t + this.D - 1;
     this.local.clear(); this.remote.clear(); this.comb.clear(); this.out = []; this.sys = []; this.hashes.clear(); this.pend.clear();
-    this.stall = 0; this.hold = false; this.desync = false; this.snapWait = null;
+    this.stall = 0; this.hold = false; this.desync = false; this.snapWait = null; this.dg = Math.max(this.dg, this.D);
+  },
+  // invité : ses actions partent assez tôt pour que la trame revienne avant d'être jouée (8 ticks en direct, jusqu'à 45 par relais)
+  tune(rtt) {
+    const want = clamp(Math.ceil((rtt * 1.25 + 40) / TICK_MS), this.D, 45);
+    this.dg = want > this.dg ? want : Math.max(want, this.dg - 4);
   },
   // vérifications locales avant d'envoyer : retour immédiat au joueur (argent, case occupée…)
   pre(type, a) {
@@ -4485,7 +4706,7 @@ const Lock = {
   // avant le tick t : publie nos actions pour t+D, puis vérifie que la trame du tick t est connue
   ready(t) {
     if (this.hold) return false;
-    const f = t + this.D;
+    const f = t + (Net.role === 'guest' ? this.dg : this.D);
     while (this.sent < f) {
       this.sent++;
       const c = this.sent === f ? this.out.splice(0) : [];
@@ -4583,7 +4804,7 @@ const MP = {
     Net.send({ t: 'roster', pl: this.pl, code: Net.code });
     if (UI.top() === 'ov-mp') UI.renderMP();
   },
-  setPing(p, v) { if (this.pl[p]) this.pl[p].ping = v; },
+  setPing(p, v, rl) { if (this.pl[p]) { this.pl[p].ping = v; this.pl[p].rl = !!rl; } },
   sendCfg() { if (Net.role === 'host') Net.send({ t: 'cfg', mode: this.mode, diff: this.diff }); },
   unready() { for (const p in this.pl) if (+p) this.pl[p].ready = false; },
   setMode(m) { if (Net.role !== 'host') return; this.mode = m; this.unready(); this.sendCfg(); this.syncRoster(); },
@@ -4633,7 +4854,6 @@ const MP = {
     this.target = others.find(p => p > Net.me); if (this.target == null) this.target = others[0];
     if (Net.coop) Lock.reset(0);
     Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, mp: o.mode, events: o.events, autoWave: o.autoWave, slots: this.slots });
-    BG.start();
     UI.mpHud(true);
     UI.banner(Net.versus ? 'VERSUS' : 'COOPÉRATION', this.slots.map(p => this.name(p).toUpperCase()).join(' · '), MP_COL[Net.me]);
     const n = this.slots.length;
@@ -4649,7 +4869,7 @@ const MP = {
       if (Net.versus) this.flushSurv();
     }
     if (Net.coop && Lock.desync) this.resync();
-    if (Net.coop && now - (this.curT || 0) > 90) {
+    if (Net.coop && now - (this.curT || 0) > (Net.relayed() ? 250 : 90)) {
       const h = UI.hover;
       if (h.inside && (h.wx !== this.cwx || h.wy !== this.cwy || UI.placing !== this.cpl)) {
         this.curT = now; this.cwx = h.wx; this.cwy = h.wy; this.cpl = UI.placing;
@@ -4770,7 +4990,7 @@ const MP = {
     if (Net.role === 'host') this.syncRoster();
   },
   leave() {
-    Net.send({ t: 'bye' });
+    Net.send({ t: 'bye' }); Net.flushAll();
     Net.reset();
     UI.mpHud(false);
     if (Game.state === 'play') Game.quit(false);
@@ -7644,8 +7864,8 @@ const UI = {
     if (this.mpState === 'lobby' && Net.on) {
       const host = Net.role === 'host', ids = Object.keys(MP.pl).map(Number).sort((a, b) => a - b), n = ids.length;
       const row = p => {
-        const P = MP.pl[p], me = p === Net.me, ping = host ? P.ping : me ? Net.ping : 0;
-        return `<div class="mp-pl" style="--pc:${MP_COL[p]}"><i></i><b>${esc(P.name)}</b><span>${p ? 'INVITÉ' : 'HÔTE'}${me ? ' · VOUS' : ''}${p && ping ? ` · ${ping} ms` : ''}</span>${p && P.ready ? '<em>PRÊT</em>' : ''}${host && p ? `<button class="mp-kick" data-p="${p}" title="Exclure ${esc(P.name)}">✕</button>` : ''}</div>`;
+        const P = MP.pl[p], me = p === Net.me, ping = host ? P.ping : me ? Net.ping : 0, rl = host ? P.rl : me ? Net.relayed() : false;
+        return `<div class="mp-pl" style="--pc:${MP_COL[p]}"><i></i><b>${esc(P.name)}</b><span>${p ? 'INVITÉ' : 'HÔTE'}${me ? ' · VOUS' : ''}${p && ping ? ` · ${ping} ms` : ''}${p && rl ? ' · <em class="rl">RELAIS</em>' : ''}</span>${p && P.ready ? '<em>PRÊT</em>' : ''}${host && p ? `<button class="mp-kick" data-p="${p}" title="Exclure ${esc(P.name)}">✕</button>` : ''}</div>`;
       };
       const free = Array.from({ length: Math.max(0, NET_MAX - n) }, () => '<div class="mp-pl free"><i></i><b>Place libre</b><span>EN ATTENTE…</span></div>').join('');
       const ready = host ? MP.allReady() : MP.ready;
@@ -7696,7 +7916,7 @@ const UI = {
         <div class="mp-box"><h3>HÉBERGER</h3><p>Créez un salon (jusqu'à ${NET_MAX} joueurs) et donnez son code à vos amis. Code au hasard, ou choisissez le vôtre.</p><input id="mp-hcode" class="mp-in big" maxlength="17" placeholder="Code perso (facultatif)" autocomplete="off" value="${esc(Store.s.roomCode || '')}"><button class="btn prim big" id="mp-host">CRÉER UN SALON</button></div>
         <div class="mp-box"><h3>REJOINDRE</h3><p>Entrez le code reçu de l'hôte.</p><input id="mp-code" class="mp-in big" maxlength="17" placeholder="NEON-XXXX" autocomplete="off"><button class="btn prim big" id="mp-join">REJOINDRE</button></div>
       </div>${st}
-      <div class="note" style="margin-top:12px">Le code passe par quatre services publics gratuits de mise en relation en parallèle (PeerJS et trois serveurs MQTT) : si votre réseau en bloque un, les autres prennent le relais. Seule la poignée de main y transite, la partie se joue ensuite en direct entre les navigateurs.
+      <div class="note" style="margin-top:12px">Le code passe par quatre services publics gratuits de mise en relation en parallèle (PeerJS et trois serveurs MQTT) : si votre réseau en bloque un, les autres prennent le relais. La partie se joue ensuite en direct entre les navigateurs ; si vos réseaux l'empêchent, ou si la liaison tombe en cours de partie, elle passe par un serveur relais, sans perte de message.
         Pas d'internet, ou ça ne passe pas ? <a href="#" id="mp-man">Connexion manuelle (réseau local)</a>. L'hôte peut exclure un joueur depuis le salon.</div>`;
     const nm = $('mp-name');
     nm.onchange = () => { Store.s.name = nm.value.trim().slice(0, 24) || MP.myName(); Store.save(); };
@@ -7772,7 +7992,7 @@ const UI = {
   refreshMP() {
     const el = $('mp'); if (el.classList.contains('hidden') || !G) return;
     const esc = s => MP.esc(s), vs = Net.versus || G.net === 'versus';
-    let h = `<div class="mp-h"><i></i><b>${vs ? 'VERSUS' : 'COOP'} · ${MP.slots.length} JOUEURS</b><span>${Net.on ? (Net.ping ? Net.ping + ' ms' : '') : 'DÉCONNECTÉ'}</span></div>`;
+    let h = `<div class="mp-h"><i></i><b>${vs ? 'VERSUS' : 'COOP'} · ${MP.slots.length} JOUEURS</b><span>${Net.on ? (Net.ping ? Net.ping + ' ms' : '') + (Net.relayed() ? ' · RELAIS' : '') : 'DÉCONNECTÉ'}</span></div>`;
     if (vs) {
       const tg = MP.aim(), many = MP.others().length > 1;
       for (const p of MP.others()) {
@@ -8193,6 +8413,7 @@ function loop(now) {
   // filet de sécurité : certains navigateurs mobiles ratent l'événement resize (rotation, barre d'adresse)
   if ((UI.frameN & 31) === 0 && (window.innerWidth !== View.w || window.innerHeight !== View.h)) Render.resize();
   if (Game.state === 'play' && G) { simStep(dt); MP.tick(now); }
+  if (Net.role) Net.pump(now);
   else if (Game.state === 'menu' && G && G.demo) Demo.frame(dt);
   Render.frame(now);
   UI.frame();
@@ -8220,6 +8441,8 @@ function boot() {
   });
   window.addEventListener('scroll', () => { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); });
   window.addEventListener('beforeunload', () => { if (G && !G.over && G.phase === 'prep') SaveSys.save(); });
+  // fermeture de l'onglet : on prévient les autres joueurs tout de suite (sinon ils attendraient 20 s)
+  window.addEventListener('pagehide', () => { if (Net.on) { try { Net.send({ t: 'bye' }); Net.flushAll(); } catch (e) { /* ignore */ } } });
   UI.showMenu();
   requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });
   // accès console pour le débogage : NW.G, NW.give(5000), ...
