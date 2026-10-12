@@ -47,9 +47,10 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 |---|---|
 | **24 tourelles** | 8 de base, 2 de soutien (Ventilo, Ordi) et **14 fusions** sur 3 paliers (T2 → T3 → Apocalypse T4) |
 | **Spécialisations** | au niveau 5 (niveau 3 pour le soutien), chaque tourelle choisit **1 voie sur 2** qui change son comportement |
-| **Fin de partie** | après la vague 30 : **niveaux Oméga** 11 à 15 (+35 % de dégâts par niveau) et **Recherche Oméga** (+8 % de dégâts pour toutes les tourelles par rang, sans limite, en nanites) ; badge ⚔ qui estime le temps de tir nécessaire contre la vague suivante. Au-delà de la vague 50, les PV progressent de 13 % par vague, de quoi viser la vague 100 |
+| **Fin de partie** | après le Léviathan (vague 50) : **niveaux Oméga** 11 à 15 (+35 % de dégâts par niveau, crédits + 1 abyssite par niveau) et **Recherche Oméga** (+8 % de dégâts pour toutes les tourelles par rang, sans limite, en plasma) ; badge ⚔ qui estime le temps de tir nécessaire contre la vague suivante. Au-delà de la vague 50, les PV progressent de 13 % par vague, de quoi viser la vague 100 |
 | **Fusion des canons** | plans achetés au Labo avec des nanites, puis **fusion sur le terrain** de deux tourelles adjacentes |
-| **Arbre de compétences** | 18 compétences en 3 branches, dont 2 qui débloquent des capacités |
+| **Arbre de compétences** | 30 compétences en 3 branches et 4 paliers : nanites (palier II), **plasma** (palier III) et **abyssite** (palier IV) ; une **raffinerie** transforme les nanites en trop en plasma |
+| **Éléments rares** | **plasma ✺** (boss dès la vague 10, parfois élites, raffinerie) et **abyssite ⬟** (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50) |
 | **Capacités** | Frappe Orbitale (ciblée), Cryo-Bombe, Surcharge |
 | **Ennemis** | 22 types (dont régénérateurs, ruches, déphaseurs, nécromants, mastodontes, voileurs…), élites et **6 boss** à mécanique (Colosse, Hydre, Overlord, Scission, Sentinelle, Sauteur), présentés à leur arrivée |
 | **Méga-boss** | vague 50 : **Léviathan** (3 phases : carapace et IEM géante, frénésie et escorte blindée, Abysse qui régénère et neutralise vos meilleures tourelles) ; vague 100 : **Oméga** (4 phases : failles d'élites, distorsions, boucliers miroirs, effondrement, puis 3 Échos). Ensuite toutes les 50 vagues. S'il atteint le noyau, la partie est perdue. |
@@ -123,6 +124,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.9** : arbre de compétences agrandi (30 compétences, paliers plasma et abyssite), nouveaux éléments rares, raffinerie de nanites, niveaux Oméga après le Léviathan et payés en abyssite.
 - **v9.8** : multijoueur fiabilisé : relais de secours par les serveurs MQTT (liaison directe impossible ou coupée), messages numérotés et renvoyés sans perte, liaison directe retentée, avance du lockstep adaptée à la latence.
 - **v9.7** : fin de partie rééquilibrée : PV +13 %/vague après la 50 (au lieu d'environ +19 %), niveaux Oméga 11 à 15, Recherche Oméga sans limite, badge de puissance de feu dans l'aperçu de vague.
 - **v9.6** : tourelles brouillées (IEM, météores, sabotages) débrouillables contre crédits (panneau, bouton flottant, touche `D`) ; un soutien brouillé suspend son bonus puis repart (il restait bloqué).
