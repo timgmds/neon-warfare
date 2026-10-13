@@ -28,14 +28,15 @@ affiche combien sont en ligne. Si aucun n'est joignable, le jeu le dit clairemen
 **Relais de secours** : si la liaison directe est impossible entre deux réseaux (certaines box, 4G, réseaux
 d'entreprise), la partie passe par les serveurs MQTT, en parallèle. Si la liaison directe tombe en cours de partie,
 le relais prend la suite sans perte : chaque message est numéroté et renvoyé tant qu'il n'est pas confirmé. La
-liaison directe est ensuite retentée automatiquement. En coopération, l'avance de chaque invité s'adapte à sa
-latence pour éviter les saccades. Un joueur qui ne donne plus aucune nouvelle pendant 20 s est considéré comme parti. Sans internet (réseau local), la **connexion
+liaison directe est ensuite retentée automatiquement. En coopération, l'hôte cadence la partie sans jamais
+attendre personne : les invités n'envoient que leurs actions, et chacun rejoue les trames de l'hôte avec un petit tampon
+qui s'adapte à sa connexion (jeu fluide même à 500 ms de ping, un joueur lent ne fige plus les autres). Un joueur qui ne donne plus aucune nouvelle pendant 20 s est considéré comme parti. Sans internet (réseau local), la **connexion
 manuelle** échange deux codes par copier-coller, sans aucun serveur (une invitation par joueur).
 
 | Mode | Principe |
 |---|---|
 | **Versus** | même carte et mêmes vagues, chacun chez soi. Envoyez des paquets d'ennemis chez l'adversaire **ciblé** (cliquez sur un nom dans le panneau de gauche) : ils coûtent des crédits mais augmentent votre **revenu par vague**. Chaque ennemi envoyé rapporte une **prime de survie** (jusqu'à 60 % de son prix s'il tient 20 s, +50 % s'il atteint le noyau adverse). **Sabotages** une fois par vague : *pluie de météores* (sonne ses meilleures tourelles, deux perdent un niveau) et *météore géant* (pulvérise sa tourelle la plus chère, sauf s'il la vend dans les 4 s). Le dernier debout gagne ; classement affiché en fin de partie. Plus dur qu'en solo : ennemis +30 % de PV, plus d'élites, intégrité -30 %, crédits de départ -15 %, 10 s de préparation, et **escalade** de +5 % de PV par vague dès la vague 13. |
-| **Coopération** | une seule carte, une intégrité commune, **chacun ses crédits** ; nanites, compétences, plans et capacités partagés, protocoles à tour de rôle. Ennemis plus résistants selon le nombre de joueurs. Toutes les machines calculent la même partie en *lockstep* (l'hôte fixe l'ordre des actions de chacun) et se resynchronisent toutes seules en cas d'écart ; un joueur qui part laisse ses tourelles. |
+| **Coopération** | une seule carte, une intégrité commune, **chacun ses crédits** ; nanites, compétences, plans et capacités partagés, protocoles à tour de rôle. Ennemis plus résistants selon le nombre de joueurs. Toutes les machines calculent la même partie en *lockstep* (l'hôte fixe l'ordre des actions de chacun ; une tourelle demandée s'affiche aussitôt en fantôme en attendant) et se resynchronisent toutes seules en cas d'écart ; un joueur qui part laisse ses tourelles. |
 
 Tous les joueurs doivent avoir la même version du fichier. Le multijoueur ne fonctionne pas dans un
 aperçu intégré (ex. claude.ai) : ouvrez le fichier directement dans Chrome, Edge ou Firefox, ou servez-le
@@ -124,6 +125,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.12** : coopération fluide avec une forte latence : l'hôte n'attend plus les invités, messages réduits aux seules actions, tampon de lecture adaptatif et rattrapage en douceur, fantôme immédiat des tourelles posées.
 - **v9.11** : Partie perso (17 réglages, gardés d'une partie à l'autre) ; pose des T3/T4 au prix progressif ; plus de plasma par boss après les vagues 25 et 40 ; IEM des astéroïdes et de la foudre à débrouiller contre crédits ; « Recommencer » garde le mode de jeu.
 - **v9.10** : fusions T3 et T4 payées en plasma et en abyssite (plan et pose), coûts selon la difficulté.
 - **v9.9** : arbre de compétences agrandi (30 compétences, paliers plasma et abyssite), nouveaux éléments rares, raffinerie de nanites, niveaux Oméga après le Léviathan et payés en abyssite.

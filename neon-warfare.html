@@ -853,7 +853,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.11';
+const VERSION = '9.12';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -4790,7 +4790,7 @@ const Net = {
     if (m.t === 'pong') {
       L.ping = Math.round(performance.now() - m.ts);
       L.rttMin = Math.min(L.ping, (L.rttMin || L.ping) * 1.1);   // latence de base, hors renvois
-      if (this.role === 'guest') { this.ping = L.ping; L.srtt = L.srtt ? L.srtt * .7 + L.ping * .3 : L.ping; Lock.tune(L.srtt); } else MP.setPing(L.p, L.ping, this.useRelay(L));
+      if (this.role === 'guest') { this.ping = L.ping; L.srtt = L.srtt ? L.srtt * .7 + L.ping * .3 : L.ping; Lock.tune(); } else MP.setPing(L.p, L.ping, this.useRelay(L));
       return;
     }
     if (this.role === 'host') {
@@ -4841,19 +4841,25 @@ const BG = {
 
 /* ---------- lockstep (coopération) : chaque tick n'est calculé qu'une fois connues les actions de tous les joueurs.
    Chaque invité envoie ses actions à l'hôte ; l'hôte les rassemble, fixe l'ordre et renvoie à tous la trame du tick. ---------- */
+/* Coopération : l'hôte cadence la partie et ne s'arrête jamais pour attendre un invité.
+   - les invités envoient leurs actions seulement quand ils en ont (pas de message à chaque tick) ;
+   - l'hôte les place dans le prochain tick qu'il publie (D ticks plus tard) avec les siennes, puis diffuse la trame ;
+     les ticks sans action ne sont pas envoyés, seulement un top d'horloge tous les 2 ticks ;
+   - chaque invité joue les trames reçues avec un petit tampon contre les à-coups du réseau, et accélère ou
+     ralentit très légèrement pour garder ce tampon : un joueur à 200 ms ne fige plus les autres, et lui-même
+     voit une partie fluide (simplement décalée de sa latence). */
 const Lock = {
-  D: 8, dg: 8, sent: -1, combMax: -1, local: new Map(), remote: new Map(), comb: new Map(), out: [], sys: [], hashes: new Map(), pend: new Map(),
+  D: 2, sent: -1, combMax: -1, comb: new Map(), out: [], rq: [], sys: [], hashes: new Map(), pend: new Map(),
   stall: 0, hold: false, desync: false, snapWait: null,
+  buf: 4, bufMin: 3, winMin: 1e9, winT: 0, missT: 0, ghosts: [],
   reset(t = 0) {
     this.sent = t + this.D - 1; this.combMax = t + this.D - 1;
-    this.local.clear(); this.remote.clear(); this.comb.clear(); this.out = []; this.sys = []; this.hashes.clear(); this.pend.clear();
-    this.stall = 0; this.hold = false; this.desync = false; this.snapWait = null; this.dg = Math.max(this.dg, this.D);
+    this.comb.clear(); this.out = []; this.rq = []; this.sys = []; this.hashes.clear(); this.pend.clear(); this.ghosts = [];
+    this.stall = 0; this.hold = false; this.desync = false; this.snapWait = null;
+    this.buf = Math.max(this.bufMin, 4); this.winMin = 1e9; this.winT = 0;
   },
-  // invité : ses actions partent assez tôt pour que la trame revienne avant d'être jouée (8 ticks en direct, jusqu'à 45 par relais)
-  tune(rtt) {
-    const want = clamp(Math.ceil((rtt * 1.25 + 40) / TICK_MS), this.D, 45);
-    this.dg = want > this.dg ? want : Math.max(want, this.dg - 4);
-  },
+  // invité : le relais MQTT arrive par paquets (toutes les 45 ms), il faut un tampon un peu plus grand
+  tune() { this.bufMin = Net.relayed() ? 5 : 3; if (this.buf < this.bufMin) this.buf = this.bufMin; },
   // vérifications locales avant d'envoyer : retour immédiat au joueur (argent, case occupée…)
   pre(type, a) {
     if (type === 'build') {
@@ -4876,45 +4882,56 @@ const Lock = {
   push(type, a) {
     if (!this.pre(type, a)) return false;
     this.out.push([type, ...a]);
+    // retour immédiat : la tourelle demandée s'affiche en fantôme en attendant son tick
+    if (type === 'build' && Net.role === 'guest') this.ghosts.push({ k: a[0], x: a[1], y: a[2], t: performance.now() });
     return true;
   },
-  // hôte : actions d'un invité pour le tick k
-  onFrame(m) {
-    let M = this.remote.get(m.p); if (!M) this.remote.set(m.p, M = new Map());
-    M.set(m.k, m.c); this.combine();
+  // hôte : actions d'un invité, jouées dans le prochain tick publié
+  onFrame(m) { if (Array.isArray(m.c) && m.c.length) this.rq.push([m.p, m.c]); },
+  // invité : trame d'un tick telle que fixée par l'hôte (sans « c » : simple top d'horloge, ticks vides jusqu'à k)
+  onComb(m) {
+    if (m.k <= this.combMax && !m.c) return;
+    if (m.c) this.comb.set(m.k, m.c);
+    if (m.k > this.combMax) this.combMax = m.k;
   },
-  // invité : trame complète d'un tick, telle que fixée par l'hôte
-  onComb(m) { this.comb.set(m.k, m.c); if (m.k > this.combMax) this.combMax = m.k; },
-  // hôte : dès que les actions de tous les joueurs pour un tick sont connues, il les assemble et les diffuse
-  combine() {
-    if (Net.role !== 'host' || this.hold) return;
-    const P = MP.peersIn();
-    for (;;) {
-      const k = this.combMax + 1;
-      if (!this.local.has(k) || P.some(p => !(this.remote.get(p) || new Map()).has(k))) return;
-      const c = [], L = this.local.get(k); this.local.delete(k);
-      if (L.length) c.push([0, L]);
-      for (const p of P) { const M = this.remote.get(p), x = M.get(k); M.delete(k); if (x.length) c.push([p, x]); }
-      if (this.sys.length) c.push([0, this.sys.splice(0)]);   // événements du salon (départ d'un joueur)
-      this.comb.set(k, c); this.combMax = k;
-      Net.send({ t: 'F', k, c });
-    }
-  },
-  // avant le tick t : publie nos actions pour t+D, puis vérifie que la trame du tick t est connue
+  // avant le tick t : l'hôte publie les trames jusqu'à t+D ; l'invité envoie ses actions et vérifie qu'il connaît le tick t
   ready(t) {
     if (this.hold) return false;
-    const f = t + (Net.role === 'guest' ? this.dg : this.D);
-    while (this.sent < f) {
-      this.sent++;
-      const c = this.sent === f ? this.out.splice(0) : [];
-      if (Net.role === 'host') this.local.set(this.sent, c); else Net.send({ t: 'f', k: this.sent, c });
+    if (Net.role === 'host') {
+      while (this.sent < t + this.D) {
+        const k = ++this.sent, c = [];
+        if (this.out.length) c.push([0, this.out.splice(0)]);
+        for (const [p, x] of this.rq.splice(0)) if (!MP.out[p]) c.push([p, x]);
+        if (this.sys.length) c.push([0, this.sys.splice(0)]);   // événements du salon (départ d'un joueur)
+        if (c.length) this.comb.set(k, c);
+        this.combMax = k;
+        if (c.length) Net.send({ t: 'F', k, c }); else if (k % 2 === 0) Net.send({ t: 'F', k });
+      }
+      return true;
     }
-    this.combine();
-    return this.combMax >= t;
+    if (this.out.length) Net.send({ t: 'f', c: this.out.splice(0) });
+    if (this.combMax >= t) return true;
+    // à court de trames : on agrandit le tampon (au plus une fois toutes les 300 ms)
+    const now = performance.now();
+    if (now - this.missT > 300) { this.missT = now; this.buf = Math.min(40, this.buf + 2); }
+    return false;
+  },
+  // invité : vitesse de lecture qui garde environ « buf » ticks d'avance en réserve
+  pace(dt) {
+    const lead = this.combMax - G.tick;
+    this.winMin = Math.min(this.winMin, lead); this.winT += dt;
+    if (this.winT > 4000) {   // réserve jamais entamée depuis 4 s : on réduit le tampon (moins de décalage)
+      if (this.winMin > 2 && this.buf > this.bufMin) this.buf--;
+      this.winT = 0; this.winMin = 1e9;
+    }
+    const e = lead - this.buf;
+    // très en retard (onglet masqué, coupure) : rattrapage rapide
+    return e > 30 ? Math.min(8, e / 12) : clamp(1 + e * .04, .85, 1.6);
   },
   exec(t) {
     const c = this.comb.get(t) || []; this.comb.delete(t);
     for (const [p, cmds] of c) for (const x of cmds) Act.run(p, x[0], x.slice(1));
+    if (this.ghosts.length) { const now = performance.now(); this.ghosts = this.ghosts.filter(g => now - g.t < 3000 && !Towers.at(g.x, g.y)); }
   },
   // empreinte de l'état : comparée régulièrement pour détecter une désynchronisation
   hash() {
@@ -6771,6 +6788,16 @@ const Render = {
       c.beginPath(); c.moveTo(s.x - r * .4, s.y); c.lineTo(s.x + r * .4, s.y); c.moveTo(s.x, s.y - r * .4); c.lineTo(s.x, s.y + r * .4); c.stroke();
       c.fillStyle = rgba(s.col, .06 + k * .14); c.beginPath(); c.arc(s.x, s.y, s.r, 0, TAU); c.fill();
     }
+    if (Lock.ghosts.length && Net.coop) {
+      const k = .35 + .2 * Math.sin(performance.now() / 120);
+      for (const g of Lock.ghosts) {
+        if (!TOWERS[g.k]) continue;
+        const x = (g.x + .5) * TILE, y = (g.y + .5) * TILE;
+        c.globalAlpha = k; c.drawImage(Spr.base(g.k), x - 32, y - 32, 64, 64); c.drawImage(Spr.head(g.k), x - 32, y - 32, 64, 64); c.globalAlpha = 1;
+        c.strokeStyle = rgba(MP_COL[Net.me] || '#00f3ff', .8); c.lineWidth = 1.5; c.setLineDash([4, 4]);
+        c.strokeRect(g.x * TILE + 2, g.y * TILE + 2, TILE - 4, TILE - 4); c.setLineDash([]);
+      }
+    }
     const h = UI.hover, M = G.map;
     if (UI.placing && UI.placing.startsWith('trap:') && h.inside && h.tx >= 0 && h.ty >= 0 && h.tx < M.C && h.ty < M.R) {
       const type = UI.placing.slice(5), ok = Traps.canPlace(h.tx, h.ty) && Traps.count(type) < TRAPS[type].max, rich = G.money >= Traps.cost(type);
@@ -8616,10 +8643,11 @@ function simStep(dt) {
   if (G.over || (UI.blocking() && !Net.on)) { Render.alpha = 1; if (G.over) FX.update(); return; }
   let sm = 1;
   if (Game.slowT > 0) { Game.slowT -= dt; sm = .28; }
-  Game.acc += dt * Game.speed * sm;
+  Game.acc += dt * Game.speed * sm * (Net.coop && Net.role === 'guest' ? Lock.pace(dt) : 1);
   const t0 = performance.now();
   let steps = 0;
-  while (Game.acc >= TICK_MS && steps < 12) {
+  const maxSteps = Net.coop && Net.role === 'guest' ? 48 : 12;
+  while (Game.acc >= TICK_MS && steps < maxSteps) {
     if (Net.coop) {
       if (!Lock.ready(G.tick)) { Lock.stall += TICK_MS; Game.acc = Math.min(Game.acc, TICK_MS * 4); break; }
       Lock.stall = 0; Lock.exec(G.tick);
@@ -8630,7 +8658,7 @@ function simStep(dt) {
     Game.acc -= TICK_MS; steps++;
     if (G.over || (UI.blocking() && !Net.on)) break;
   }
-  if (steps >= 12) Game.acc = 0;
+  if (steps >= maxSteps) Game.acc = 0;
   if (steps) Perf.simMs = Perf.simMs * .9 + (performance.now() - t0) / steps * .1;
   Render.alpha = clamp(Game.acc / TICK_MS, 0, 1);
 }
