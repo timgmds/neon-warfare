@@ -871,7 +871,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.14';
+const VERSION = '9.15';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -1510,11 +1510,13 @@ const BOSSES = {
 };
 /* MÉGA-BOSS : vague 50 (Léviathan), vague 100 (Oméga), puis en alternance toutes les 50 vagues.
    Plusieurs phases : à chaque seuil de PV, 2,5 s d'invulnérabilité puis de nouveaux pouvoirs. S'il atteint le noyau, c'est fini. */
-BOSSES.leviathan = { name: 'LÉVIATHAN', hp: 15000, armor: 5, spd: .36, bounty: 1500, leak: 9999, r: 30, color: '#00e1ff', shape: 'mega1', rot: true, boss: true, mega: true, heavy: true,
+// slowRes : les ralentissements et le gel n'ont que la moitié de leur effet sur lui
+BOSSES.leviathan = { name: 'LÉVIATHAN', hp: 24000, shield: 4000, armor: 6, spd: .36, bounty: 2000, leak: 9999, r: 30, color: '#00e1ff', shape: 'mega1', rot: true, boss: true, mega: true, heavy: true, slowRes: .5,
   phases: [
-    { n: 'Carapace abyssale', armor: 5, jam: { every: 360, r: 210, t: 120 } },
-    { at: .66, n: 'Frénésie des profondeurs', armor: 1.5, spd: 1.35, summon: { types: ['ram', 'hive', 'tank'], every: 420, n: 3 }, jam: { every: 420, r: 210, t: 120 } },
-    { at: .33, n: 'Abysse', armor: 2, spd: 1.15, regen: .006, drain: { every: 420, n: 3, t: 240, r: 260 }, summon: { types: ['juggernaut', 'ram'], every: 600, n: 2 } }
+    { n: 'Carapace abyssale', armor: 6, jam: { every: 330, r: 220, t: 120 } },
+    { at: .7, n: 'Frénésie des profondeurs', armor: 2, spd: 1.35, shieldBack: .5, summon: { types: ['ram', 'hive', 'tank'], every: 360, n: 4 }, jam: { every: 380, r: 220, t: 120 } },
+    { at: .4, n: 'Abysse', armor: 2.5, spd: 1.15, regen: .009, drain: { every: 360, n: 4, t: 240, r: 270 }, summon: { types: ['juggernaut', 'ram'], every: 480, n: 3 } },
+    { at: .12, n: 'Raz-de-marée', armor: 1, spd: 1.6, jam: { every: 300, r: 250, t: 150 }, summon: { types: ['ram', 'juggernaut', 'hive'], every: 300, n: 3 } }
   ] };
 BOSSES.omega = { name: 'OMÉGA', hp: 32000, shield: 9000, armor: 4, spd: .32, bounty: 4000, leak: 9999, r: 34, color: '#ff2bd6', shape: 'mega2', boss: true, mega: true, heavy: true,
   spawn: { type: 'echo', n: 3, hp: 1 },
@@ -1559,7 +1561,7 @@ const LORE = {
   mite: 'Essaim libéré par une Ruche. Rapide, fragile, nombreux.',
   wraith: 'Mort revenu à la vie par un Nécromant.',
   shardlet: 'Dernier éclat d\'une Scission. Rapide, mais fragile.',
-  leviathan: 'Méga-boss de la vague 50. Trois phases : carapace et IEM géantes, puis frénésie et escorte blindée, puis l\'Abysse qui régénère et neutralise vos meilleures tourelles. S\'il touche le noyau, la partie est perdue.',
+  leviathan: 'Méga-boss de la vague 50, protégé par un bouclier et à moitié insensible aux ralentissements et au gel. Quatre phases : carapace et IEM géantes, puis frénésie et escorte blindée (bouclier rechargé), puis l\'Abysse qui régénère et neutralise vos meilleures tourelles, enfin le Raz-de-marée où il fonce vers le noyau. S\'il touche le noyau, la partie est perdue.',
   omega: 'Méga-boss de la vague 100. Quatre phases : failles d\'élites, distorsions, miroir de boucliers, puis effondrement. Abattu, il libère trois Échos. S\'il touche le noyau, la partie est perdue.',
   echo: 'Fragment d\'Oméga qui survit à sa destruction.',
   colosse: 'Forteresse ambulante au blindage massif. Lent, mais il encaisse tout.',
@@ -2611,6 +2613,7 @@ const Status = {
   slow(e, f, t) {
     if (e.d.noSlow) return;
     if (e.boss) t *= .5;
+    if (e.d.slowRes) f = 1 - (1 - f) * e.d.slowRes;
     if (e.slowT <= 0 || f < e.slowF) e.slowF = f;
     if (t > e.slowT) e.slowT = t;
   },
@@ -3771,7 +3774,7 @@ const Abil = {
       Strikes.add(x, y, ABILS.orbital.radius, this.orbDmg(), null, ABILS.orbital.color, 45, true);
       Sfx.play('nuke');
     } else if (k === 'emp') {
-      for (const e of G.enemies) { if (!e.alive || e.d.noSlow) continue; e.freezeT = e.boss ? 90 : 180; FX.spark(e.x, e.y, '#bff4ff', 4, 1.5); }
+      for (const e of G.enemies) { if (!e.alive || e.d.noSlow) continue; e.freezeT = e.d.slowRes ? 45 : e.boss ? 90 : 180; FX.spark(e.x, e.y, '#bff4ff', 4, 1.5); }
       const M = G.map;
       FX.ring(M.C * TILE / 2, M.R * TILE / 2, '#3ad7ff', Math.max(M.C, M.R) * TILE * .7, 40, 6, 20);
       Render.flash(.45, '#3ad7ff'); Sfx.play('freeze');
