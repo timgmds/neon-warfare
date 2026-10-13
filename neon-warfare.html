@@ -117,6 +117,7 @@ body.no-crt #crt{display:none}
 .bcard .pr{font-family:var(--mono);font-size:11px;color:var(--gold);font-weight:700;pointer-events:none}
 .bcard .hk{position:absolute;top:2px;left:4px;font-size:9px;color:var(--dim);font-family:var(--mono)}
 .bcard .tr{position:absolute;top:2px;right:4px;font-size:8px;font-weight:800;letter-spacing:1px}
+.bcard .ec{position:absolute;top:12px;right:3px;font-size:9px;font-weight:800;font-family:var(--mono);pointer-events:none}
 .bcard:hover{transform:translateY(-3px);border-color:var(--tc)}
 .bcard.sel{border-color:var(--tc);background:rgba(255,255,255,.1);box-shadow:0 0 14px -2px var(--tc),inset 0 0 12px -4px var(--tc);transform:translateY(-4px)}
 .bcard.off{opacity:.4}
@@ -838,7 +839,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.9';
+const VERSION = '9.10';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -2537,6 +2538,14 @@ const RES = {
   p: { i: '✺', c: '#ff8a3d', n: 'plasma' },
   a: { i: '⬟', c: '#b48cff', n: 'abyssite' }
 };
+// fusions T3 (plasma) et T4 (abyssite) : le plan au Labo et chaque pose coûtent des éléments rares, selon la difficulté
+// (index = palier de la tourelle)
+const ELEM_COST = {
+  recrue:    { plan: [0, 0, 0, 3, 2], pose: [0, 0, 0, 0, 1] },
+  standard:  { plan: [0, 0, 0, 5, 3], pose: [0, 0, 0, 1, 2] },
+  hardcore:  { plan: [0, 0, 0, 7, 4], pose: [0, 0, 0, 2, 3] },
+  cauchemar: { plan: [0, 0, 0, 9, 5], pose: [0, 0, 0, 3, 4] }
+};
 const Res = {
   get(c) { return c === 'p' ? G.res.p : c === 'a' ? G.res.a : G.nanites; },
   take(c, v) { if (c === 'p') G.res.p -= v; else if (c === 'a') G.res.a -= v; else G.nanites -= v; },
@@ -2940,6 +2949,20 @@ const Enemies = {
 /* ============================== TOURELLES ============================== */
 const Towers = {
   _hit: [],
+  elemOf(k) { const t = TOWERS[k].tier; return t === 3 ? 'p' : t === 4 ? 'a' : null; },
+  // plan = synthèse au Labo ; sinon pose (construction ou fusion sur le terrain)
+  elemCost(k, plan) {
+    if (!this.elemOf(k)) return 0;
+    const E = ELEM_COST[G.diffKey] || ELEM_COST.standard, t = TOWERS[k].tier;
+    return plan ? E.plan[t] + (k === 'singularity' ? 1 : 0) : E.pose[t];
+  },
+  canPay(k) { const c = this.elemOf(k); return !c || Res.get(c) >= this.elemCost(k); },
+  // texte « + 1 ✺ » à côté d'un prix
+  elemTxt(k, plan) { const c = this.elemOf(k), v = c ? this.elemCost(k, plan) : 0; return v ? ` + ${v} ${RES[c].i}` : ''; },
+  elemMissing(k) {
+    const c = this.elemOf(k);
+    if (Act.mine()) { Sfx.play('error'); UI.toast(c === 'p' ? 'Plasma requis' : 'Abyssite requise', `Poser une ${TOWERS[k].name} coûte aussi ${Res.tag(c, this.elemCost(k))} (${c === 'p' ? 'boss, élites, raffinerie' : 'méga-boss, puis boss après la vague 50'}).`, RES[c].c, 3.5); }
+  },
   costOf(k) { return Math.round(TOWERS[k].cost * G.mod.cost * (G.mod.kcost[k] || 1) * (TOWERS[k].tier === 0 ? G.mod.t0cost : 1)); },
   // niveaux Oméga : une fois la vague 30 repoussée (en vague 30 ou plus tard)
   omega() { return G.waveNum > OMEGA.from || (G.waveNum === OMEGA.from && !G.waves[OMEGA.from]); },
@@ -2966,10 +2989,11 @@ const Towers = {
   },
   build(key, tx, ty) {
     if (!this.canPlace(tx, ty)) { Sfx.play('error'); return null; }
-    const cost = this.costOf(key);
+    const cost = this.costOf(key), ec = this.elemCost(key);
     if (G.money < cost) { UI.noMoney(); return null; }
-    G.money -= cost;
-    const t = this.create(key, tx, ty); t.invested = cost; t.ts.spent += cost;
+    if (!this.canPay(key)) { this.elemMissing(key); return null; }
+    G.money -= cost; if (ec) Res.take(this.elemOf(key), ec);
+    const t = this.create(key, tx, ty); t.invested = cost; t.ts.spent += cost; t.elem = ec;
     G.stats.built++;
     this.recalc();
     FX.ring(t.cx, t.cy, t.d.color, 34, 22, 2); FX.spark(t.cx, t.cy, t.d.color, 14, 3);
@@ -2986,6 +3010,7 @@ const Towers = {
   sell(t) {
     const v = this.sellValue(t);
     gain(v, Net.coop && t.owner != null ? t.owner : G.actor); G.stats.gold -= v;
+    if (t.fresh && t.elem) Res.gain(this.elemOf(t.key), t.elem);
     FX.float(t.cx, t.cy - 12, '+' + v, '#ffd23f', 14); FX.spark(t.cx, t.cy, '#ffd23f', 10, 2.5); FX.ring(t.cx, t.cy, t.d.color, 26, 16, 2);
     Sfx.play('sell');
     this.remove(t); this.recalc(); if (UI.sel === t) UI.deselect();
@@ -3871,13 +3896,14 @@ const Fusion = {
   avail(k) { return TOWERS[k].tier <= 1 || G.unlocked.has(k); },
   recipeFor(a, b) { return RECIPES.find(r => (r.a === a && r.b === b) || (r.a === b && r.b === a)); },
   canResearch(r) { return !G.unlocked.has(r.r) && this.avail(r.a) && this.avail(r.b); },
-  cost(r) { return Math.max(1, Math.round(r.n * G.mod.bp)); },
-  anyResearchable() { return RECIPES.some(r => this.canResearch(r) && G.nanites >= this.cost(r)); },
+  cur(r) { return Towers.elemOf(r.r) || 'n'; },
+  cost(r) { return Towers.elemOf(r.r) ? Towers.elemCost(r.r, true) : Math.max(1, Math.round(r.n * G.mod.bp)); },
+  anyResearchable() { return RECIPES.some(r => this.canResearch(r) && Res.get(this.cur(r)) >= this.cost(r)); },
   research(r) {
     if (!this.canResearch(r)) return false;
-    const c = this.cost(r);
-    if (G.nanites < c) { Sfx.play('error'); return false; }
-    G.nanites -= c; G.unlocked.add(r.r); G.freshBp = r.r;
+    const c = this.cost(r), cu = this.cur(r);
+    if (Res.get(cu) < c) { Sfx.play('error'); return false; }
+    Res.take(cu, c); G.unlocked.add(r.r); G.freshBp = r.r;
     this.scan();
     Missions.on('plan');
     const d = TOWERS[r.r];
@@ -3900,12 +3926,13 @@ const Fusion = {
   fieldCost(a, b, r) { return Math.max(0, Math.round(Towers.costOf(r.r) - .8 * (a.invested + b.invested))); },
   fieldFuse(a, b, r) {
     if (!G.unlocked.has(r.r)) {
-      UI.toast('Plan requis', `Synthétisez d'abord le plan ${TOWERS[r.r].name} au Labo de fusion (${this.cost(r)} ◈).`, '#ff2bd6', 3.5);
+      UI.toast('Plan requis', `Synthétisez d'abord le plan ${TOWERS[r.r].name} au Labo de fusion (${Res.tag(this.cur(r), this.cost(r))}).`, '#ff2bd6', 3.5);
       Sfx.play('error'); return;
     }
-    const cost = this.fieldCost(a, b, r);
+    const cost = this.fieldCost(a, b, r), ec = Towers.elemCost(r.r);
     if (G.money < cost) { UI.noMoney(); return; }
-    G.money -= cost;
+    if (!Towers.canPay(r.r)) { Towers.elemMissing(r.r); return; }
+    G.money -= cost; if (ec) Res.take(Towers.elemOf(r.r), ec);
     const lvl = Math.max(1, Math.floor((a.level + b.level) / 2)), inv = a.invested + b.invested + cost, R = TOWERS[r.r];
     FX.bolt(b.cx, b.cy, a.cx, a.cy, R.color, 3, 20);
     FX.spark(b.cx, b.cy, TOWERS[b.key].color, 16, 3);
@@ -4736,6 +4763,7 @@ const Lock = {
     if (type === 'build') {
       if (!Towers.canPlace(a[1], a[2])) { Sfx.play('error'); return false; }
       if (G.money < Towers.costOf(a[0])) { UI.noMoney(); return false; }
+      if (!Towers.canPay(a[0])) { Towers.elemMissing(a[0]); return false; }
     } else if (type === 'trap') {
       if (!Traps.canPlace(a[1], a[2]) || Traps.count(a[0]) >= TRAPS[a[0]].max) { Sfx.play('error'); return false; }
       if (G.money < Traps.cost(a[0])) { UI.noMoney(); return false; }
@@ -6891,7 +6919,8 @@ const UI = {
       `<div class="s"><span>Dégâts</span><b>${d.dmg}${d.kind === 'beam' ? '/s' : ''}${d.kind === 'missiles' ? ' x' + d.count : ''}</b>` +
       `<span>Portée</span><b>${(d.range / TILE).toFixed(1)} cases</b>` +
       (d.kind !== 'radar' && d.kind !== 'beam' ? `<span>Cadence</span><b>${(60 / d.rate).toFixed(1)}/s</b>` : '') + '</div>';
-    return `<h4>${d.name} <span style="color:var(--gold);font-family:var(--mono)">${cost}¢</span></h4><div class="d">${d.desc}</div>${stats}` +
+    const ec = G && Towers.elemOf(k) ? Towers.elemTxt(k) : '';
+    return `<h4>${d.name} <span style="color:var(--gold);font-family:var(--mono)">${cost}¢</span>${ec ? `<span style="color:${RES[Towers.elemOf(k)].c};font-family:var(--mono)">${ec}</span>` : ''}</h4><div class="d">${d.desc}</div>${stats}` +
       `<div class="tags">${this.tagsHtml(d)}</div>${rec ? `<div class="d">Fusion de ${TOWERS[rec.a].name} + ${TOWERS[rec.b].name}</div>` : ''}`;
   },
   enemyDesc(d, hpMul) {
@@ -6995,7 +7024,7 @@ const UI = {
       $('hs-el').hidden = !(G.res.sp || G.res.sa || G.res.p || G.res.a);
       $('h-plasma').textContent = RES.p.i + G.res.p; $('h-abyss').textContent = RES.a.i + G.res.a;
       $('h-abyss').hidden = !(G.res.sa || G.res.a);
-      this.refreshBadges();
+      this.refreshBadges(); this.refreshBar();
     }
     if (L.nano !== G.nanites) { const el = $('h-nano'); el.textContent = G.nanites; if (L.nano !== undefined && G.nanites > L.nano) this.anim(el, 'bump'); L.nano = G.nanites; this.refreshBadges(); }
     if (L.wave !== G.waveNum) { $('h-wave').textContent = G.waveNum; L.wave = G.waveNum; }
@@ -7244,7 +7273,8 @@ const UI = {
       el.className = 'bcard' + (G.freshBp === k ? ' fresh' : '');
       el.style.setProperty('--tc', d.color);
       const hk = i < 10 ? (i === 9 ? '0' : '' + (i + 1)) : '';
-      el.innerHTML = `<span class="hk">${hk}</span>${d.tier >= 2 ? `<span class="tr" style="color:${d.color}">T${d.tier}</span>` : ''}<canvas></canvas><span class="pr"></span>`;
+      const ev = Towers.elemCost(k), ei = ev ? `<span class="ec" style="color:${RES[Towers.elemOf(k)].c}">${ev}${RES[Towers.elemOf(k)].i}</span>` : '';
+      el.innerHTML = `<span class="hk">${hk}</span>${d.tier >= 2 ? `<span class="tr" style="color:${d.color}">T${d.tier}</span>` : ''}${ei}<canvas></canvas><span class="pr"></span>`;
       Spr.icon(el.querySelector('canvas'), k, 44);
       el.onclick = () => {
         this.setPlacing(this.placing === k ? null : k);
@@ -7287,7 +7317,7 @@ const UI = {
       const c = this.cards[k], cost = c.send ? MP.sendCost(c.send) : c.trap ? Traps.cost(c.trap) : Towers.costOf(k);
       if (c.cost !== cost) { c.cost = cost; c.pr.textContent = cost; }
       if (c.send) { const st = MP.stock(c.send); if (c.hk.textContent !== String(st)) c.hk.textContent = SENDS[c.send].from > Math.max(1, G.waveNum) ? 'V' + SENDS[c.send].from : st; }
-      const off = G.money < cost || (!!c.send && !MP.canSend(c.send));   // toujours un booléen : toggle(x, undefined) inverserait la classe
+      const off = G.money < cost || (!!c.send && !MP.canSend(c.send)) || (!c.send && !c.trap && !Towers.canPay(k));   // toujours un booléen : toggle(x, undefined) inverserait la classe
       if (off !== c.off) { c.off = off; c.el.classList.toggle('off', off); }
       c.el.classList.toggle('sel', this.placing === k);
     }
@@ -7457,7 +7487,7 @@ const UI = {
     let fuse = '';
     for (const f of Fusion.fieldOptions(t)) {
       const R = TOWERS[f.r.r];
-      fuse += `<div class="fuse-opt${f.owned ? '' : ' off'}" data-o="${f.o.id}" style="--fc:${R.color}"><canvas></canvas><span>+ ${TOWERS[f.o.key].name} → <b>${R.name}</b></span><span class="c">${f.owned ? (f.cost ? fmt(f.cost) + '¢' : 'GRATUIT') : 'PLAN ?'}</span></div>`;
+      fuse += `<div class="fuse-opt${f.owned ? '' : ' off'}" data-o="${f.o.id}" style="--fc:${R.color}"><canvas></canvas><span>+ ${TOWERS[f.o.key].name} → <b>${R.name}</b></span><span class="c">${f.owned ? (f.cost ? fmt(f.cost) + '¢' : 'GRATUIT') + Towers.elemTxt(f.r.r) : 'PLAN ?'}</span></div>`;
     }
     if (fuse) fuse = `<div class="lbl-s" style="margin-top:8px;color:var(--sec)">FUSION SUR LE TERRAIN</div>` + fuse;
     // spécialisation : choix offert au niveau requis, puis rappel de la voie choisie
@@ -7820,22 +7850,22 @@ const UI = {
     this.renderLab(); this.open('ov-lab');
   },
   renderLab() {
-    $('lab-sub').innerHTML = `Nanites : <span class="nanos">${G.nanites} ◈</span> — Synthétisez un <b>plan</b> pour rendre une tourelle fusionnée constructible. Ensuite, <b>placez ses deux composants côte à côte</b> et sélectionnez-en un pour les <b>fusionner sur le terrain</b> : 80% de leur valeur est récupérée et leur niveau moyen conservé.`;
+    $('lab-sub').innerHTML = `Disponibles : ${Res.tag('n', G.nanites)} · ${Res.tag('p', G.res.p)} · ${Res.tag('a', G.res.a)}<br>Plans <b>T2</b> en nanites, <b>T3</b> en plasma, <b>T4</b> en abyssite ; chaque pose d'une T3 ou T4 coûte aussi son élément (selon la difficulté). Synthétisez un <b>plan</b> pour rendre une tourelle fusionnée constructible. Ensuite, <b>placez ses deux composants côte à côte</b> et sélectionnez-en un pour les <b>fusionner sur le terrain</b> : 80% de leur valeur est récupérée et leur niveau moyen conservé.`;
     const Lb = $('lab'); Lb.innerHTML = '';
     for (const tier of [2, 3, 4]) {
       const h = document.createElement('div'); h.className = 'lab-tier'; h.textContent = TIER_NAMES[tier]; Lb.appendChild(h);
       const grid = document.createElement('div'); grid.className = 'rgrid';
       for (const r of RECIPES.filter(x => TOWERS[x.r].tier === tier)) {
-        const d = TOWERS[r.r], own = G.unlocked.has(r.r), can = Fusion.canResearch(r), rc = Fusion.cost(r), afford = G.nanites >= rc;
+        const d = TOWERS[r.r], own = G.unlocked.has(r.r), can = Fusion.canResearch(r), rc = Fusion.cost(r), cu = Fusion.cur(r), afford = Res.get(cu) >= rc;
         const missing = [r.a, r.b].filter(k => !Fusion.avail(k)).map(k => TOWERS[k].name);
         const el = document.createElement('div');
         el.className = 'rcard' + (own ? ' own' : '') + (!own && !can ? ' lock' : '');
         el.style.setProperty('--tc', d.color);
-        el.innerHTML = `<div class="eq"><canvas></canvas>+<canvas></canvas>→<canvas class="res"></canvas><div style="margin-left:auto;text-align:right">${own ? '<span class="tag g">PLAN ACQUIS</span>' : `<span class="nanos">${rc} ◈</span>`}</div></div>
-          <h4>${d.name}<small>${TOWERS[r.a].name} + ${TOWERS[r.b].name} · ${Towers.costOf(r.r)}¢</small></h4><p>${d.desc}</p>
+        el.innerHTML = `<div class="eq"><canvas></canvas>+<canvas></canvas>→<canvas class="res"></canvas><div style="margin-left:auto;text-align:right">${own ? '<span class="tag g">PLAN ACQUIS</span>' : Res.tag(cu, rc)}</div></div>
+          <h4>${d.name}<small>${TOWERS[r.a].name} + ${TOWERS[r.b].name} · ${Towers.costOf(r.r)}¢${Towers.elemTxt(r.r)} la pose</small></h4><p>${d.desc}</p>
           ${d.kind === 'support' ? '' : `<div class="ms"><span>DÉG <b>${d.dmg}${d.kind === 'beam' ? '/s' : ''}</b></span><span>PORTÉE <b>${(d.range / TILE).toFixed(1)}</b></span>${d.rate > 1 ? `<span>CAD <b>${(60 / d.rate).toFixed(1)}/s</b></span>` : ''}</div>`}
           <div class="tags">${this.tagsHtml(d)}</div>
-          ${own ? '' : missing.length ? `<div class="note" style="color:var(--dang)">Plans requis : ${missing.join(', ')}</div>` : `<button class="btn nano" ${afford ? '' : 'disabled'}>SYNTHÉTISER LE PLAN · ${rc} ◈</button>`}`;
+          ${own ? '' : missing.length ? `<div class="note" style="color:var(--dang)">Plans requis : ${missing.join(', ')}</div>` : `<button class="btn nano" ${afford ? '' : 'disabled'} style="${cu !== 'n' ? `border-color:${RES[cu].c};color:${RES[cu].c}` : ''}">SYNTHÉTISER LE PLAN · ${rc} ${RES[cu].i}</button>`}`;
         const cvs = el.querySelectorAll('canvas');
         Spr.icon(cvs[0], r.a, 36); Spr.icon(cvs[1], r.b, 36); Spr.icon(cvs[2], r.r, 48);
         const btn = el.querySelector('button');
@@ -8392,7 +8422,7 @@ const UI = {
         <li>Les <b>débris</b> bloquent des cases : recyclez-les (charges limitées) pour des crédits ou des nanites.</li>
         <li>Appeler une vague en avance (quand la précédente a fini d'apparaître) rapporte une <b>prime</b>.</li>
         <li><b>Spécialisation</b> : au niveau 5 (niveau 3 pour le soutien), choisissez l'une des deux voies de la tourelle (losange doré clignotant). Le choix est définitif et nécessaire pour continuer à l'améliorer.</li>
-        <li><b>Éléments rares</b> : le <b style="color:#ff8a3d">plasma ✺</b> (boss dès la vague 10, parfois élites, ou raffinerie de nanites) paie le palier III de l'arbre ; l'<b style="color:#b48cff">abyssite ⬟</b> (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50) paie le palier IV et les niveaux Oméga.</li>
+        <li><b>Éléments rares</b> : le <b style="color:#ff8a3d">plasma ✺</b> (boss dès la vague 10, parfois élites, ou raffinerie de nanites) paie le palier III de l'arbre et les fusions <b>T3</b> ; l'<b style="color:#b48cff">abyssite ⬟</b> (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50) paie le palier IV, les niveaux Oméga et l'Apocalypse <b>T4</b>. Pour une T3 ou une T4, le plan au Labo <i>et</i> chaque pose coûtent l'élément, d'autant plus que la difficulté est élevée (Standard : plan T3 5 ✺, pose 1 ✺ ; plan T4 3 ⬟, pose 2 ⬟).</li>
         <li><b style="color:#ff4df0">Fin de partie</b> : une fois le Léviathan repoussé (vague 50), les tourelles d'attaque montent jusqu'au <b>niveau Oméga 15</b> (+35 % de dégâts par niveau, crédits + 1 abyssite par niveau), et la <b>Recherche Oméga</b> (en bas de l'arbre, en plasma) ajoute +8 % de dégâts à toutes les tourelles par rang, sans limite. Le badge <b>⚔</b> de l'aperçu de vague estime combien de secondes de tir il faut pour détruire la vague suivante.</li>
         <li><b>Pièges</b> (dans la barre, après les tourelles de base) : les <b>mines</b> explosent au passage d'un ennemi au sol, les <b>barricades</b> bloquent le chemin jusqu'à leur destruction. Ils se posent sur le chemin, loin de l'entrée et du noyau.</li>
         <li>Certaines cartes ont <b>deux chemins</b> qui se rejoignent : couvrez les deux branches, ou concentrez-vous sur le tronçon commun. Les ennemis y sont 10% moins résistants.</li></ul>
