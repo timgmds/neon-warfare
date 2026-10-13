@@ -79,6 +79,8 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | `U` / `X` | Améliorer / vendre la tourelle sélectionnée |
 | `T` / `O` | Changer le ciblage / surcadence |
 | `D` | Débrouiller contre crédits la tourelle sélectionnée, ou toutes les tourelles brouillées |
+
+Toutes ces touches se changent dans **Options → Raccourcis clavier**, où l'on peut aussi donner une touche à chaque tourelle ou piège.
 | `R` | Recycler le débris sélectionné |
 | `F` / `P` | Vitesse (1×, 2×, 3×) / pause |
 | `K` / `L` / `G` / `C` / `H` | Arbre / Labo de fusion / Analyse de combat / Casino / Manuel |
@@ -125,6 +127,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.14** : raccourcis clavier modifiables (Options → Raccourcis clavier) : toutes les commandes, les emplacements de la barre, et une touche au choix pour chaque tourelle ou piège ; la barre, les boutons et le manuel affichent vos touches.
 - **v9.13** : zone des soutiens par crans (4 → 8 → 12 → 20 voisins) ; la 2ᵉ voie du Nexus, qui couvrait déjà les diagonales, devient **Grand rayonnement** (12 voisins), et la compétence Maillage agrandit aussi la zone du Nexus.
 - **v9.12** : coopération fluide avec une forte latence : l'hôte n'attend plus les invités, messages réduits aux seules actions, tampon de lecture adaptatif et rattrapage en douceur, fantôme immédiat des tourelles posées.
 - **v9.11** : Partie perso (17 réglages, gardés d'une partie à l'autre) ; pose des T3/T4 au prix progressif ; plus de plasma par boss après les vagues 25 et 40 ; IEM des astéroïdes et de la foudre à débrouiller contre crédits ; « Recommencer » garde le mode de jeu.
