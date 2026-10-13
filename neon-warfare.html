@@ -853,7 +853,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.12';
+const VERSION = '9.13';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -880,6 +880,10 @@ const angDiff = (a, b) => { let d = (a - b) % TAU; if (d > Math.PI) d -= TAU; el
 const turnTo = (a, b, k) => a - angDiff(a, b) * k;
 const NB4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const NB8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+// zone des tourelles de soutien, cran par cran : 4 voisins → 8 (diagonales) → 12 (cases à 2 en ligne droite) → 20 (losange complet)
+const NB12 = NB8.concat([[2, 0], [-2, 0], [0, 2], [0, -2]]);
+const NB20 = NB12.concat([[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [-1, 2], [1, -2], [-1, -2]]);
+const NBZ = [NB4, NB8, NB12, NB20];
 const TXT = s => s + '︎'; // force la présentation texte (pas d'emoji)
 
 function mulberry32(a) {
@@ -1350,7 +1354,7 @@ const TOWERS = {
   phoenix:  { name: 'Phénix', tier: 2, cost: 460, range: 150, dmg: 22, rate: 20, color: '#ffb03a', kind: 'proj', head: 'phoenix', spd: 9, psz: 3.5, burn: { dps: 18, t: 120 }, bounce: 2, airMult: 2, heat: 12, cool: .6,
     desc: 'Boules de feu rebondissantes (2 rebonds) qui enflamment. Anti-air x2.' },
   nexus:    { name: 'Nexus', tier: 2, cost: 520, range: 0, dmg: 0, rate: 0, color: '#7dffb0', kind: 'support', head: 'nexus', support: { cool: .8, dmg: .3, range: .1 }, diag: true,
-    desc: 'Supercalculateur : buffe les 8 tourelles voisines (+30% dégâts, +80% refroidissement, +10% portée).' },
+    desc: 'Supercalculateur : buffe ses voisines, diagonales comprises (+30% dégâts, +80% refroidissement, +10% portée).' },
   // ----- FUSIONS T3 -----
   nova:     { name: 'Nova', tier: 3, cost: 950, range: 180, dmg: 240, rate: 120, color: '#4dfff3', kind: 'proj', head: 'nova', spd: 6, psz: 7, splash: 95, heat: 60, cool: .5,
     desc: 'Sphère d\'énergie dévastatrice avec une énorme zone d\'explosion.' },
@@ -1639,7 +1643,7 @@ const SKILLS = {
   a8:  { br: 0, row: 4, col: 2, cur: 'p', i: '♛', n: 'Tueur de titans', max: 2, cost: [3, 4], req: [['a6', 1]], d: r => `+${25 * r}% de dégâts contre les boss.` },
   a9:  { br: 0, row: 5, col: 1, cur: 'p', i: '☠', n: 'Exécution', max: 1, cost: [6], reqAny: [['a7', 1], ['a8', 1]], d: () => 'Les ennemis (hors boss) sous 8% de leurs PV sont achevés instantanément.' },
   e7:  { br: 1, row: 4, col: 0, cur: 'p', i: '≫', n: 'Cadence plasma', max: 3, cost: [2, 3, 4], req: [['e6', 1]], d: r => `+${8 * r}% de cadence de tir.` },
-  e8:  { br: 1, row: 4, col: 2, cur: 'p', i: '⬡', n: 'Maillage', max: 1, cost: [5], req: [['e6', 1]], d: () => 'Ventilo, Ordi et Nexus renforcent aussi leurs voisins en diagonale (8 cases).' },
+  e8:  { br: 1, row: 4, col: 2, cur: 'p', i: '⬡', n: 'Maillage', max: 1, cost: [5], req: [['e6', 1]], d: () => 'Ventilo, Ordi et Nexus agrandissent leur zone d\'un cran : 4 → 8 voisins (diagonales), et 8 → 12 pour le Nexus.' },
   e9:  { br: 1, row: 5, col: 1, cur: 'p', i: '⛨', n: 'Blindage IEM', max: 2, cost: [4, 6], reqAny: [['e7', 1], ['e8', 1]], d: r => `Brouillage, drain et étourdissement des tourelles -${35 * r}% de durée.` },
   c7:  { br: 2, row: 4, col: 0, cur: 'p', i: '✺', n: 'Prospection', max: 2, cost: [3, 4], req: [['c6', 1]], d: r => `+${r} plasma par boss vaincu.` },
   c8:  { br: 2, row: 4, col: 2, cur: 'p', i: '¤', n: 'Fonds souverain', max: 2, cost: [2, 3], req: [['c6', 1]], d: r => `Primes de fin de vague +${40 * r}%.` },
@@ -1762,7 +1766,10 @@ const SPECS = {
   radar:    [{ n: 'Brouillage', i: '⌖', d: 'Marquage +15% supplémentaire.', mark: .15 },
              { n: 'Veille longue', i: '◎', d: '+50% de portée.', range: 1.5 }],
   support:  [{ n: 'Amplificateur', i: '▲', d: 'Effets de soutien +50%.', eff: 1.5 },
-             { n: 'Rayonnement', i: '✺', d: 'Affecte aussi les diagonales (8 voisins).', diag: true }]
+             { n: 'Rayonnement', i: '✺', d: 'Zone agrandie d\'un cran : les diagonales (8 voisins), ou les cases à 2 de distance si les diagonales sont déjà couvertes (12 voisins).', diag: true }],
+  // le Nexus couvre déjà les diagonales : sa seconde voie va plus loin
+  nexus:    [{ n: 'Amplificateur', i: '▲', d: 'Effets de soutien +50%.', eff: 1.5 },
+             { n: 'Grand rayonnement', i: '✺', d: 'Zone agrandie : les cases à 2 de distance en ligne droite s\'ajoutent (12 voisins au lieu de 8).', diag: true }]
 };
 
 /* ---------- Commandant : niveau permanent, grades et doctrines ---------- */
@@ -3110,10 +3117,12 @@ const Towers = {
     Sfx.play('sell');
     this.remove(t); this.recalc(); if (UI.sel === t) UI.deselect();
   },
-  specs(t) { return SPECS[t.d.kind] || null; },
+  specs(t) { return SPECS[t.key] || SPECS[t.d.kind] || null; },
   specLvl(t) { return t.d.kind === 'support' ? SPEC_LVL_SUPPORT : SPEC_LVL; },
   needsSpec(t) { return !!this.specs(t) && t.spec == null && t.level >= this.specLvl(t); },
-  diag(t) { return !!(t.d.diag || t.sm.diag || (t.d.support && G.mod.supDiag)); },
+  // crans de zone d'un soutien (0 = 4 voisins … 3 = 20) : diagonales d'origine, voie Rayonnement, compétence Maillage
+  reachOf(k, sm) { const d = TOWERS[k]; return Math.min(3, (d.diag ? 1 : 0) + (sm && sm.diag ? 1 : 0) + (d.support && G.mod.supDiag ? 1 : 0)); },
+  reach(t) { return this.reachOf(t.key, t.sm); },
   setSpec(t, i) {
     const S = this.specs(t); if (!S || !S[i] || t.spec != null) return;
     t.spec = i; t.sm = S[i]; t.born = performance.now() - 120;
@@ -3145,7 +3154,7 @@ const Towers = {
     for (const s of G.towers) {
       const sp = s.d.support; if (!sp || s.stun > 0) continue;   // soutien brouillé : bonus suspendu
       const m = G.mod.support * (1 + .2 * (s.level - 1)) * (s.sm.eff || 1);
-      for (const [dx, dy] of (this.diag(s) ? NB8 : NB4)) {
+      for (const [dx, dy] of NBZ[this.reach(s)]) {
         const x = s.tx + dx, y = s.ty + dy;
         if (x < 0 || y < 0 || x >= C || y >= R) continue;
         const t = G.tgrid[y * C + x]; if (!t || t.d.support) continue;
@@ -6400,9 +6409,9 @@ const Render = {
     c.stroke();
     if (dash) c.setLineDash([]);
   },
-  supportTiles(c, tx, ty, diag, col) {
+  supportTiles(c, tx, ty, lvl, col) {
     c.fillStyle = col; c.globalAlpha = .22;
-    for (const [dx, dy] of (diag ? NB8 : NB4)) {
+    for (const [dx, dy] of NBZ[lvl]) {
       const x = tx + dx, y = ty + dy;
       if (x < 0 || y < 0 || x >= G.map.C || y >= G.map.R) continue;
       c.fillRect(x * TILE + 2, y * TILE + 2, TILE - 4, TILE - 4);
@@ -6418,7 +6427,7 @@ const Render = {
     }
     if (sel) {
       this.rangeCircle(c, sel.cx, sel.cy, sel.range, A, .06, .55, false);
-      if (sel.d.support) this.supportTiles(c, sel.tx, sel.ty, Towers.diag(sel), '#39ff88');
+      if (sel.d.support) this.supportTiles(c, sel.tx, sel.ty, Towers.reach(sel), '#39ff88');
       c.strokeStyle = '#ffffff'; c.lineWidth = 1.5; c.strokeRect(sel.tx * TILE + 1, sel.ty * TILE + 1, TILE - 2, TILE - 2);
     }
     if (UI.selDebris) { const d = UI.selDebris; c.strokeStyle = '#ffffff'; c.lineWidth = 1.5; c.strokeRect(d.tx * TILE + 1, d.ty * TILE + 1, TILE - 2, TILE - 2); }
@@ -6426,7 +6435,7 @@ const Render = {
       const ht = Towers.at(h.tx, h.ty);
       if (ht && ht !== sel) {
         this.rangeCircle(c, ht.cx, ht.cy, ht.range, '#ffffff', .03, .3, true);
-        if (ht.d.support) this.supportTiles(c, ht.tx, ht.ty, Towers.diag(ht), '#39ff88');
+        if (ht.d.support) this.supportTiles(c, ht.tx, ht.ty, Towers.reach(ht), '#39ff88');
       }
       if (M.cells[h.ty * M.C + h.tx] !== 1) { c.fillStyle = 'rgba(255,255,255,.06)'; c.fillRect(h.tx * TILE, h.ty * TILE, TILE, TILE); }
     }
@@ -6815,7 +6824,7 @@ const Render = {
       c.strokeStyle = col; c.lineWidth = 1.5; c.strokeRect(h.tx * TILE + 1, h.ty * TILE + 1, TILE - 2, TILE - 2);
       if (ok) {
         this.rangeCircle(c, x, y, d.range * G.mod.range, rich ? this.theme.accent : '#ff2a6d', .06, .6, true);
-        if (d.support) this.supportTiles(c, h.tx, h.ty, d.diag, '#39ff88');
+        if (d.support) this.supportTiles(c, h.tx, h.ty, Towers.reachOf(key), '#39ff88');
         for (const [dx, dy] of NB4) {
           const o = Towers.at(h.tx + dx, h.ty + dy);
           if (o && Fusion.recipeFor(key, o.key)) {
@@ -7023,7 +7032,7 @@ const UI = {
     T.style.display = 'block';
     this.moveTip(h.sx, h.sy);
   },
-  tagsHtml(d) {
+  tagsHtml(d, t) {
     const T = [];
     if (d.tier >= 2) T.push([TIER_NAMES[d.tier], 'p']);
     if (d.splash) T.push(['Zone', 'y']);
@@ -7038,7 +7047,7 @@ const UI = {
     if (d.bounce) T.push([`Rebonds x${d.bounce}`, 'y']);
     if (d.kind === 'vortex') T.push(['Contrôle', 'p']);
     if (d.kind === 'missiles') T.push([`x${d.count} missiles`, 'y']);
-    if (d.kind === 'support') T.push([d.diag ? '8 voisins' : '4 voisins', 'g']);
+    if (d.kind === 'support') T.push([NBZ[t ? Towers.reach(t) : G && G.mod ? Towers.reachOf(Object.keys(TOWERS).find(k => TOWERS[k] === d)) : d.diag ? 1 : 0].length + ' voisins', 'g']);
     return T.map(([t, c]) => `<span class="tag ${c}">${t}</span>`).join('');
   },
   towerTipHtml(k) {
@@ -7606,7 +7615,7 @@ const UI = {
         <div>CADENCE <b id="tp-rate">-</b></div><div>DPS <b id="tp-dps">-</b></div>
         <div>ÉLIM. <b id="tp-kills">-</b></div><div>TOTAL <b id="tp-dealt">-</b></div></div>`;
     }
-    const tags = `<div class="tags">${this.tagsHtml(d)}${t.bDmg > 0 && !sup ? `<span class="tag g">Soutien +${Math.round(t.bDmg * 100)}% dég.</span>` : ''}${t.bCool > 0 && !sup ? `<span class="tag b">Refroid. +${Math.round(t.bCool * 100)}%</span>` : ''}</div>`;
+    const tags = `<div class="tags">${this.tagsHtml(d, t)}${t.bDmg > 0 && !sup ? `<span class="tag g">Soutien +${Math.round(t.bDmg * 100)}% dég.</span>` : ''}${t.bCool > 0 && !sup ? `<span class="tag b">Refroid. +${Math.round(t.bCool * 100)}%</span>` : ''}</div>`;
     let ctrl = '';
     if (!sup && d.kind !== 'radar') {
       if (d.kind !== 'pulse') ctrl += `<div class="lbl-s" style="margin-top:4px">CIBLAGE <span style="opacity:.6">[T]</span></div><div class="seg" id="tp-strat">${STRATS.map((s, i) => `<button data-s="${i}" class="${t.strat === i ? 'on' : ''}">${s}</button>`).join('')}</div>`;

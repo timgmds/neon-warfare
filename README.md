@@ -125,6 +125,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.13** : zone des soutiens par crans (4 → 8 → 12 → 20 voisins) ; la 2ᵉ voie du Nexus, qui couvrait déjà les diagonales, devient **Grand rayonnement** (12 voisins), et la compétence Maillage agrandit aussi la zone du Nexus.
 - **v9.12** : coopération fluide avec une forte latence : l'hôte n'attend plus les invités, messages réduits aux seules actions, tampon de lecture adaptatif et rattrapage en douceur, fantôme immédiat des tourelles posées.
 - **v9.11** : Partie perso (17 réglages, gardés d'une partie à l'autre) ; pose des T3/T4 au prix progressif ; plus de plasma par boss après les vagues 25 et 40 ; IEM des astéroïdes et de la foudre à débrouiller contre crédits ; « Recommencer » garde le mode de jeu.
 - **v9.10** : fusions T3 et T4 payées en plasma et en abyssite (plan et pose), coûts selon la difficulté.
