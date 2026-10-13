@@ -383,6 +383,21 @@ svg.links line.on{stroke:var(--bc);stroke-width:2.5;opacity:.85}
 .rcard .ms b{color:#fff}
 
 /* options / lists */
+#keys-list{max-height:min(60vh,560px);overflow-y:auto;padding-right:6px}
+.kg{font-size:9px;letter-spacing:2px;color:var(--accent);font-weight:800;margin:14px 0 4px}
+.kg:first-child{margin-top:0}
+.kg small{display:block;letter-spacing:0;font-weight:500;color:var(--dim);font-size:10px;margin-top:2px}
+.krow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.krow small{color:var(--dim);font-size:9px;margin-left:6px;letter-spacing:1px}
+.kset{display:flex;gap:4px;flex:none}
+.kbtn{min-width:96px;padding:5px 8px;border-radius:5px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#fff;font:800 11px var(--mono);cursor:pointer}
+.kbtn:hover{border-color:var(--accent)}
+.krow.wait .kbtn{border-color:var(--gold);color:var(--gold);animation:kpulse 1s infinite}
+@keyframes kpulse{50%{opacity:.55}}
+.kclr{width:26px;border-radius:5px;border:1px solid rgba(255,255,255,.12);background:transparent;color:var(--dim);cursor:pointer}
+.kclr:hover:not(:disabled){color:var(--dang);border-color:var(--dang)}
+.kclr:disabled{opacity:.25;cursor:default}
+.bcard .hk:empty{display:none}
 .opt{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
 .opt span small{display:block;color:var(--dim);font-size:10px;margin-top:2px}
 .opt input[type=range]{width:170px;accent-color:var(--accent)}
@@ -797,6 +812,9 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <div class="ov" id="ov-pause"><div class="modal" style="width:390px;text-align:center">
   <h2>PAUSE</h2><div class="sub" id="pause-info"></div><div class="mbtns" style="margin:12px auto 0" id="pause-btns"></div></div></div>
 <div class="ov" id="ov-opts"><div class="modal" style="width:500px"><button class="mclose" data-close>✕</button><h2>OPTIONS</h2><div id="opts"></div></div></div>
+<div class="ov" id="ov-keys"><div class="modal" style="width:640px"><button class="mclose" data-close>✕</button><h2>RACCOURCIS CLAVIER</h2>
+  <div class="sub">Cliquez sur une touche puis appuyez sur la nouvelle (Échap pour annuler, ✕ pour n'en mettre aucune). Une touche déjà utilisée est retirée de l'autre commande.</div>
+  <div id="keys-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="keys-reset">TOUCHES PAR DÉFAUT</button></div></div></div>
 <div class="ov" id="ov-tree"><div class="modal" style="width:1020px"><button class="mclose" data-close>✕</button>
   <h2>ARBRE DE COMPÉTENCES</h2><div class="sub" id="tree-sub"></div><div class="tree" id="tree"></div><div id="ars"></div></div></div>
 <div class="ov" id="ov-lab"><div class="modal" style="width:1020px"><button class="mclose" data-close>✕</button>
@@ -853,7 +871,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.13';
+const VERSION = '9.14';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -6927,6 +6945,7 @@ const Input = {
     UI.deselect();
   },
   key(e) {
+    if (Keys.wait) { Keys.capture(e); return; }
     if (e.target && e.target.tagName === 'INPUT') return;
     const code = e.code;
     if (code === 'Escape') { e.preventDefault(); UI.escape(); return; }
@@ -6935,33 +6954,131 @@ const Input = {
       const top = UI.top();
       if (top === 'ov-cards') { const m = /^(Digit|Numpad)([1-4])$/.exec(code); if (m) Act.do('card', +m[2] - 1); return; }
       if (top === 'ov-over' && (code === 'Enter' || code === 'NumpadEnter' || code === 'Space')) { e.preventDefault(); const b = $('go-again'); if (b) b.click(); return; }
-      if ((code === 'KeyP' && top === 'ov-pause') || (code === 'KeyK' && top === 'ov-tree') || (code === 'KeyL' && top === 'ov-lab') || (code === 'KeyH' && top === 'ov-help' && G) || (code === 'KeyG' && top === 'ov-stats') || (code === 'KeyC' && top === 'ov-casino' && !UI.spinning)) UI.close(top);
+      const a = Keys.act(code);
+      if ((a === 'pause' && top === 'ov-pause') || (a === 'tree' && top === 'ov-tree') || (a === 'lab' && top === 'ov-lab') || (a === 'help' && top === 'ov-help' && G) || (a === 'stats' && top === 'ov-stats') || (a === 'casino' && top === 'ov-casino' && !UI.spinning)) UI.close(top);
       return;
     }
     if (Game.state !== 'play' || !G || G.over || e.repeat) return;
-    switch (code) {
-      case 'Space': case 'Enter': case 'NumpadEnter': e.preventDefault(); Act.do('wave'); break;
-      case 'KeyP': UI.openPause(); break;
-      case 'KeyF': Game.cycleSpeed(); break;
-      case 'KeyK': UI.openTree(); break;
-      case 'KeyL': UI.openLab(); break;
-      case 'KeyG': UI.openStats(); break;
-      case 'KeyC': UI.openCasino(); break;
-      case 'KeyH': UI.openHelp(); break;
-      case 'KeyQ': Abil.trigger('orbital'); break;
-      case 'KeyW': Abil.trigger('emp'); break;
-      case 'KeyE': Abil.trigger('overdrive'); break;
-      case 'KeyU': if (UI.sel && Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); break;
-      case 'KeyX': case 'Delete': case 'Backspace': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;
-      case 'KeyT': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % 4); break;
-      case 'KeyO': if (UI.sel) UI.toggleOC(); break;
-      case 'KeyD': UI.unjam(); break;
-      case 'KeyR': if (UI.selDebris && !UI.selDebris.trap) Act.do('recycle', UI.selDebris.tx, UI.selDebris.ty); break;
-      default: {
-        const m = /^(Digit|Numpad)(\d)$/.exec(code);
-        if (m) { const i = m[2] === '0' ? 9 : +m[2] - 1, k = UI.hotkeys[i]; if (k) UI.setPlacing(UI.placing === k ? null : k); }
-      }
+    const act = Keys.act(code);
+    if (!act) return;
+    if (act.startsWith('tw:') || act.startsWith('trap:')) {
+      const k = act.startsWith('tw:') ? act.slice(3) : act;
+      if (UI.cards[k]) UI.setPlacing(UI.placing === k ? null : k);
+      else if (TOWERS[k]) UI.toast(TOWERS[k].name, TOWERS[k].tier >= 2 ? 'Plan non acquis : synthétisez-le au Labo de fusion.' : 'Indisponible dans cette partie.', TOWERS[k].color, 2.5);
+      return;
     }
+    if (act.startsWith('slot')) { const k = UI.hotkeys[+act.slice(4) - 1]; if (k) UI.setPlacing(UI.placing === k ? null : k); return; }
+    switch (act) {
+      case 'wave': e.preventDefault(); Act.do('wave'); break;
+      case 'pause': UI.openPause(); break;
+      case 'speed': Game.cycleSpeed(); break;
+      case 'tree': UI.openTree(); break;
+      case 'lab': UI.openLab(); break;
+      case 'stats': UI.openStats(); break;
+      case 'casino': UI.openCasino(); break;
+      case 'help': UI.openHelp(); break;
+      case 'orbital': case 'emp': case 'overdrive': Abil.trigger(act); break;
+      case 'up': if (UI.sel && Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); break;
+      case 'sell': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;
+      case 'strat': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % 4); break;
+      case 'oc': if (UI.sel) UI.toggleOC(); break;
+      case 'unjam': UI.unjam(); break;
+      case 'recycle': if (UI.selDebris && !UI.selDebris.trap) Act.do('recycle', UI.selDebris.tx, UI.selDebris.ty); break;
+    }
+  }
+};
+
+/* ============================== RACCOURCIS CLAVIER ==============================
+   Chaque commande a ses touches par défaut (codes physiques e.code), que le joueur peut remplacer dans
+   Options → Raccourcis clavier ; il peut aussi donner une touche à n'importe quelle tourelle ou piège. */
+const KEYDEF = [
+  { g: 'PARTIE', id: 'wave', n: 'Lancer / appeler la vague', d: ['Space', 'Enter', 'NumpadEnter'] },
+  { g: 'PARTIE', id: 'speed', n: 'Vitesse', d: ['KeyF'] },
+  { g: 'PARTIE', id: 'pause', n: 'Pause', d: ['KeyP'] },
+  { g: 'PARTIE', id: 'tree', n: 'Arbre de compétences', d: ['KeyK'] },
+  { g: 'PARTIE', id: 'lab', n: 'Labo de fusion', d: ['KeyL'] },
+  { g: 'PARTIE', id: 'stats', n: 'Analyse de combat', d: ['KeyG'] },
+  { g: 'PARTIE', id: 'casino', n: 'Casino', d: ['KeyC'] },
+  { g: 'PARTIE', id: 'help', n: 'Manuel', d: ['KeyH'] },
+  { g: 'CAPACITÉS', id: 'orbital', n: 'Frappe orbitale', d: ['KeyQ'] },
+  { g: 'CAPACITÉS', id: 'emp', n: 'Cryo-Bombe', d: ['KeyW'] },
+  { g: 'CAPACITÉS', id: 'overdrive', n: 'Surcharge', d: ['KeyE'] },
+  { g: 'TOURELLE CHOISIE', id: 'up', n: 'Améliorer', d: ['KeyU'] },
+  { g: 'TOURELLE CHOISIE', id: 'sell', n: 'Vendre', d: ['KeyX', 'Delete', 'Backspace'] },
+  { g: 'TOURELLE CHOISIE', id: 'strat', n: 'Changer de ciblage', d: ['KeyT'] },
+  { g: 'TOURELLE CHOISIE', id: 'oc', n: 'Surcadence', d: ['KeyO'] },
+  { g: 'TOURELLE CHOISIE', id: 'unjam', n: 'Débrouiller (sinon toutes)', d: ['KeyD'] },
+  { g: 'TOURELLE CHOISIE', id: 'recycle', n: 'Recycler le débris', d: ['KeyR'] },
+  ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => ({ g: 'EMPLACEMENTS DE LA BARRE', id: 'slot' + i, n: 'Emplacement ' + i, d: ['Digit' + (i % 10), 'Numpad' + (i % 10)] }))
+];
+const Keys = {
+  wait: null, map: null,
+  // touches d'une commande : réglage du joueur (tableau, éventuellement vide) sinon défaut
+  of(id) {
+    const u = (Store.s.keys || {})[id];
+    if (u) return u;
+    const d = KEYDEF.find(x => x.id === id);
+    return d ? d.d : [];
+  },
+  build() {
+    this.map = new Map();
+    for (const d of KEYDEF) for (const c of this.of(d.id)) this.map.set(c, d.id);
+    for (const id in Store.s.keys || {}) if (/^(tw|trap):/.test(id)) for (const c of Store.s.keys[id]) this.map.set(c, id);
+  },
+  act(code) { if (!this.map) this.build(); return this.map.get(code) || null; },
+  is(code, id) { return this.act(code) === id; },
+  // libellé de la touche principale d'une commande (vide si aucune)
+  lbl(id) { const c = this.of(id)[0]; return c ? this.name(c) : ''; },
+  name(code) {
+    const N = { Space: 'ESPACE', Enter: 'ENTRÉE', NumpadEnter: 'ENTRÉE', Delete: 'SUPPR', Backspace: '⌫', Tab: 'TAB', ShiftLeft: 'MAJ', ShiftRight: 'MAJ D',
+      ControlLeft: 'CTRL', ControlRight: 'CTRL D', AltLeft: 'ALT', AltRight: 'ALT GR', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
+      Insert: 'INSER', Home: 'DÉBUT', End: 'FIN', PageUp: 'PG ↑', PageDown: 'PG ↓', CapsLock: 'VERR MAJ' };
+    if (N[code]) return N[code];
+    let m = /^Numpad(\d)$/.exec(code); if (m) return 'PAVÉ ' + m[1];
+    m = /^Digit(\d)$/.exec(code); if (m) return m[1];
+    if (/^Key[A-Z]$/.test(code) || /^(Semicolon|Comma|Period|Slash|Quote|BracketLeft|BracketRight|Backslash|Minus|Equal|IntlBackslash)$/.test(code)) {
+      if (UI.layout) { const v = UI.layout.get(code); if (v) return v.toUpperCase(); }
+      if (/^Key/.test(code)) return UI.keyLabel(code);
+    }
+    return code.replace(/^Numpad/, 'PAVÉ ').toUpperCase();
+  },
+  set(id, codes) {
+    const K = Store.s.keys || (Store.s.keys = {});
+    // une touche ne sert qu'à une commande : on la retire de toutes les autres
+    for (const c of codes) for (const o of KEYDEF.map(d => d.id).concat(Object.keys(K))) if (o !== id) {
+      const cur = this.of(o); if (cur.includes(c)) K[o] = cur.filter(x => x !== c);
+    }
+    K[id] = codes;
+    for (const o in K) if (/^(tw|trap):/.test(o) && !K[o].length) delete K[o];
+    Store.save(); this.build(); this.changed();
+  },
+  reset() { Store.s.keys = {}; Store.save(); this.build(); this.changed(); },
+  changed() { if (G && !G.demo) { UI.buildBar(); UI.buildAbils(); UI.refreshAbils(true); if (UI.sel) UI.renderPanel(); } },
+  // écran Options → Raccourcis
+  render() {
+    const box = $('keys-list'), row = (id, n, sub) => {
+      const c = this.of(id), w = this.wait === id;
+      return `<div class="krow${w ? ' wait' : ''}"><span>${n}${sub ? `<small>${sub}</small>` : ''}</span><span class="kset"><button class="kbtn" data-k="${id}">${w ? 'APPUYEZ SUR UNE TOUCHE…' : c.length ? c.slice(0, 2).map(x => this.name(x)).join(' / ') : '—'}</button><button class="kclr" data-c="${id}" title="Aucune touche" ${c.length ? '' : 'disabled'}>✕</button></span></div>`;
+    };
+    let h = '', g = '';
+    for (const d of KEYDEF) {
+      if (d.g !== g) { g = d.g; h += `<div class="kg">${g}</div>`; }
+      h += row(d.id, d.n);
+    }
+    h += `<div class="kg">TOURELLES ET PIÈGES<small>une touche pour sélectionner directement un canon, même s'il change de place dans la barre</small></div>`;
+    for (const k in TOWERS) h += row('tw:' + k, `<b style="color:${TOWERS[k].color}">${TOWERS[k].name}</b>`, TOWERS[k].tier >= 2 ? 'T' + TOWERS[k].tier : '');
+    for (const t in TRAPS) h += row('trap:' + t, `<b style="color:${TRAPS[t].color}">${TRAPS[t].name}</b>`, 'piège');
+    box.innerHTML = h;
+    box.querySelectorAll('.kbtn').forEach(b => b.onclick = () => { this.wait = this.wait === b.dataset.k ? null : b.dataset.k; Sfx.play('ui'); this.render(); });
+    box.querySelectorAll('.kclr').forEach(b => b.onclick = () => { this.wait = null; this.set(b.dataset.c, []); Sfx.play('ui'); this.render(); });
+  },
+  open() { this.wait = null; this.render(); UI.open('ov-keys'); },
+  // capture de la touche pendant un réglage
+  capture(e) {
+    e.preventDefault(); e.stopPropagation();
+    const id = this.wait; this.wait = null;
+    if (e.code !== 'Escape' && e.code !== 'F3' && e.code !== 'Backquote' && e.code) { this.set(id, [e.code]); Sfx.play('upgrade'); }
+    this.render();
   }
 };
 
@@ -7180,7 +7297,7 @@ const UI = {
     const c = Towers.unjamCostAll(), k = n + ':' + c + ':' + (G.money >= c);
     if (k === this.last.ujk) return;
     this.last.ujk = k;
-    b.innerHTML = `⚡ DÉBROUILLER ${n > 1 ? n + ' TOURELLES' : 'LA TOURELLE'} · <b>${fmt(c)}¢</b> <span class="k">D</span>`;
+    b.innerHTML = `⚡ DÉBROUILLER ${n > 1 ? n + ' TOURELLES' : 'LA TOURELLE'} · <b>${fmt(c)}¢</b> <span class="k">${Keys.lbl('unjam')}</span>`;
     b.disabled = G.money < c;
   },
   // touche D : la tourelle sélectionnée si elle est brouillée, sinon toutes
@@ -7201,7 +7318,7 @@ const UI = {
     const key = txt + cls + dis;
     if (this.last.wbtn === key) return;
     this.last.wbtn = key;
-    b.innerHTML = txt + (dis ? '' : ' <span class="k">ESPACE</span>');
+    b.innerHTML = txt + (dis ? '' : ` <span class="k">${Keys.lbl('wave')}</span>`);
     b.className = 'btn ' + cls; b.disabled = dis;
   },
   refreshBadges() {
@@ -7394,7 +7511,7 @@ const UI = {
       for (const type in TRAPS) {
         const T = TRAPS[type], k = 'trap:' + type, el = document.createElement('div');
         el.className = 'bcard'; el.style.setProperty('--tc', T.color);
-        el.innerHTML = `<span class="tr" style="color:${T.color}">PIÈGE</span><canvas></canvas><span class="pr"></span>`;
+        el.innerHTML = `<span class="hk">${Keys.lbl(k)}</span><span class="tr" style="color:${T.color}">PIÈGE</span><canvas></canvas><span class="pr"></span>`;
         const cv = el.querySelector('canvas'), dpr = Math.min(2, window.devicePixelRatio || 1);
         cv.width = cv.height = 44 * dpr; const x = cv.getContext('2d'); x.setTransform(dpr * 1.25, 0, 0, dpr * 1.25, 22 * dpr, 22 * dpr); drawTrapShape(x, type, true);
         el.onclick = () => this.setPlacing(this.placing === k ? null : k);
@@ -7410,7 +7527,7 @@ const UI = {
       const el = document.createElement('div');
       el.className = 'bcard' + (G.freshBp === k ? ' fresh' : '');
       el.style.setProperty('--tc', d.color);
-      const hk = i < 10 ? (i === 9 ? '0' : '' + (i + 1)) : '';
+      const hk = (Keys.lbl('tw:' + k) || (i < 10 ? Keys.lbl('slot' + (i + 1)) : '')).replace('PAVÉ ', 'P');
       const ei = Towers.elemOf(k) ? `<span class="ec" style="color:${RES[Towers.elemOf(k)].c}"></span>` : '';
       el.innerHTML = `<span class="hk">${hk}</span>${d.tier >= 2 ? `<span class="tr" style="color:${d.color}">T${d.tier}</span>` : ''}${ei}<canvas></canvas><span class="pr"></span>`;
       Spr.icon(el.querySelector('canvas'), k, 44);
@@ -7488,7 +7605,7 @@ const UI = {
     for (const k of Abil.keys) {
       const a = ABILS[k], el = document.createElement('div');
       el.className = 'abil'; el.style.setProperty('--c', a.color);
-      el.innerHTML = `<span class="ic">${TXT(a.i)}</span><div class="cdov"></div><span class="cdt"></span><span class="key">${this.keyLabel(a.code)}</span>`;
+      el.innerHTML = `<span class="ic">${TXT(a.i)}</span><div class="cdov"></div><span class="cdt"></span><span class="key">${Keys.lbl(k)}</span>`;
       el.onclick = () => Abil.trigger(k);
       el.onpointerenter = e => { if (e.pointerType !== 'touch') this.showTipAt(this.abilTip(k), el.getBoundingClientRect(), a.color); };
       el.onpointerleave = () => this.hideTip();
@@ -7498,7 +7615,7 @@ const UI = {
   },
   abilTip(k) {
     const a = ABILS[k], locked = G && !Abil.unlocked(k), cd = G ? Abil.cdMax(k) / 60 : a.cd / 60;
-    return `<h4>${a.n} [${this.keyLabel(a.code)}]</h4><div class="d">${a.d}</div>` +
+    return `<h4>${a.n}${Keys.lbl(k) ? ` [${Keys.lbl(k)}]` : ''}</h4><div class="d">${a.d}</div>` +
       `<div class="d" style="margin-top:4px">Recharge : ${Math.round(cd)} s${k === 'orbital' && G ? ` · Dégâts : <b style="color:#fff">${fmt(Abil.orbDmg())}</b>` : ''}</div>` +
       (locked ? `<div class="d" style="color:var(--dang);margin-top:4px">Verrouillée — compétence « ${SKILLS[a.skill].n} » requise (Arbre).</div>` : '');
   },
@@ -7620,7 +7737,7 @@ const UI = {
     if (!sup && d.kind !== 'radar') {
       if (d.kind !== 'pulse') ctrl += `<div class="lbl-s" style="margin-top:4px">CIBLAGE <span style="opacity:.6">[T]</span></div><div class="seg" id="tp-strat">${STRATS.map((s, i) => `<button data-s="${i}" class="${t.strat === i ? 'on' : ''}">${s}</button>`).join('')}</div>`;
       ctrl += `<div class="lbl-s" style="margin-top:8px">CHALEUR</div><div class="heat"><i id="tp-heat"></i></div>`;
-      ctrl += `<div class="row" style="margin-top:2px"><button class="btn${t.oc ? ' danger on' : ''}" id="tp-oc" style="flex:1">SURCADENCE : ${t.oc ? 'ON' : 'OFF'} <span class="k">O</span></button></div>` +
+      ctrl += `<div class="row" style="margin-top:2px"><button class="btn${t.oc ? ' danger on' : ''}" id="tp-oc" style="flex:1">SURCADENCE : ${t.oc ? 'ON' : 'OFF'} <span class="k">${Keys.lbl('oc')}</span></button></div>` +
         `<div class="note" style="margin-top:3px">Cadence x2 mais chauffe. À 100% : arrêt jusqu'au refroidissement complet. Les Ventilos aident.</div>`;
     }
     let fuse = '';
@@ -7636,10 +7753,10 @@ const UI = {
       S.map((s, i) => `<button class="spec" data-sp="${i}"><i>${TXT(s.i)}</i><b>${s.n}</b><span>${s.d}</span></button>`).join('') + '</div>';
     else if (t.spec != null) spec = `<div class="specd"><i>${TXT(S[t.spec].i)}</i><b>${S[t.spec].n}</b><span>${S[t.spec].d}</span></div>`;
     else if (S) spec = `<div class="note" style="margin-top:6px">Spécialisation débloquée au niveau ${Towers.specLvl(t)}.</div>`;
-    const upTxt = t.level >= maxL ? (!sup && !Towers.omega() ? `NIVEAUX OMÉGA APRÈS LA VAGUE ${Towers.omFrom()}` : 'NIVEAU MAX') : t.level >= 10 ? `▲ OMÉGA ${t.level + 1} · +${Math.round((G.mod.omegaDmg - 1) * 100)}% DÉG. · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢ + ${OMEGA.abyss} ${RES.a.i}</b> <span class="k">U</span>` : need ? 'CHOISISSEZ UNE SPÉCIALISATION' : `▲ AMÉLIORER · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢</b> <span class="k">U</span>`;
+    const upTxt = t.level >= maxL ? (!sup && !Towers.omega() ? `NIVEAUX OMÉGA APRÈS LA VAGUE ${Towers.omFrom()}` : 'NIVEAU MAX') : t.level >= 10 ? `▲ OMÉGA ${t.level + 1} · +${Math.round((G.mod.omegaDmg - 1) * 100)}% DÉG. · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢ + ${OMEGA.abyss} ${RES.a.i}</b> <span class="k">${Keys.lbl('up')}</span>` : need ? 'CHOISISSEZ UNE SPÉCIALISATION' : `▲ AMÉLIORER · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢</b> <span class="k">${Keys.lbl('up')}</span>`;
     P.innerHTML = `<div class="tp-head"><canvas id="tp-ic"></canvas><div><div class="tp-name">${d.name.toUpperCase()}</div><div class="tp-sub">${TIER_NAMES[d.tier]} · NIV ${t.level}/${maxL}</div><div class="pips">${pips}</div></div><span class="tp-close" id="tp-x">✕</span></div>
       ${body}${tags}<div class="jam" id="tp-jam" hidden><span>⚡ BROUILLÉE${sup ? ' · BONUS SUSPENDU' : ''} · <b id="tp-jt"></b></span><button class="btn" id="tp-unjam"></button><button class="btn" id="tp-unjall" hidden></button></div>${spec}${ctrl}${fuse}
-      <div class="pbtns"><button class="btn prim" id="tp-up">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE · ${fmt(Towers.sellValue(t))}¢ <span class="k">X</span></button></div>`;
+      <div class="pbtns"><button class="btn prim" id="tp-up">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE · ${fmt(Towers.sellValue(t))}¢ <span class="k">${Keys.lbl('sell')}</span></button></div>`;
     Spr.icon($('tp-ic'), t.key, 42);
     $('tp-x').onclick = () => this.deselect();
     $('tp-up').onclick = () => { if (Act.do('up', t.tx, t.ty)) this.renderPanel(); };
@@ -7685,7 +7802,7 @@ const UI = {
     J.hidden = !on;
     if (!on) { if (was) this.placePanel(); return; }
     $('tp-jt').textContent = t.jamP ? 'jusqu\'au débrouillage' : (t.stun / 60).toFixed(1).replace('.', ',') + ' s';
-    const b = $('tp-unjam'); b.innerHTML = `DÉBROUILLER · <b>${fmt(c)}¢</b> <span class="k">D</span>`; b.disabled = G.money < c;
+    const b = $('tp-unjam'); b.innerHTML = `DÉBROUILLER · <b>${fmt(c)}¢</b> <span class="k">${Keys.lbl('unjam')}</span>`; b.disabled = G.money < c;
     const a = $('tp-unjall'); a.hidden = n < 2;
     if (n > 1) { a.innerHTML = `TOUTES (${n}) · <b>${fmt(ca)}¢</b>`; a.disabled = G.money < ca; }
     if (!was) this.placePanel();
@@ -7701,7 +7818,7 @@ const UI = {
       <div class="note">Recyclez-le pour libérer la case et récupérer des crédits (70%) ou des nanites (30%).</div>
       <div class="sgrid" style="margin-top:8px"><div style="grid-column:1/3">CHARGES DE RECYCLAGE <b style="color:${c > 0 ? 'var(--ok)' : 'var(--dang)'}">${c}</b></div></div>
       <div class="note">+1 charge toutes les 5 vagues.</div>
-      <div class="row" style="margin-top:9px"><button class="btn nano" id="tp-rec" style="flex:1" ${c > 0 && !busy ? '' : 'disabled'}>${busy ? 'RECYCLAGE EN COURS…' : 'RECYCLER'} <span class="k">R</span></button></div>`;
+      <div class="row" style="margin-top:9px"><button class="btn nano" id="tp-rec" style="flex:1" ${c > 0 && !busy ? '' : 'disabled'}>${busy ? 'RECYCLAGE EN COURS…' : 'RECYCLER'} <span class="k">${Keys.lbl('recycle')}</span></button></div>`;
     $('tp-x').onclick = () => this.deselect();
     $('tp-rec').onclick = () => { if (this.selDebris) Act.do('recycle', this.selDebris.tx, this.selDebris.ty); };
     P.classList.add('show');
@@ -7861,6 +7978,7 @@ const UI = {
       <div class="opt"><span>Chiffres de dégâts</span><button class="btn" id="o-dn">${tg(s.dmgNums)}</button></div>
       <div class="opt"><span>Événements aléatoires<small>Astéroïdes, ravitaillements, tempêtes… (prochaines parties)</small></span><button class="btn" id="o-ev">${tg(s.events !== false)}</button></div>
       <div class="opt"><span>Compteur FPS<small>Touche F3</small></span><button class="btn" id="o-fps">${tg(s.fps)}</button></div>
+      <div class="opt"><span>Raccourcis clavier<small>Changer les touches, en donner une à chaque canon</small></span><button class="btn" id="o-keys">MODIFIER</button></div>
       <div class="opt"><span>Démo IA du menu<small>Une partie jouée par l'IA en fond du menu principal</small></span><button class="btn" id="o-demo">${tg(s.demo)}</button></div>
       <div class="opt" style="border:0"><span>Réinitialiser la progression<small>Héritage, succès, records et sauvegarde</small></span><button class="btn danger" id="o-reset">EFFACER</button></div>`;
     $('o-sfx').oninput = e => { s.sfx = e.target.value / 100; Sfx.applyVolumes(); };
@@ -7874,6 +7992,8 @@ const UI = {
     $('o-sh').onclick = () => { s.shake = !s.shake; Store.save(); this.openOptions(); };
     $('o-dn').onclick = () => { s.dmgNums = !s.dmgNums; this.dmgNums = s.dmgNums; Store.save(); this.openOptions(); };
     $('o-fps').onclick = () => { this.toggleFps(); this.openOptions(); };
+    $('o-keys').onclick = () => Keys.open();
+    $('keys-reset').onclick = () => { Keys.wait = null; Keys.reset(); Sfx.play('ui'); Keys.render(); };
     $('o-ev').onclick = () => { s.events = s.events === false; Store.save(); this.openOptions(); };
     $('o-demo').onclick = () => {
       s.demo = !s.demo; Store.save();
@@ -8556,22 +8676,22 @@ const UI = {
     this.open('ov-ach');
   },
   openHelp() {
-    const q = this.keyLabel('KeyQ'), w = this.keyLabel('KeyW');
+    const K = id => `<kbd>${Keys.lbl(id) || '—'}</kbd>`;
     $('help').innerHTML = `
       <h3>OBJECTIF</h3><p>Les ennemis suivent le chemin lumineux jusqu'à votre <b>noyau</b> (l'hexagone). Chaque ennemi qui passe réduit votre <b>intégrité</b>. Les vagues sont infinies et de plus en plus puissantes, avec un <b>boss toutes les 5 vagues</b> et un <b style="color:#ff2a6d">méga-boss</b> à plusieurs phases aux vagues 50 (Léviathan) et 100 (Oméga), puis toutes les 50 vagues. Un méga-boss qui atteint le noyau met fin à la partie. Tenez le plus longtemps possible.</p>
       <h3>CONSTRUIRE & AMÉLIORER</h3><ul>
-        <li>Choisissez une tourelle dans la barre du bas (touches <kbd>1</kbd>…<kbd>0</kbd>) puis cliquez sur une case libre. <kbd>Maj</kbd> + clic pour en poser plusieurs.</li>
+        <li>Choisissez une tourelle dans la barre du bas (touches ${K('slot1')}…${K('slot10')}, ou la touche que vous avez donnée à un canon) puis cliquez sur une case libre. <kbd>Maj</kbd> + clic pour en poser plusieurs.</li>
         <li>Cliquez sur une tourelle : amélioration (niveau 10 max), ciblage, surcadence, revente. Entre deux vagues, une tourelle tout juste construite est <b>remboursée à 100%</b> (droit à l'erreur).</li>
         <li>Les <b>débris</b> bloquent des cases : recyclez-les (charges limitées) pour des crédits ou des nanites.</li>
         <li>Appeler une vague en avance (quand la précédente a fini d'apparaître) rapporte une <b>prime</b>.</li>
         <li><b>Spécialisation</b> : au niveau 5 (niveau 3 pour le soutien), choisissez l'une des deux voies de la tourelle (losange doré clignotant). Le choix est définitif et nécessaire pour continuer à l'améliorer.</li>
-        <li><b>Astéroïdes et foudre</b> : leur IEM met les tourelles touchées <b>hors ligne jusqu'à ce que vous payiez le débrouillage</b> (touche D, ou le bouton qui apparaît). En partie perso, vous pouvez le rendre temporaire.</li>
+        <li><b>Astéroïdes et foudre</b> : leur IEM met les tourelles touchées <b>hors ligne jusqu'à ce que vous payiez le débrouillage</b> (touche ${K('unjam')}, ou le bouton qui apparaît). En partie perso, vous pouvez le rendre temporaire.</li>
         <li><b>Éléments rares</b> : le <b style="color:#ff8a3d">plasma ✺</b> (boss dès la vague 10, parfois élites, ou raffinerie de nanites) paie le palier III de l'arbre et les fusions <b>T3</b> ; l'<b style="color:#b48cff">abyssite ⬟</b> (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50) paie le palier IV, les niveaux Oméga et l'Apocalypse <b>T4</b>. Pour une T3 ou une T4, le plan au Labo <i>et</i> chaque pose coûtent l'élément, d'autant plus que la difficulté est élevée ; chaque pose coûte un peu plus que la précédente (Standard : plan T3 5 ✺, poses 0, 1, 2… ✺ ; plan T4 3 ⬟, poses 0, 2, 4… ⬟). Revendre une tourelle fait redescendre le prix. Les boss lâchent 1 ✺ dès la vague 10, 2 dès la 25 et 3 dès la 40.</li>
         <li><b style="color:#ff4df0">Fin de partie</b> : une fois le Léviathan repoussé (vague 50), les tourelles d'attaque montent jusqu'au <b>niveau Oméga 15</b> (+35 % de dégâts par niveau, crédits + 1 abyssite par niveau), et la <b>Recherche Oméga</b> (en bas de l'arbre, en plasma) ajoute +8 % de dégâts à toutes les tourelles par rang, sans limite. Le badge <b>⚔</b> de l'aperçu de vague estime combien de secondes de tir il faut pour détruire la vague suivante.</li>
         <li><b>Pièges</b> (dans la barre, après les tourelles de base) : les <b>mines</b> explosent au passage d'un ennemi au sol, les <b>barricades</b> bloquent le chemin jusqu'à leur destruction. Ils se posent sur le chemin, loin de l'entrée et du noyau.</li>
         <li>Certaines cartes ont <b>deux chemins</b> qui se rejoignent : couvrez les deux branches, ou concentrez-vous sur le tronçon commun. Les ennemis y sont 10% moins résistants.</li></ul>
       <h3>FUSION DES CANONS</h3><ul>
-        <li>Au <b>Labo de fusion</b> (<kbd>L</kbd>), dépensez des nanites pour acquérir des <b>plans</b> : la tourelle fusionnée devient constructible.</li>
+        <li>Au <b>Labo de fusion</b> (${K('lab')}), dépensez des nanites pour acquérir des <b>plans</b> : la tourelle fusionnée devient constructible.</li>
         <li><b>Fusion sur le terrain</b> : placez les deux composants côte à côte, sélectionnez l'un d'eux et fusionnez. 80% de leur valeur est déduite du prix et leur niveau moyen est conservé.</li>
         <li>Les fusions se combinent entre elles : T2 → T3 → l'ultime <b>Apocalypse</b> (T4). 14 recettes à découvrir.</li></ul>
       <h3>CHALEUR & SOUTIEN</h3><ul>
@@ -8607,12 +8727,12 @@ const UI = {
         <li>Les <b style="color:var(--gold)">élites</b> (cercle doré) sont 3x plus résistants mais lâchent souvent des nanites. Survolez le butin pour le ramasser.</li>
         <li><b>Boss</b> : le Colosse encaisse, l'Hydre invoque, l'Overlord brouille, la <b>Scission</b> se divise en fragments, la <b>Sentinelle</b> protège ses voisins par des boucliers et le <b>Sauteur</b> marque son point d'atterrissage avant de bondir en avant.</li>
         <li><b style="color:#fff35c">Tourelles brouillées ⚡</b> (IEM, météores, sabotages) : elles ne tirent plus, et un soutien brouillé ne donne plus son bonus. Le brouillage se dissipe seul, ou se paie pour repartir aussitôt : bouton <b>DÉBROUILLER</b> dans le panneau de la tourelle, ou touche <kbd>D</kbd>. Le prix dépend du temps restant et de la valeur de la tourelle.</li></ul>
-      <h3>RACCOURCIS</h3><div class="cols">
-        <p><kbd>Espace</kbd> Lancer / appeler la vague</p><p><kbd>1</kbd>…<kbd>0</kbd> Choisir une tourelle</p>
-        <p><kbd>${q}</kbd> <kbd>${w}</kbd> <kbd>E</kbd> Capacités</p><p><kbd>U</kbd> Améliorer · <kbd>X</kbd> Vendre</p>
-        <p><kbd>T</kbd> Ciblage · <kbd>O</kbd> Surcadence</p><p><kbd>R</kbd> Recycler le débris sélectionné</p>
-        <p><kbd>D</kbd> Débrouiller (la tourelle choisie, sinon toutes)</p>
-        <p><kbd>F</kbd> Vitesse · <kbd>P</kbd> Pause</p><p><kbd>K</kbd> Arbre · <kbd>L</kbd> Labo · <kbd>G</kbd> Stats · <kbd>C</kbd> Casino · <kbd>H</kbd> Manuel</p>
+      <h3>RACCOURCIS <small style="font-size:10px;letter-spacing:1px;color:var(--dim)">modifiables dans Options → Raccourcis clavier</small></h3><div class="cols">
+        <p>${K('wave')} Lancer / appeler la vague</p><p>${K('slot1')}…${K('slot10')} Choisir une tourelle</p>
+        <p>${K('orbital')} ${K('emp')} ${K('overdrive')} Capacités</p><p>${K('up')} Améliorer · ${K('sell')} Vendre</p>
+        <p>${K('strat')} Ciblage · ${K('oc')} Surcadence</p><p>${K('recycle')} Recycler le débris sélectionné</p>
+        <p>${K('unjam')} Débrouiller (la tourelle choisie, sinon toutes)</p>
+        <p>${K('speed')} Vitesse · ${K('pause')} Pause</p><p>${K('tree')} Arbre · ${K('lab')} Labo · ${K('stats')} Stats · ${K('casino')} Casino · ${K('help')} Manuel</p>
         <p><kbd>Échap</kbd> / clic droit : annuler</p><p><kbd>F3</kbd> Compteur FPS</p></div>`;
     this.open('ov-help');
   }
