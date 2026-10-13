@@ -7,7 +7,7 @@ récent (PC, tablette ou téléphone). Se joue **seul ou de 2 à 4 joueurs** (ve
 ## Jouer
 
 1. Ouvrir `neon-warfare.html` dans un navigateur.
-2. **Nouvelle partie** → choisir la doctrine, le mode (Classique, Boss Rush, Chaos, Bac à sable)
+2. **Nouvelle partie** → choisir la doctrine, le mode (Classique, Boss Rush, Chaos, Bac à sable, Partie perso)
    et la menace (Recrue, Standard, Hardcore, Cauchemar), ou relever le **Défi du jour**.
 3. Choisir une tourelle dans la barre du bas (touches `1`…`0`), cliquer sur une case libre,
    puis lancer la vague avec `Espace`.
@@ -50,15 +50,15 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Fin de partie** | après le Léviathan (vague 50) : **niveaux Oméga** 11 à 15 (+35 % de dégâts par niveau, crédits + 1 abyssite par niveau) et **Recherche Oméga** (+8 % de dégâts pour toutes les tourelles par rang, sans limite, en plasma) ; badge ⚔ qui estime le temps de tir nécessaire contre la vague suivante. Au-delà de la vague 50, les PV progressent de 13 % par vague, de quoi viser la vague 100 |
 | **Fusion des canons** | plans achetés au Labo avec des nanites, puis **fusion sur le terrain** de deux tourelles adjacentes |
 | **Arbre de compétences** | 30 compétences en 3 branches et 4 paliers : nanites (palier II), **plasma** (palier III) et **abyssite** (palier IV) ; une **raffinerie** transforme les nanites en trop en plasma |
-| **Éléments rares** | **plasma ✺** (boss dès la vague 10, parfois élites, raffinerie) et **abyssite ⬟** (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50). Les fusions **T3** demandent du plasma et l'Apocalypse **T4** de l'abyssite, pour le plan au Labo **et** pour chaque pose, avec des coûts qui montent avec la difficulté (Recrue : plan T3 3 ✺, pose gratuite ; Standard : 5 ✺ + 1 ✺ par pose ; Hardcore : 7 + 2 ; Cauchemar : 9 + 3 ; T4 de 2 + 1 à 5 + 4 ⬟) |
+| **Éléments rares** | **plasma ✺** (1 par boss dès la vague 10, 2 dès la 25, 3 dès la 40 ; parfois élites ; raffinerie) et **abyssite ⬟** (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50). Les fusions **T3** demandent du plasma et l'Apocalypse **T4** de l'abyssite, pour le plan au Labo **et** pour chaque pose. Le plan dépend de la difficulté (T3 : 3 / 5 / 7 / 9 ✺, T4 : 2 / 3 / 4 / 5 ⬟) et chaque pose coûte un peu plus que la précédente (Standard : T3 0, 1, 2… ✺ ; T4 0, 2, 4… ⬟) ; revendre fait redescendre le prix |
 | **Capacités** | Frappe Orbitale (ciblée), Cryo-Bombe, Surcharge |
 | **Ennemis** | 22 types (dont régénérateurs, ruches, déphaseurs, nécromants, mastodontes, voileurs…), élites et **6 boss** à mécanique (Colosse, Hydre, Overlord, Scission, Sentinelle, Sauteur), présentés à leur arrivée |
 | **Méga-boss** | vague 50 : **Léviathan** (3 phases : carapace et IEM géante, frénésie et escorte blindée, Abysse qui régénère et neutralise vos meilleures tourelles) ; vague 100 : **Oméga** (4 phases : failles d'élites, distorsions, boucliers miroirs, effondrement, puis 3 Échos). Ensuite toutes les 50 vagues. S'il atteint le noyau, la partie est perdue. |
 | **Cartes** | procédurales (portrait/paysage), dont la moitié avec **deux chemins** qui se rejoignent |
 | **Pièges** | **mines** et **barricades** à poser sur le chemin |
-| **Événements aléatoires** | pluie d'astéroïdes, capsule de ravitaillement, ruée vers l'or, surtension, tempête solaire, lune de sang, comète, faille dimensionnelle, orage IEM |
+| **Événements aléatoires** | pluie d'astéroïdes, capsule de ravitaillement, ruée vers l'or, surtension, tempête solaire, lune de sang, comète, faille dimensionnelle, orage IEM. L'IEM des astéroïdes et de la foudre met les tourelles **hors ligne jusqu'au débrouillage payant** |
 | **Casino néon** | entre les vagues : **machine à sous** (3 jetons, jackpot progressif, malédiction aux trois crânes) et **paris** sur la vague suivante |
-| **Modes** | Classique, **Boss Rush** (un boss par vague), **Chaos** (événements en rafale), **Bac à sable** (ressources illimitées) |
+| **Modes** | Classique, **Boss Rush** (un boss par vague), **Chaos** (événements en rafale), **Bac à sable** (ressources illimitées), **Partie perso** (17 réglages : PV, vitesse et nombre d'ennemis, fréquence des boss, crédits, primes, intégrité, nanites, gains et coûts en éléments, ressources de départ, vague des niveaux Oméga, plans offerts, événements, IEM temporaire ou à payer ; sans records ni progression) |
 | **Défi du jour** | même carte et mêmes 2 mutateurs pour tout le monde ce jour-là, record journalier |
 | **Graine libre** | dans Nouvelle partie, un nombre ou n'importe quel mot (`neon`, `Timoti`…) : même texte = même carte et mêmes vagues |
 | **Défier un ami** | chaque partie a un **code de carte** (ex. `1A2B3C-L-S`), affiché en fin de partie avec **Copier** et **Rejouer cette carte** : saisi dans Nouvelle partie, il redonne la même carte et les mêmes vagues ; historique des 30 dernières parties dans le Palmarès, rejouables d'un clic (▶) |
@@ -124,6 +124,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.11** : Partie perso (17 réglages, gardés d'une partie à l'autre) ; pose des T3/T4 au prix progressif ; plus de plasma par boss après les vagues 25 et 40 ; IEM des astéroïdes et de la foudre à débrouiller contre crédits ; « Recommencer » garde le mode de jeu.
 - **v9.10** : fusions T3 et T4 payées en plasma et en abyssite (plan et pose), coûts selon la difficulté.
 - **v9.9** : arbre de compétences agrandi (30 compétences, paliers plasma et abyssite), nouveaux éléments rares, raffinerie de nanites, niveaux Oméga après le Léviathan et payés en abyssite.
 - **v9.8** : multijoueur fiabilisé : relais de secours par les serveurs MQTT (liaison directe impossible ou coupée), messages numérotés et renvoyés sans perte, liaison directe retentée, avance du lockstep adaptée à la latence.

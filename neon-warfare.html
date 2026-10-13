@@ -300,6 +300,19 @@ body.no-crt #crt{display:none}
 
 /* difficulty */
 .dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px}
+#cus-box{border:1px solid rgba(180,140,255,.35);border-radius:10px;padding:12px 14px;margin:-6px 0 16px;background:rgba(180,140,255,.04)}
+.cus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 18px}
+.cus-g{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cus-g .lbl-s{color:#b48cff;margin-bottom:2px}
+.cus-r{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#a9b6cc;min-height:24px}
+.cus-r.on{color:#fff}
+.cus-r.on b{color:#b48cff}
+.cus-s{display:flex;align-items:center;gap:2px;flex:none}
+.cus-s b{min-width:64px;text-align:center;font:800 11px var(--mono);color:#fff}
+.cus-s button{width:22px;height:22px;border-radius:4px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#cfe3ff;font:800 13px var(--font);cursor:pointer;padding:0;line-height:1}
+.cus-s button:hover:not(:disabled){border-color:#b48cff;color:#fff}
+.cus-s button:disabled{opacity:.25;cursor:default}
+.cus-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--dim)}
 .dcard{border:1px solid var(--dc);border-radius:10px;padding:14px;cursor:pointer;background:rgba(255,255,255,.02);transition:transform .15s,box-shadow .15s,background .15s}
 .dcard:hover{transform:translateY(-3px);box-shadow:0 0 24px -6px var(--dc);background:rgba(255,255,255,.05)}
 .dcard h3{margin:0 0 6px;color:var(--dc);letter-spacing:.2em;font-size:15px}
@@ -773,6 +786,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   <h2>NOUVELLE PARTIE</h2><div class="sub">Choisissez votre doctrine et votre mode, puis le niveau de menace. Une carte unique est générée à chaque partie.</div>
   <div class="lbl-s">DOCTRINE</div><div class="docs" id="doc-row"></div><div class="doc-desc" id="doc-desc"></div>
   <div class="lbl-s" style="margin-bottom:6px">MODE</div><div class="seg gm-seg" id="gm-row"></div><div class="doc-desc" id="gm-desc"></div>
+  <div id="cus-box" hidden></div>
   <div class="lbl-s" style="margin-bottom:8px">MENACE</div>
   <div class="dgrid" id="diff-grid"></div>
   <div class="seedrow"><span class="lbl-s">GRAINE / CODE DE CARTE <span style="opacity:.6">(facultatif : un nombre, un mot, ou le code d'un ami)</span></span><input id="seed-in" class="mp-in" maxlength="32" placeholder="ex. 42, neon, 1A2B3C-L-S" autocomplete="off"><span id="seed-ok" class="note"></span></div></div></div>
@@ -839,7 +853,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.10';
+const VERSION = '9.11';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -1374,7 +1388,68 @@ const GMODES = {
   classic: { n: 'Classique', c: '#00f3ff', d: 'Vagues infinies, un boss toutes les 5 vagues. Le mode de référence pour les records.' },
   rush:    { n: 'Boss Rush', c: '#ff2a6d', d: 'Un boss à chaque vague dès la vague 3. Crédits de départ ×1,5, primes ×1,3, fragments ×1,5.' },
   chaos:   { n: 'Chaos', c: '#ff8a3d', d: 'Un événement aléatoire presque à chaque vague, dès la vague 3. Fragments ×1,2.' },
-  sandbox: { n: 'Bac à sable', c: '#39ff88', d: 'Crédits et nanites illimités, tous les plans de fusion débloqués : testez tout ! Ni succès, ni XP, ni records.' }
+  sandbox: { n: 'Bac à sable', c: '#39ff88', d: 'Crédits et nanites illimités, tous les plans de fusion débloqués : testez tout ! Ni succès, ni XP, ni records.' },
+  custom:  { n: 'Partie perso', c: '#b48cff', d: 'Réglez vous-même ennemis, économie, boss et éléments (réglages ci-dessous, gardés pour la prochaine fois), puis choisissez la menace de base. Ni succès, ni XP, ni fragments, ni records.' }
+};
+/* ---------- réglages de la Partie perso : v = valeurs possibles, d = défaut ---------- */
+const CUSTOM = [
+  { k: 'hp', g: 'ENNEMIS', n: 'PV des ennemis', v: [.25, .5, .75, 1, 1.25, 1.5, 2, 3, 5], d: 1, f: 'x' },
+  { k: 'spd', g: 'ENNEMIS', n: 'Vitesse', v: [.6, .8, 1, 1.2, 1.4, 1.6], d: 1, f: 'x' },
+  { k: 'count', g: 'ENNEMIS', n: 'Nombre', v: [.5, .75, 1, 1.5, 2, 3], d: 1, f: 'x' },
+  { k: 'boss', g: 'ENNEMIS', n: 'Un boss toutes les', v: [3, 5, 10], d: 5, f: 'w' },
+  { k: 'money', g: 'ÉCONOMIE', n: 'Crédits de départ', v: [.5, 1, 2, 3, 5, 10], d: 1, f: 'x' },
+  { k: 'bounty', g: 'ÉCONOMIE', n: 'Primes', v: [.5, .75, 1, 1.5, 2, 3], d: 1, f: 'x' },
+  { k: 'lives', g: 'ÉCONOMIE', n: 'Intégrité du noyau', v: [.1, .25, .5, 1, 2, 5], d: 1, f: 'x' },
+  { k: 'nano', g: 'ÉCONOMIE', n: 'Nanites de fin de vague', v: [.5, 1, 2, 3], d: 1, f: 'x' },
+  { k: 'elem', g: 'ÉLÉMENTS', n: 'Plasma et abyssite gagnés', v: [.5, 1, 1.5, 2, 3, 5], d: 1, f: 'x' },
+  { k: 'ecost', g: 'ÉLÉMENTS', n: 'Coût en éléments des T3/T4', v: [0, .5, 1, 1.5, 2], d: 1, f: 'x', z: 'GRATUIT' },
+  { k: 'n0', g: 'ÉLÉMENTS', n: 'Nanites de départ', v: [0, 3, 10, 25, 50, 100], d: 3, f: 'n', i: '◈' },
+  { k: 'p0', g: 'ÉLÉMENTS', n: 'Plasma de départ', v: [0, 3, 5, 10, 25, 50], d: 0, f: 'n', i: '✺' },
+  { k: 'a0', g: 'ÉLÉMENTS', n: 'Abyssite de départ', v: [0, 2, 5, 10, 25], d: 0, f: 'n', i: '⬟' },
+  { k: 'omega', g: 'PARTIE', n: 'Niveaux Oméga après la vague', v: [10, 20, 30, 50, 75], d: 50, f: 'n' },
+  { k: 'plans', g: 'PARTIE', n: 'Plans de fusion offerts', v: [0, 2, 3, 4], d: 0, l: ['AUCUN', 'T2', 'T2 + T3', 'TOUS'] },
+  { k: 'ev', g: 'PARTIE', n: 'Événements aléatoires', v: [0, 1, 3], d: 1, l: ['AUCUN', 'NORMAUX', 'CHAOS'] },
+  { k: 'jam', g: 'PARTIE', n: 'IEM des astéroïdes et de la foudre', v: [1, 0], d: 1, l: ['À PAYER', 'TEMPORAIRE'] }
+];
+const Custom = {
+  norm(o) { const c = {}; for (const d of CUSTOM) c[d.k] = o && d.v.includes(o[d.k]) ? o[d.k] : d.d; return c; },
+  get() { return this.norm(Store.s.cus); },
+  txt(d, v) {
+    if (d.l) return d.l[d.v.indexOf(v)];
+    if (d.z && !v) return d.z;
+    return d.f === 'x' ? '×' + String(v).replace('.', ',') : d.f === 'w' ? v + ' vagues' : v + (d.i ? ' ' + d.i : '');
+  },
+  // modificateurs de la partie (au lancement et au chargement d'une sauvegarde)
+  apply(o) {
+    const c = G.cus = this.norm(o), m = makeMut([]);
+    Object.assign(m, { hp: c.hp, spd: c.spd, count: c.count, money: c.money, bounty: c.bounty, lives: c.lives, nano: c.nano, events: c.ev === 3 ? 3 : 1 });
+    G.mut = m; G.mutKeys = []; G.events = c.ev > 0;
+  },
+  // ressources et plans offerts au départ
+  start() {
+    const c = G.cus;
+    G.nanites += c.n0 - 3; G.res.p = c.p0; G.res.a = c.a0;
+    if (c.p0) G.res.sp = 1;
+    if (c.a0) G.res.sa = 1;
+    for (const r of RECIPES) if (TOWERS[r.r].tier <= c.plans) G.unlocked.add(r.r);
+  },
+  differs() { const c = this.get(); return CUSTOM.some(d => c[d.k] !== d.d); },
+  render() {
+    const box = $('cus-box'), c = this.get();
+    let h = '', g = '';
+    for (const d of CUSTOM) {
+      if (d.g !== g) { if (g) h += '</div>'; g = d.g; h += `<div class="cus-g"><div class="lbl-s">${g}</div>`; }
+      const i = d.v.indexOf(c[d.k]), on = c[d.k] !== d.d;
+      h += `<div class="cus-r${on ? ' on' : ''}"><span>${d.n}</span><span class="cus-s"><button data-k="${d.k}" data-s="-1" ${i ? '' : 'disabled'}>‹</button><b>${this.txt(d, c[d.k])}</b><button data-k="${d.k}" data-s="1" ${i < d.v.length - 1 ? '' : 'disabled'}>›</button></span></div>`;
+    }
+    h += '</div>';
+    box.innerHTML = `<div class="cus-grid">${h}</div><div class="cus-foot"><span>Ces réglages s'ajoutent à la menace choisie (PV, intégrité, crédits, coûts en éléments).</span><button class="btn" id="cus-reset" ${this.differs() ? '' : 'disabled'}>RÉGLAGES PAR DÉFAUT</button></div>`;
+    box.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => {
+      const d = CUSTOM.find(x => x.k === b.dataset.k), cur = this.get(), i = clamp(d.v.indexOf(cur[d.k]) + +b.dataset.s, 0, d.v.length - 1);
+      cur[d.k] = d.v[i]; Store.s.cus = cur; Store.save(); Sfx.play('ui'); this.render();
+    });
+    $('cus-reset').onclick = () => { Store.s.cus = null; Store.save(); Sfx.play('ui'); this.render(); };
+  }
 };
 const STRATS = ['PREMIER', 'FORT', 'FAIBLE', 'PROCHE'];
 
@@ -2538,13 +2613,14 @@ const RES = {
   p: { i: '✺', c: '#ff8a3d', n: 'plasma' },
   a: { i: '⬟', c: '#b48cff', n: 'abyssite' }
 };
-// fusions T3 (plasma) et T4 (abyssite) : le plan au Labo et chaque pose coûtent des éléments rares, selon la difficulté
-// (index = palier de la tourelle)
+// fusions T3 (plasma) et T4 (abyssite) : le plan au Labo et chaque pose coûtent des éléments rares, selon la difficulté.
+// plan : index = palier. pose : [base, pas] par palier → la n-ième tourelle de ce palier déjà en jeu coûte base + pas × n
+// (la première est donc bon marché, c'est l'accumulation qui coûte cher ; revendre fait redescendre le prix)
 const ELEM_COST = {
-  recrue:    { plan: [0, 0, 0, 3, 2], pose: [0, 0, 0, 0, 1] },
-  standard:  { plan: [0, 0, 0, 5, 3], pose: [0, 0, 0, 1, 2] },
-  hardcore:  { plan: [0, 0, 0, 7, 4], pose: [0, 0, 0, 2, 3] },
-  cauchemar: { plan: [0, 0, 0, 9, 5], pose: [0, 0, 0, 3, 4] }
+  recrue:    { plan: [0, 0, 0, 3, 2], pose: { 3: [-1, 1], 4: [0, 1] } },
+  standard:  { plan: [0, 0, 0, 5, 3], pose: { 3: [0, 1], 4: [0, 2] } },
+  hardcore:  { plan: [0, 0, 0, 7, 4], pose: { 3: [1, 1], 4: [0, 3] } },
+  cauchemar: { plan: [0, 0, 0, 9, 5], pose: { 3: [1, 2], 4: [0, 4] } }
 };
 const Res = {
   get(c) { return c === 'p' ? G.res.p : c === 'a' ? G.res.a : G.nanites; },
@@ -2557,9 +2633,15 @@ const Res = {
     if (x != null) FX.float(x, y, `+${v} ${RES[c].i}`, RES[c].c, 17);
     if (first) UI.toast(c === 'p' ? 'Nouvel élément : plasma ✺' : 'Nouvel élément : abyssite ⬟',
       c === 'p' ? 'Lâché par les boss, parfois par les élites, ou raffiné à partir de nanites. Il débloque le <b>palier III</b> de l\'arbre de compétences (touche K).'
-        : 'Arrachée au Léviathan, puis aux boss après la vague 50. Elle débloque le <b>palier IV</b> de l\'arbre et paie les <b>niveaux Oméga</b> des tourelles.', RES[c].c, 7);
+        : `Arrachée au Léviathan, puis aux boss après la vague ${Towers.omFrom()}. Elle débloque le <b>palier IV</b> de l\'arbre et paie les <b>niveaux Oméga</b> des tourelles.`, RES[c].c, 7);
   },
-  tag(c, v) { return `<b style="color:${RES[c].c};font-family:var(--mono)">${v} ${RES[c].i}</b>`; }
+  tag(c, v) { return `<b style="color:${RES[c].c};font-family:var(--mono)">${v} ${RES[c].i}</b>`; },
+  // butin d'élément (boss, élites, méga-boss) : multiplié en partie perso, la fraction devient une chance
+  drop(c, v, x, y) {
+    const m = G.cus ? G.cus.elem : 1;
+    if (m !== 1) { v *= m; v = Math.floor(v) + (sr() < v % 1 ? 1 : 0); }
+    this.gain(c, v, x, y);
+  }
 };
 const VERSUS = { hp: 1.3, esc: 1.05, escFrom: 12, lives: .7, money: .85, elite: 1.5, sendHp: 1.1, prep: 600, first: 1200 };
 function gain(v, p = G.actor) {
@@ -2639,7 +2721,7 @@ const Mega = {
     e.spd = e.spd0 * (P.spd || 1);
     for (const k of ['jam', 'summon', 'drain', 'rift', 'blink', 'aura']) if (P[k]) e.mt[k] = Math.round(P[k].every * (first ? .6 : .4));
     if (first) return;
-    Res.gain('a', e.type === 'omega' ? 2 : 1, e.x, e.y - 50);   // chaque phase arrachée au méga-boss rapporte de l'abyssite
+    Res.drop('a', e.type === 'omega' ? 2 : 1, e.x, e.y - 50);   // chaque phase arrachée au méga-boss rapporte de l'abyssite
     e.inv = 150; e.leapTo = 0; e.slowT = 0; e.freezeT = 0;
     if (P.shieldBack && e.maxShield) e.shield = Math.max(e.shield, e.maxShield * P.shieldBack);
     Render.shake(20); Render.flash(.45, e.d.color); Sfx.play('boss');
@@ -2884,10 +2966,11 @@ const Enemies = {
       const bn = (e.d.mega ? 15 : 3) + G.mut.bossNano;
       G.nanites += bn; G.stats.bosses++;
       const ew = e.wave || 0;   // 0 : boss envoyé par un adversaire (versus), sans éléments rares
-      if (e.d.mega) { Res.gain('p', e.type === 'omega' ? 12 : 8, e.x, e.y - 48); Res.gain('a', e.type === 'omega' ? 6 : 3, e.x, e.y - 68); }
+      if (e.d.mega) { Res.drop('p', e.type === 'omega' ? 12 : 8, e.x, e.y - 48); Res.drop('a', e.type === 'omega' ? 6 : 3, e.x, e.y - 68); }
       else {
-        if (ew >= 10) Res.gain('p', 1 + (e.elite ? 1 : 0) + G.mod.prosp, e.x, e.y - 48);
-        if (ew > OMEGA.from) Res.gain('a', 1 + G.mod.abyssB, e.x, e.y - 68);
+        // 1 ✺ par boss dès la vague 10, 2 dès la 25, 3 dès la 40 (1 en Boss Rush, où il y a un boss par vague)
+        if (ew >= 10) Res.drop('p', (G.gm === 'rush' ? 1 : ew >= 40 ? 3 : ew >= 25 ? 2 : 1) + (e.elite ? 1 : 0) + G.mod.prosp, e.x, e.y - 48);
+        if (ew > Towers.omFrom()) Res.drop('a', 1 + G.mod.abyssB, e.x, e.y - 68);
       }
       if (e.d.mega) {
         G.stats.megas = (G.stats.megas || 0) + 1; Ach.unlock(e.type);
@@ -2903,7 +2986,7 @@ const Enemies = {
       for (let i = 0; i < 4; i++) FX.ring(e.x, e.y, i & 1 ? '#ffffff' : e.d.color, 50 + i * 30, 26 + i * 6, 3);
       Drops.spawn(e.x - 10, e.y, 'gold'); Drops.spawn(e.x + 10, e.y, 'gold');
     } else {
-      if (e.elite && (e.wave || 0) >= 15 && sr() < .05) Res.gain('p', 1, e.x, e.y - 22);
+      if (e.elite && (e.wave || 0) >= 15 && sr() < .05) Res.drop('p', 1, e.x, e.y - 22);
       const r = sr();
       if (r < (e.elite ? .35 : .03) * dm) Drops.spawn(e.x, e.y, 'nano');
       else if (r < (e.elite ? .6 : .09) * dm) Drops.spawn(e.x, e.y, 'gold');
@@ -2954,18 +3037,30 @@ const Towers = {
   elemCost(k, plan) {
     if (!this.elemOf(k)) return 0;
     const E = ELEM_COST[G.diffKey] || ELEM_COST.standard, t = TOWERS[k].tier;
-    return plan ? E.plan[t] + (k === 'singularity' ? 1 : 0) : E.pose[t];
+    let v;
+    if (plan) v = E.plan[t] + (k === 'singularity' ? 1 : 0);
+    else { const P = E.pose[t]; v = Math.max(0, P[0] + P[1] * this.tierCount(t)); }
+    return Math.round(v * (G.cus ? G.cus.ecost : 1));
   },
+  // tourelles de ce palier déjà en jeu (en coopération : celles du joueur qui agit)
+  tierCount(t) {
+    const me = G.actor != null ? G.actor : Net.me;
+    let n = 0;
+    for (const x of G.towers) if (x.d.tier === t && (!Net.coop || x.owner == null || x.owner === me)) n++;
+    return n;
+  },
+  // les niveaux Oméga (et l'abyssite des boss) commencent après cette vague
+  omFrom() { return G && G.cus ? G.cus.omega : OMEGA.from; },
   canPay(k) { const c = this.elemOf(k); return !c || Res.get(c) >= this.elemCost(k); },
   // texte « + 1 ✺ » à côté d'un prix
   elemTxt(k, plan) { const c = this.elemOf(k), v = c ? this.elemCost(k, plan) : 0; return v ? ` + ${v} ${RES[c].i}` : ''; },
   elemMissing(k) {
     const c = this.elemOf(k);
-    if (Act.mine()) { Sfx.play('error'); UI.toast(c === 'p' ? 'Plasma requis' : 'Abyssite requise', `Poser une ${TOWERS[k].name} coûte aussi ${Res.tag(c, this.elemCost(k))} (${c === 'p' ? 'boss, élites, raffinerie' : 'méga-boss, puis boss après la vague 50'}).`, RES[c].c, 3.5); }
+    if (Act.mine()) { Sfx.play('error'); UI.toast(c === 'p' ? 'Plasma requis' : 'Abyssite requise', `Poser une ${TOWERS[k].name} coûte aussi ${Res.tag(c, this.elemCost(k))} (${c === 'p' ? 'boss, élites, raffinerie' : 'méga-boss, puis boss après la vague ' + this.omFrom()}). Le prix monte avec le nombre de ${TOWERS[k].tier === 3 ? 'T3' : 'T4'} déjà posées.`, RES[c].c, 3.5); }
   },
   costOf(k) { return Math.round(TOWERS[k].cost * G.mod.cost * (G.mod.kcost[k] || 1) * (TOWERS[k].tier === 0 ? G.mod.t0cost : 1)); },
   // niveaux Oméga : une fois la vague 30 repoussée (en vague 30 ou plus tard)
-  omega() { return G.waveNum > OMEGA.from || (G.waveNum === OMEGA.from && !G.waves[OMEGA.from]); },
+  omega() { const f = this.omFrom(); return G.waveNum > f || (G.waveNum === f && !G.waves[f]); },
   maxLevel(t) { return t.d.kind === 'support' ? 5 : this.omega() ? OMEGA.max : 10; },
   upCost(t) { return Math.round((t.d.cost * .6 * t.level + 30) * (t.level >= 10 ? Math.pow(OMEGA.cost, t.level - 9) : 1) * G.mod.cost * (G.mod.kcost[t.key] || 1) * (t.d.tier === 0 ? G.mod.t0cost : 1)); },
   // multiplicateur de dégâts du niveau : +22 % par niveau jusqu'au 10, puis +35 % par niveau Oméga
@@ -3032,7 +3127,7 @@ const Towers = {
     if (this.needsSpec(t)) { UI.toast('Spécialisation requise', 'Choisissez une voie dans le panneau de la tourelle pour continuer à l\'améliorer.', '#ffd23f', 3); Sfx.play('error'); return false; }
     const c = this.upCost(t), ab = t.level >= 10 ? OMEGA.abyss : 0;
     if (G.money < c) { UI.noMoney(); return false; }
-    if (ab && G.res.a < ab) { if (Act.mine()) { Sfx.play('error'); UI.toast('Abyssite requise', `Chaque niveau Oméga coûte aussi ${ab} abyssite ⬟ (méga-boss, puis boss après la vague ${OMEGA.from}).`, RES.a.c, 3); } return false; }
+    if (ab && G.res.a < ab) { if (Act.mine()) { Sfx.play('error'); UI.toast('Abyssite requise', `Chaque niveau Oméga coûte aussi ${ab} abyssite ⬟ (méga-boss, puis boss après la vague ${this.omFrom()}).`, RES.a.c, 3); } return false; }
     G.money -= c; G.res.a -= ab; t.invested += c; t.ts.spent += c; t.level++; t.born = performance.now() - 170;
     this.recalc();
     const om = t.level > 10, oc = om ? '#ff4df0' : '#39ff88';
@@ -3106,7 +3201,7 @@ const Towers = {
       if (t.flash > 0) t.flash--;
       if (t.recoil > .1) t.recoil *= .8; else t.recoil = 0;
       if (d.spinHead) t.spin += d.spinHead * (t.stun > 0 || t.over ? .2 : 1);
-      if (d.kind === 'support') { if (t.stun > 0 && --t.stun <= 0) rc = true; continue; }
+      if (d.kind === 'support') { if (t.stun > 0 && !t.jamP && --t.stun <= 0) rc = true; continue; }
       if (t.heat > 0) {
         t.heat -= (d.cool || .5) * (1 + t.bCool) * G.mod.cool;
         if (t.heat <= 0) {
@@ -3114,7 +3209,7 @@ const Towers = {
           if (t.over) { t.over = false; FX.float(t.cx, t.cy - 16, 'EN LIGNE', '#39ff88', 10); }
         }
       }
-      if (t.stun > 0) { t.stun--; t.beam = null; continue; }
+      if (t.stun > 0) { if (!t.jamP) t.stun--; t.beam = null; continue; }
       if (t.over) {
         t.beam = null;
         if (Render.hq && (G.tick & 7) === 0) FX.smoke(t.cx + rnd(-5, 5), t.cy - 4, 40, 3);
@@ -3149,7 +3244,7 @@ const Towers = {
     if (G.money < c) { UI.noMoney(); return false; }
     G.money -= c;
     for (const t of list) {
-      t.stun = 0; t.aimT = 0;
+      t.stun = 0; t.jamP = 0; t.aimT = 0;
       FX.ring(t.cx, t.cy, '#39ff88', 30, 18, 2); FX.float(t.cx, t.cy - 18, 'EN LIGNE', '#39ff88', 11);
     }
     if (list.some(t => t.d.support)) this.recalc();
@@ -3479,10 +3574,11 @@ const Waves = {
     const base = k <= 49 ? this.hpBase(k) : this.hpBase(49) * Math.pow(1.13, k - 49);
     return base * G.diff.hp * fork * (G.net === 'coop' ? COOP.hp * (G.np || 2) / 2 : G.net === 'versus' ? VERSUS.hp * Math.pow(VERSUS.esc, Math.max(0, n - VERSUS.escFrom)) : 1);
   },
+  bossEv() { return G.cus ? G.cus.boss : 5; },
   // hasard reproductible : une carte donnée produit toujours les mêmes vagues (aperçu fiable, Défi du jour équitable)
   rng(n, salt = 0) { return mulberry32((G.seed ^ Math.imul(n + 1, 2654435761) ^ salt) >>> 0); },
   plan(n) {
-    const R = this.rng(n), mega = n % 50 === 0, boss = mega || n % 5 === 0 || (G.gm === 'rush' && n >= 3);
+    const R = this.rng(n), mega = n % 50 === 0, boss = mega || n % this.bossEv() === 0 || (G.gm === 'rush' && n >= 3);
     let th = WTHEMES[0];
     if (mega) th = { id: 'mega', name: 'Alerte rouge', countMul: .45 };
     else if (boss) th = { id: 'boss', name: 'Alerte Boss', countMul: .65 };
@@ -3506,7 +3602,7 @@ const Waves = {
   },
   bossesFor(n) {
     if (n % 50 === 0) { const m = [(n / 50) % 2 ? 'leviathan' : 'omega']; if (n >= 150) m.push(BOSS_ORDER[(n / 50) % BOSS_ORDER.length]); return m; }
-    const rush = G.gm === 'rush', k = rush ? n - 3 : n / 5 - 1, c = rush ? (n >= 30 ? 3 : n >= 15 ? 2 : 1) : n >= 40 ? 3 : n >= 20 ? 2 : 1, out = [];
+    const rush = G.gm === 'rush', k = rush ? n - 3 : Math.floor(n / this.bossEv()) - 1, c = rush ? (n >= 30 ? 3 : n >= 15 ? 2 : 1) : n >= 40 ? 3 : n >= 20 ? 2 : 1, out = [];
     for (let i = 0; i < c; i++) out.push(BOSS_ORDER[(k + i) % BOSS_ORDER.length]);
     return out;
   },
@@ -3607,7 +3703,7 @@ const Waves = {
     if (w.n >= 10) Ach.unlock('wave10');
     if (w.n >= 25) Ach.unlock('wave25');
     if (w.n >= 50) Ach.unlock('wave50');
-    if (w.n === OMEGA.from && G.gm !== 'sandbox') UI.toast('Niveaux Oméga débloqués', `Vos tourelles peuvent monter jusqu'au niveau ${OMEGA.max} (+35 % de dégâts par niveau, ${OMEGA.abyss} abyssite ⬟ par niveau), et la Recherche Oméga (en bas de l'arbre, touche K) augmente les dégâts de toutes les tourelles contre du plasma.`, '#ff4df0', 7);
+    if (w.n === Towers.omFrom() && G.gm !== 'sandbox') UI.toast('Niveaux Oméga débloqués', `Vos tourelles peuvent monter jusqu'au niveau ${OMEGA.max} (+35 % de dégâts par niveau, ${OMEGA.abyss} abyssite ⬟ par niveau), et la Recherche Oméga (en bas de l'arbre, touche K) augmente les dégâts de toutes les tourelles contre du plasma.`, '#ff4df0', 7);
     if (w.n >= 10 && G.stats.leaks === 0) Ach.unlock('noleak');
     if (w.n >= 15 && (G.diffKey === 'hardcore' || G.diffKey === 'cauchemar')) Ach.unlock('hard15');
     if (w.n >= 15 && G.daily) Ach.unlock('daily');
@@ -4014,7 +4110,7 @@ const Cmd = {
   nextDoctrine(l) { return Object.values(DOCTRINES).filter(d => d.lvl > l).sort((a, b) => a.lvl - b.lvl)[0] || null; },
   gain(x) {
     x = Math.round(x);
-    if (!x || (G && (G.demo || G.gm === 'sandbox'))) return;
+    if (!x || (G && (G.demo || G.gm === 'sandbox' || G.gm === 'custom'))) return;
     const c = Store.data.cmd;
     c.xp += x;
     if (G) G.xpRun += x;
@@ -5128,7 +5224,7 @@ const MP = {
       'perks', 'net', 'events', 'recycling', 'combo', 'comboT', 'overdriveT', 'ev', 'evSpd', 'evQ', 'pods', 'craters', 'wallets', 'jpot', 'slot', 'income', 'sendStock', 'np', 'gone'];
     s.x = {}; for (const k of keys) s.x[k] = G[k];
     s.x.drops = G.drops.map(d => Object.assign({}, d));
-    s.tw = G.towers.map(t => [t.owner, t.heat, t.over ? 1 : 0, t.cd, t.ang, t.aimT, t.ramp, t.stun, t.fresh ? 1 : 0, t.id]);
+    s.tw = G.towers.map(t => [t.owner, t.heat, t.over ? 1 : 0, t.cd, t.ang, t.aimT, t.ramp, t.stun, t.fresh ? 1 : 0, t.id, t.jamP ? 1 : 0]);
     return JSON.parse(JSON.stringify(s));
   },
   restore(s) {
@@ -5136,7 +5232,7 @@ const MP = {
     Game.unpack(s);
     const X = s.x;
     for (const k in X) if (k !== 'wallets') G[k] = X[k];
-    G.towers.forEach((t, i) => { const a = s.tw[i]; if (!a) return; [t.owner, t.heat, t.over, t.cd, t.ang, t.aimT, t.ramp, t.stun, t.fresh, t.id] = a; t.over = !!t.over; t.fresh = !!t.fresh; });
+    G.towers.forEach((t, i) => { const a = s.tw[i]; if (!a) return; [t.owner, t.heat, t.over, t.cd, t.ang, t.aimT, t.ramp, t.stun, t.fresh, t.id, t.jamP] = a; t.over = !!t.over; t.fresh = !!t.fresh; });
     G.rs = s.rs;   // la reconstruction des tourelles consomme du hasard : on remet la graine de l'hôte
     G.missions = (s.missions || []).filter(m => MDEF[m.id]);
     G.preview = Waves.plan(G.waveNum + 1);   // après G.net : les PV dépendent du mode
@@ -5391,12 +5487,13 @@ const Events = {
   blast(x, y, r, dmg, stun, col, big) {
     const r2 = r * r;
     for (const e of G.enemies) if (e.alive && d2(e.x, e.y, x, y) <= r2) Combat.hit(e, dmg, null);
-    const tr2 = (r * .75) * (r * .75);
+    const tr2 = (r * .75) * (r * .75), lock = !G.cus || G.cus.jam === 1;
     let rc = false;
     for (const t of G.towers) if (d2(t.cx, t.cy, x, y) <= tr2) {
       if (t.d.support && !(t.stun > 0)) rc = true;
       t.stun = Math.max(t.stun, Towers.stunFor(stun)); if (t.d.heat) t.heat = Math.min(99, t.heat + 35);
-      FX.float(t.cx, t.cy - 18, 'SONNÉE', '#fff35c', 10);
+      if (lock) t.jamP = 1;   // l'IEM reste jusqu'au débrouillage payant
+      FX.float(t.cx, t.cy - 18, lock ? 'HORS LIGNE' : 'SONNÉE', '#fff35c', 10);
     }
     if (rc) Towers.recalc();
     FX.ring(x, y, col, r * 1.2, 26, 4); FX.ring(x, y, '#ffffff', r * .6, 16, 2); FX.spark(x, y, col, big ? 34 : 20, big ? 5.5 : 4, 40, 3);
@@ -5574,7 +5671,7 @@ const Hist = {
     Store.save();
   },
   // code de défi : graine + orientation + difficulté + mode → même carte et mêmes vagues pour un ami
-  code(g = G) { return `${g.seed.toString(36).toUpperCase()}-${g.portrait ? 'P' : 'L'}-${g.diffKey[0].toUpperCase()}${g.gm !== 'classic' ? '-' + g.gm[0].toUpperCase() : ''}`; },
+  code(g = G) { return `${g.seed.toString(36).toUpperCase()}-${g.portrait ? 'P' : 'L'}-${g.diffKey[0].toUpperCase()}${g.gm !== 'classic' && g.gm !== 'custom' ? '-' + g.gm[0].toUpperCase() : ''}`; },
   parse(c) {
     const raw = String(c || '').trim(), m = /^([0-9A-Z]+)-([PL])(?:-([RSHC]))?(?:-([CRS]))?$/i.exec(raw.toUpperCase());
     if (!raw) return null;
@@ -5587,7 +5684,7 @@ const Hist = {
 
 const Ach = {
   unlock(id) {
-    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.gm === 'sandbox'))) return;
+    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.gm === 'sandbox' || G.gm === 'custom'))) return;
     Store.data.ach[id] = Date.now(); Store.data.meta.frags += 3; Store.save();
     UI.toast('Succès : ' + ACH[id].n, ACH[id].d + ' <span class="frags">+3 ✦</span>', '#ffd23f', 4.5);
     Sfx.play('ach');
@@ -5604,14 +5701,14 @@ const SaveSys = {
   pack() {
     const M = G.map;
     return {
-      v: 8, gm: G.gm, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
+      v: 8, gm: G.gm, cus: G.cus, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
       doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, cx: G.cx,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       rs: G.rs, nanites: G.nanites, res: G.res, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
       tstats: Object.fromEntries(Object.entries(G.tstats).map(([k, s]) => [k, [Math.round(s.dealt), s.kills, s.shots, s.spent]])),
       waveDmg: Object.fromEntries(Object.entries(G.waveDmg).map(([k, v]) => [k, Math.round(v)])),
       map: { C: M.C, R: M.R, cells: Array.from(M.cells).join(''), paths: M.paths },
-      towers: G.towers.map(t => [t.key, t.tx, t.ty, t.level, t.invested, t.kills, Math.round(t.dealt), t.strat, t.oc ? 1 : 0, t.spec, t.shots]),
+      towers: G.towers.map(t => [t.key, t.tx, t.ty, t.level, t.invested, t.kills, Math.round(t.dealt), t.strat, t.oc ? 1 : 0, t.spec, t.shots, t.jamP ? t.stun : 0]),
       date: Date.now()
     };
   },
@@ -5625,7 +5722,7 @@ const Game = {
     G = {
       diffKey, diff: DIFFS[diffKey], seed, rs: seed ^ 0x5bd1e995, map, towers: [], tgrid: new Array(map.C * map.R).fill(null), enemies: [], drops: [],
       strikes: [], vortices: [], spawnQ: [], waves: {}, money: 0, lives: 0, maxLives: 0, nanites: 0, res: { p: 0, a: 0, ref: 0 }, recycle: 0, waveNum: 0,
-      phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
+      cus: null, phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
       doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null, traps: [], cx: {},
@@ -5650,6 +5747,7 @@ const Game = {
     if (opts.events != null) G.events = opts.events;
     if (opts.autoWave != null) G.autoWave = opts.autoWave;
     if (daily) { G.daily = daily.date; G.mutKeys = daily.mutKeys; G.mut = makeMut(daily.mutKeys); }
+    if (G.gm === 'custom') Custom.apply(opts.cus || Custom.get());
     const dk = opts.doctrine != null ? opts.doctrine : Store.data.doctrine;
     const D = opts.doctrine != null ? DOCTRINES[dk] || DOCTRINES.standard : DOCTRINES[dk] && DOCTRINES[dk].lvl <= Store.data.cmd.lvl ? DOCTRINES[dk] : DOCTRINES.standard;
     G.doctrine = D === DOCTRINES.standard ? 'standard' : dk;
@@ -5663,6 +5761,7 @@ const Game = {
     }
     G.cmdStart = Object.assign({}, Store.data.cmd);
     if (G.gm === 'rush') G.money = Math.round(G.money * 1.5);
+    if (G.cus) Custom.start();
     if (G.gm === 'sandbox') { G.money = 99999; G.nanites = 999; G.res.p = G.res.a = 999; for (const r of RECIPES) G.unlocked.add(r.r); }
     if (G.net === 'coop') {
       // un portefeuille par joueur : G.money désigne celui de l'auteur de l'action (ou du joueur local)
@@ -5704,6 +5803,7 @@ const Game = {
       if (s.daily) { G.daily = s.daily; G.mutKeys = s.mutKeys || []; G.mut = makeMut(G.mutKeys); }
       G.portrait = !!s.portrait;
       if (s.gm && GMODES[s.gm]) { G.gm = s.gm; if (G.gm === 'chaos' && !s.daily) { G.mutKeys = ['chaos']; G.mut = makeMut(G.mutKeys); } }
+      if (G.gm === 'custom') Custom.apply(s.cus);
       Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, res: Object.assign({ p: 0, a: 0, ref: 0 }, s.res), recycle: s.recycle,
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
         doctrine: DOCTRINES[s.doctrine] ? s.doctrine : 'standard', missions: (s.missions || []).filter(m => MDEF[m.id]),
@@ -5719,6 +5819,7 @@ const Game = {
         if (!TOWERS[a[0]]) continue;
         const t = Towers.create(a[0], a[1], a[2], a[3]);
         t.invested = a[4]; t.kills = a[5]; t.dealt = a[6]; t.strat = a[7]; t.oc = !!a[8]; t.fresh = false; t.shots = a[10] || 0;
+        if (a[11] > 0) { t.stun = a[11]; t.jamP = 1; }
         if (!s.tstats) { t.ts.dealt += t.dealt; t.ts.kills += t.kills; t.ts.shots += t.shots; t.ts.spent += t.invested; }   // ancienne sauvegarde
         const S = Towers.specs(t); if (a[9] != null && S && S[a[9]]) { t.spec = a[9]; t.sm = S[a[9]]; }
       }
@@ -5763,7 +5864,7 @@ const Game = {
       FX.spark(ex, ey, '#ff2a6d', 80, 7, 60, 3); Render.flash(.6, '#ff2a6d'); Render.shake(25); Sfx.play('boom'); Sfx.play('leak');
       MP.defeat(); return;
     }
-    const frags = G.gm === 'sandbox' ? 0 : Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2 + (G.stats.megas || 0) * 25) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1) * (G.gm === 'rush' ? 1.5 : 1)));
+    const frags = G.gm === 'sandbox' || G.gm === 'custom' ? 0 : Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2 + (G.stats.megas || 0) * 25) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1) * (G.gm === 'rush' ? 1.5 : 1)));
     Store.data.meta.frags += frags;
     let best, prev;
     if (G.daily) {
@@ -5772,7 +5873,7 @@ const Game = {
       if (best) D[G.daily] = G.waveNum;
     } else {
       const rk = G.gm === 'classic' ? G.diffKey : G.diffKey + ':' + G.gm;
-      prev = Store.data.records[rk] || 0; best = G.gm !== 'sandbox' && G.waveNum > prev;
+      prev = Store.data.records[rk] || 0; best = G.gm !== 'sandbox' && G.gm !== 'custom' && G.waveNum > prev;
       if (best) Store.data.records[rk] = G.waveNum;
     }
     Store.data.stats.kills += G.stats.kills;
@@ -6891,7 +6992,7 @@ const UI = {
     T.style.setProperty('--tc', t.d.color);
     T.innerHTML = `<h4>${t.d.name} <span style="color:#fff;font-size:10px">NIV ${t.level}</span></h4>` +
       (t.d.kind === 'support' ? '<div class="d">Tourelle de soutien</div>' : `<div class="s"><span>DPS</span><b>${fmt(Towers.dps(t))}</b><span>Élim.</span><b>${t.kills}</b></div>`) +
-      (t.over ? '<div class="d" style="color:var(--dang)">SURCHAUFFE</div>' : '') + (t.stun > 0 ? `<div class="d" style="color:#fff35c">BROUILLÉE${t.d.support ? ' · bonus suspendu' : ''}</div><div class="d">Débrouiller : ${fmt(Towers.unjamCost(t))}¢ (sélection puis D)</div>` : '');
+      (t.over ? '<div class="d" style="color:var(--dang)">SURCHAUFFE</div>' : '') + (t.stun > 0 ? `<div class="d" style="color:#fff35c">${t.jamP ? 'HORS LIGNE (IEM)' : 'BROUILLÉE'}${t.d.support ? ' · bonus suspendu' : ''}</div><div class="d">Débrouiller : ${fmt(Towers.unjamCost(t))}¢ (sélection puis D)</div>` : '');
     T.style.display = 'block';
     this.moveTip(h.sx, h.sy);
   },
@@ -7028,13 +7129,14 @@ const UI = {
     }
     if (L.nano !== G.nanites) { const el = $('h-nano'); el.textContent = G.nanites; if (L.nano !== undefined && G.nanites > L.nano) this.anim(el, 'bump'); L.nano = G.nanites; this.refreshBadges(); }
     if (L.wave !== G.waveNum) { $('h-wave').textContent = G.waveNum; L.wave = G.waveNum; }
+    if (L.nt !== G.towers.length) { L.nt = G.towers.length; this.refreshBar(); }
     this.refreshWaveBtn();
   },
   // bouton flottant « débrouiller » : seulement quand le brouillage en vaut la peine (météores, gros IEM)
   refreshUnjam() {
     const b = $('b-unjam');
     let n = 0, tot = 0;
-    if (!G.over && !G.demo) for (const t of G.towers) if (t.stun > 0) { n++; tot += t.stun; }
+    if (!G.over && !G.demo) for (const t of G.towers) if (t.stun > 0) { n++; tot += t.jamP ? 999 : t.stun; }
     // sur mobile, le panneau de la tourelle sélectionnée occupe le bas de l'écran et a ses propres boutons
     const show = n > 0 && (tot >= 240 || (this.last.uj && tot > 30)) && !(View.w < 640 && this.sel);
     if (show !== this.last.uj) { this.last.uj = show; b.hidden = !show; this.last.ujk = ''; }
@@ -7273,7 +7375,7 @@ const UI = {
       el.className = 'bcard' + (G.freshBp === k ? ' fresh' : '');
       el.style.setProperty('--tc', d.color);
       const hk = i < 10 ? (i === 9 ? '0' : '' + (i + 1)) : '';
-      const ev = Towers.elemCost(k), ei = ev ? `<span class="ec" style="color:${RES[Towers.elemOf(k)].c}">${ev}${RES[Towers.elemOf(k)].i}</span>` : '';
+      const ei = Towers.elemOf(k) ? `<span class="ec" style="color:${RES[Towers.elemOf(k)].c}"></span>` : '';
       el.innerHTML = `<span class="hk">${hk}</span>${d.tier >= 2 ? `<span class="tr" style="color:${d.color}">T${d.tier}</span>` : ''}${ei}<canvas></canvas><span class="pr"></span>`;
       Spr.icon(el.querySelector('canvas'), k, 44);
       el.onclick = () => {
@@ -7283,7 +7385,7 @@ const UI = {
       el.onpointerenter = e => { if (e.pointerType !== 'touch') this.showTipAt(this.towerTipHtml(k), el.getBoundingClientRect(), d.color); };
       el.onpointerleave = () => this.hideTip();
       bar.appendChild(el);
-      this.cards[k] = { el, pr: el.querySelector('.pr'), cost: -1, off: null };
+      this.cards[k] = { el, pr: el.querySelector('.pr'), cost: -1, off: null, ec: el.querySelector('.ec'), ev: -1 };
       if (i < 10) this.hotkeys[i] = k;
       i++;
     }
@@ -7316,6 +7418,7 @@ const UI = {
     for (const k in this.cards) {
       const c = this.cards[k], cost = c.send ? MP.sendCost(c.send) : c.trap ? Traps.cost(c.trap) : Towers.costOf(k);
       if (c.cost !== cost) { c.cost = cost; c.pr.textContent = cost; }
+      if (c.ec) { const ev = Towers.elemCost(k); if (ev !== c.ev) { c.ev = ev; c.ec.textContent = ev ? ev + RES[Towers.elemOf(k)].i : ''; } }
       if (c.send) { const st = MP.stock(c.send); if (c.hk.textContent !== String(st)) c.hk.textContent = SENDS[c.send].from > Math.max(1, G.waveNum) ? 'V' + SENDS[c.send].from : st; }
       const off = G.money < cost || (!!c.send && !MP.canSend(c.send)) || (!c.send && !c.trap && !Towers.canPay(k));   // toujours un booléen : toggle(x, undefined) inverserait la classe
       if (off !== c.off) { c.off = off; c.el.classList.toggle('off', off); }
@@ -7497,7 +7600,7 @@ const UI = {
       S.map((s, i) => `<button class="spec" data-sp="${i}"><i>${TXT(s.i)}</i><b>${s.n}</b><span>${s.d}</span></button>`).join('') + '</div>';
     else if (t.spec != null) spec = `<div class="specd"><i>${TXT(S[t.spec].i)}</i><b>${S[t.spec].n}</b><span>${S[t.spec].d}</span></div>`;
     else if (S) spec = `<div class="note" style="margin-top:6px">Spécialisation débloquée au niveau ${Towers.specLvl(t)}.</div>`;
-    const upTxt = t.level >= maxL ? (!sup && !Towers.omega() ? `NIVEAUX OMÉGA APRÈS LA VAGUE ${OMEGA.from}` : 'NIVEAU MAX') : t.level >= 10 ? `▲ OMÉGA ${t.level + 1} · +${Math.round((G.mod.omegaDmg - 1) * 100)}% DÉG. · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢ + ${OMEGA.abyss} ${RES.a.i}</b> <span class="k">U</span>` : need ? 'CHOISISSEZ UNE SPÉCIALISATION' : `▲ AMÉLIORER · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢</b> <span class="k">U</span>`;
+    const upTxt = t.level >= maxL ? (!sup && !Towers.omega() ? `NIVEAUX OMÉGA APRÈS LA VAGUE ${Towers.omFrom()}` : 'NIVEAU MAX') : t.level >= 10 ? `▲ OMÉGA ${t.level + 1} · +${Math.round((G.mod.omegaDmg - 1) * 100)}% DÉG. · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢ + ${OMEGA.abyss} ${RES.a.i}</b> <span class="k">U</span>` : need ? 'CHOISISSEZ UNE SPÉCIALISATION' : `▲ AMÉLIORER · <b style="font-family:var(--mono)">${fmt(Towers.upCost(t))}¢</b> <span class="k">U</span>`;
     P.innerHTML = `<div class="tp-head"><canvas id="tp-ic"></canvas><div><div class="tp-name">${d.name.toUpperCase()}</div><div class="tp-sub">${TIER_NAMES[d.tier]} · NIV ${t.level}/${maxL}</div><div class="pips">${pips}</div></div><span class="tp-close" id="tp-x">✕</span></div>
       ${body}${tags}<div class="jam" id="tp-jam" hidden><span>⚡ BROUILLÉE${sup ? ' · BONUS SUSPENDU' : ''} · <b id="tp-jt"></b></span><button class="btn" id="tp-unjam"></button><button class="btn" id="tp-unjall" hidden></button></div>${spec}${ctrl}${fuse}
       <div class="pbtns"><button class="btn prim" id="tp-up">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE · ${fmt(Towers.sellValue(t))}¢ <span class="k">X</span></button></div>`;
@@ -7540,12 +7643,12 @@ const UI = {
   refreshJam(t) {
     const J = $('tp-jam'); if (!J) return;
     const on = t.stun > 0, n = on ? Towers.jammed().length : 0, c = Towers.unjamCost(t), ca = n > 1 ? Towers.unjamCostAll() : 0;
-    const k = on ? [Math.ceil(t.stun / 6), c, ca, n, G.money >= c, G.money >= ca].join(':') : '';
+    const k = on ? [Math.ceil(t.stun / 6), t.jamP ? 1 : 0, c, ca, n, G.money >= c, G.money >= ca].join(':') : '';
     if (k === this.last.tpj) return;
     const was = this.last.tpj; this.last.tpj = k;
     J.hidden = !on;
     if (!on) { if (was) this.placePanel(); return; }
-    $('tp-jt').textContent = (t.stun / 60).toFixed(1).replace('.', ',') + ' s';
+    $('tp-jt').textContent = t.jamP ? 'jusqu\'au débrouillage' : (t.stun / 60).toFixed(1).replace('.', ',') + ' s';
     const b = $('tp-unjam'); b.innerHTML = `DÉBROUILLER · <b>${fmt(c)}¢</b> <span class="k">D</span>`; b.disabled = G.money < c;
     const a = $('tp-unjall'); a.hidden = n < 2;
     if (n > 1) { a.innerHTML = `TOUTES (${n}) · <b>${fmt(ca)}¢</b>`; a.disabled = G.money < ca; }
@@ -7644,6 +7747,8 @@ const UI = {
     $('gm-row').innerHTML = Object.entries(GMODES).map(([k, m]) => `<button data-k="${k}" class="${k === gm ? 'on' : ''}" style="--tc:${m.c}">${m.n.toUpperCase()}</button>`).join('');
     $('gm-row').querySelectorAll('button').forEach(b => b.onclick = () => { Store.s.gm = b.dataset.k; Store.save(); Sfx.play('ui'); this.openNew(); });
     $('gm-desc').innerHTML = `<b style="color:${GMODES[gm].c}">${GMODES[gm].n}</b> — ${GMODES[gm].d}`;
+    $('cus-box').hidden = gm !== 'custom';
+    if (gm === 'custom') Custom.render();
     const g = $('diff-grid'); g.innerHTML = '';
     for (const k in DIFFS) {
       const d = DIFFS[k], rec = Store.data.records[gm === 'classic' ? k : k + ':' + gm] || 0, el = document.createElement('div');
@@ -7653,7 +7758,8 @@ const UI = {
         const go = () => {
           const sd = Hist.parse($('seed-in').value);
           this.closeAll();
-          if (sd) Game.newGame(sd.diff || k, { gm: sd.gm || gm, seed: sd.seed, portrait: sd.portrait == null ? undefined : sd.portrait }); else Game.newGame(k, { gm });
+          const cus = gm === 'custom' ? Custom.get() : null;
+          if (sd) Game.newGame(sd.diff || k, { gm: sd.free ? gm : sd.gm, cus, seed: sd.seed, portrait: sd.portrait == null ? undefined : sd.portrait }); else Game.newGame(k, { gm, cus });
         };
         if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par la nouvelle.', go);
         else go();
@@ -7688,7 +7794,8 @@ const UI = {
     }
     $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · Code de carte <b>${Hist.code()}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
       `<br>Doctrine <b>${DOCTRINES[G.doctrine].n}</b> · Commandant niv. <b>${Store.data.cmd.lvl}</b>` +
-      (G.daily ? '<br>' + G.mutKeys.map(k => `<b style="color:var(--gold)">${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>') : '');
+      (G.daily ? '<br>' + G.mutKeys.map(k => `<b style="color:var(--gold)">${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>') : '') +
+      (G.cus ? '<br><b style="color:#b48cff">Partie perso</b> : ' + (CUSTOM.filter(d => G.cus[d.k] !== d.d).map(d => `${d.n} ${Custom.txt(d, G.cus[d.k])}`).join(' · ') || 'réglages par défaut') : '');
     this.btns($('pause-btns'), [
       ['REPRENDRE', 'prim', () => this.close('ov-pause')],
       ['OPTIONS', '', () => this.openOptions()],
@@ -7697,7 +7804,7 @@ const UI = {
       ['MANUEL', '', () => this.openHelp()],
       ['CODEX', '', () => this.openCodex()],
       ['RECOMMENCER', '', () => this.confirm('RECOMMENCER ?', G.daily ? 'Le Défi du jour reprend depuis le début.' : 'Nouvelle carte, même difficulté. La partie en cours sera perdue.', () => {
-        const dk = G.diffKey, daily = !!G.daily; this.closeAll(); Game.newGame(dk, { daily });
+        const dk = G.diffKey, daily = !!G.daily, gm = G.gm, cus = G.cus; this.closeAll(); Game.newGame(dk, { daily, gm, cus });
       })],
       [G.phase === 'prep' ? 'SAUVEGARDER & QUITTER' : 'QUITTER<small>reprise au début de la vague en cours</small>', '', () => Game.quit()],
       ['ABANDONNER', 'danger', () => this.confirm('ABANDONNER ?', 'La partie sera perdue. Les fragments gagnés restent acquis.', () => { this.closeAll(); Game.gameOver(); })]
@@ -7755,7 +7862,7 @@ const UI = {
   },
   renderTree() {
     $('tree-sub').innerHTML = `Disponibles : ${Res.tag('n', G.nanites)} · ${Res.tag('p', G.res.p)} · ${Res.tag('a', G.res.a)}<br>` +
-      `<b>Palier II</b> en nanites (fin de vague, boss, butin). <b>Palier III</b> en plasma (boss, parfois élites, raffinerie). <b>Palier IV</b> en abyssite (méga-boss, puis boss après la vague ${OMEGA.from}). Les nœuds du 4<sup>e</sup> rang débloquent de nouvelles <b>capacités</b>.`;
+      `<b>Palier II</b> en nanites (fin de vague, boss, butin). <b>Palier III</b> en plasma (boss, parfois élites, raffinerie). <b>Palier IV</b> en abyssite (méga-boss, puis boss après la vague ${Towers.omFrom()}). Les nœuds du 4<sup>e</sup> rang débloquent de nouvelles <b>capacités</b>.`;
     const root = $('tree'); root.innerHTML = '';
     BRANCHES.forEach((b, bi) => {
       const col = document.createElement('div'); col.className = 'branch';
@@ -7788,7 +7895,7 @@ const UI = {
       `<div class="ars ref"><div class="ic">${RES.p.i}</div><div><b>RAFFINERIE</b><span>Transforme vos nanites en trop en plasma. Le prix augmente à chaque conversion (${G.res.ref || 0} déjà faite${(G.res.ref || 0) > 1 ? 's' : ''}).</span></div>` +
       `<button class="btn" id="ref-b" ${G.nanites >= rc ? '' : 'disabled'}><span class="nanos">${rc} ◈</span> → 1 ${RES.p.i}</button></div>` +
       `<div class="ars${on ? '' : ' off'}"><div class="ic">${TXT('⚔')}</div><div><b>RECHERCHE OMÉGA · RANG ${r}</b><span>Recherche sans limite : <b style="letter-spacing:0">+${Math.round(OMEGA.ars * 100)} %</b> de dégâts pour toutes les tourelles à chaque rang${r ? ` (actuellement +${Math.round(OMEGA.ars * 100 * r)} %)` : ''}. ` +
-      (on ? 'Le prix augmente à chaque rang.' : `Débloquée après la vague ${OMEGA.from} (le Léviathan), avec les niveaux Oméga des tourelles.`) + `</span></div>` +
+      (on ? 'Le prix augmente à chaque rang.' : `Débloquée après la vague ${Towers.omFrom()}${Towers.omFrom() === OMEGA.from ? ' (le Léviathan)' : ''}, avec les niveaux Oméga des tourelles.`) + `</span></div>` +
       `<button class="btn" id="ars-b" ${on && G.res.p >= c ? '' : 'disabled'}>+1 RANG · ${Res.tag('p', c)}</button></div>`;
     $('ars-b').onclick = () => { if (Act.do('skill', 'ars')) { this.renderTree(); this.drawLinks(); } };
     $('ref-b').onclick = () => { if (Act.do('skill', 'refine')) { this.renderTree(); this.drawLinks(); } };
@@ -7862,7 +7969,7 @@ const UI = {
         el.className = 'rcard' + (own ? ' own' : '') + (!own && !can ? ' lock' : '');
         el.style.setProperty('--tc', d.color);
         el.innerHTML = `<div class="eq"><canvas></canvas>+<canvas></canvas>→<canvas class="res"></canvas><div style="margin-left:auto;text-align:right">${own ? '<span class="tag g">PLAN ACQUIS</span>' : Res.tag(cu, rc)}</div></div>
-          <h4>${d.name}<small>${TOWERS[r.a].name} + ${TOWERS[r.b].name} · ${Towers.costOf(r.r)}¢${Towers.elemTxt(r.r)} la pose</small></h4><p>${d.desc}</p>
+          <h4>${d.name}<small>${TOWERS[r.a].name} + ${TOWERS[r.b].name} · ${Towers.costOf(r.r)}¢${Towers.elemTxt(r.r)} la prochaine pose</small></h4><p>${d.desc}</p>
           ${d.kind === 'support' ? '' : `<div class="ms"><span>DÉG <b>${d.dmg}${d.kind === 'beam' ? '/s' : ''}</b></span><span>PORTÉE <b>${(d.range / TILE).toFixed(1)}</b></span>${d.rate > 1 ? `<span>CAD <b>${(60 / d.rate).toFixed(1)}/s</b></span>` : ''}</div>`}
           <div class="tags">${this.tagsHtml(d)}</div>
           ${own ? '' : missing.length ? `<div class="note" style="color:var(--dang)">Plans requis : ${missing.join(', ')}</div>` : `<button class="btn nano" ${afford ? '' : 'disabled'} style="${cu !== 'n' ? `border-color:${RES[cu].c};color:${RES[cu].c}` : ''}">SYNTHÉTISER LE PLAN · ${rc} ${RES[cu].i}</button>`}`;
@@ -8380,7 +8487,7 @@ const UI = {
     let cols = '', xs = '';
     vals.forEach((v, i) => {
       const n = from + i, cur = live && n === last;
-      const tip = `Vague <b>${n}</b>${n % 5 === 0 ? ' · boss' : ''}${cur ? ' · en cours' : ''}<br><b style="color:var(--txt)">${fmt(v)}</b> dégâts`;
+      const tip = `Vague <b>${n}</b>${n % Waves.bossEv() === 0 ? ' · boss' : ''}${cur ? ' · en cours' : ''}<br><b style="color:var(--txt)">${fmt(v)}</b> dégâts`;
       cols += `<div class="st-c${cur ? ' cur' : ''}" data-tip="${tip.replace(/"/g, '&quot;')}">${i === imax ? `<em>${cf(v)}</em>` : ''}<i style="height:${y(v)}px"></i></div>`;
       xs += `<span>${n === from || n % every === 0 ? n : ''}</span>`;
     });
@@ -8422,7 +8529,8 @@ const UI = {
         <li>Les <b>débris</b> bloquent des cases : recyclez-les (charges limitées) pour des crédits ou des nanites.</li>
         <li>Appeler une vague en avance (quand la précédente a fini d'apparaître) rapporte une <b>prime</b>.</li>
         <li><b>Spécialisation</b> : au niveau 5 (niveau 3 pour le soutien), choisissez l'une des deux voies de la tourelle (losange doré clignotant). Le choix est définitif et nécessaire pour continuer à l'améliorer.</li>
-        <li><b>Éléments rares</b> : le <b style="color:#ff8a3d">plasma ✺</b> (boss dès la vague 10, parfois élites, ou raffinerie de nanites) paie le palier III de l'arbre et les fusions <b>T3</b> ; l'<b style="color:#b48cff">abyssite ⬟</b> (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50) paie le palier IV, les niveaux Oméga et l'Apocalypse <b>T4</b>. Pour une T3 ou une T4, le plan au Labo <i>et</i> chaque pose coûtent l'élément, d'autant plus que la difficulté est élevée (Standard : plan T3 5 ✺, pose 1 ✺ ; plan T4 3 ⬟, pose 2 ⬟).</li>
+        <li><b>Astéroïdes et foudre</b> : leur IEM met les tourelles touchées <b>hors ligne jusqu'à ce que vous payiez le débrouillage</b> (touche D, ou le bouton qui apparaît). En partie perso, vous pouvez le rendre temporaire.</li>
+        <li><b>Éléments rares</b> : le <b style="color:#ff8a3d">plasma ✺</b> (boss dès la vague 10, parfois élites, ou raffinerie de nanites) paie le palier III de l'arbre et les fusions <b>T3</b> ; l'<b style="color:#b48cff">abyssite ⬟</b> (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50) paie le palier IV, les niveaux Oméga et l'Apocalypse <b>T4</b>. Pour une T3 ou une T4, le plan au Labo <i>et</i> chaque pose coûtent l'élément, d'autant plus que la difficulté est élevée ; chaque pose coûte un peu plus que la précédente (Standard : plan T3 5 ✺, poses 0, 1, 2… ✺ ; plan T4 3 ⬟, poses 0, 2, 4… ⬟). Revendre une tourelle fait redescendre le prix. Les boss lâchent 1 ✺ dès la vague 10, 2 dès la 25 et 3 dès la 40.</li>
         <li><b style="color:#ff4df0">Fin de partie</b> : une fois le Léviathan repoussé (vague 50), les tourelles d'attaque montent jusqu'au <b>niveau Oméga 15</b> (+35 % de dégâts par niveau, crédits + 1 abyssite par niveau), et la <b>Recherche Oméga</b> (en bas de l'arbre, en plasma) ajoute +8 % de dégâts à toutes les tourelles par rang, sans limite. Le badge <b>⚔</b> de l'aperçu de vague estime combien de secondes de tir il faut pour détruire la vague suivante.</li>
         <li><b>Pièges</b> (dans la barre, après les tourelles de base) : les <b>mines</b> explosent au passage d'un ennemi au sol, les <b>barricades</b> bloquent le chemin jusqu'à leur destruction. Ils se posent sur le chemin, loin de l'entrée et du noyau.</li>
         <li>Certaines cartes ont <b>deux chemins</b> qui se rejoignent : couvrez les deux branches, ou concentrez-vous sur le tronçon commun. Les ennemis y sont 10% moins résistants.</li></ul>
