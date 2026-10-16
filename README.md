@@ -54,7 +54,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Éléments rares** | **plasma ✺** (1 par boss dès la vague 10, 2 dès la 25, 3 dès la 40 ; parfois élites ; raffinerie) et **abyssite ⬟** (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50). Les fusions **T3** demandent du plasma et l'Apocalypse **T4** de l'abyssite, pour le plan au Labo **et** pour chaque pose. Le plan dépend de la difficulté (T3 : 3 / 5 / 7 / 9 ✺, T4 : 2 / 3 / 4 / 5 ⬟) et chaque pose coûte un peu plus que la précédente (Standard : T3 0, 1, 2… ✺ ; T4 0, 2, 4… ⬟) ; revendre fait redescendre le prix |
 | **Capacités** | Frappe Orbitale (ciblée), Cryo-Bombe, Surcharge |
 | **Ennemis** | 22 types (dont régénérateurs, ruches, déphaseurs, nécromants, mastodontes, voileurs…), élites et **6 boss** à mécanique (Colosse, Hydre, Overlord, Scission, Sentinelle, Sauteur), présentés à leur arrivée |
-| **Méga-boss** | vague 50 : **Léviathan** (bouclier, à moitié insensible aux ralentissements et au gel ; 4 phases : carapace et IEM géante, frénésie et escorte blindée, Abysse qui régénère et neutralise vos meilleures tourelles, Raz-de-marée où il fonce vers le noyau) ; vague 100 : **Oméga** (4 phases : failles d'élites, distorsions, boucliers miroirs, effondrement, puis 3 Échos). Ensuite toutes les 50 vagues. S'il atteint le noyau, la partie est perdue. |
+| **Méga-boss** | vague 50 : **Léviathan** (bouclier, en partie insensible aux ralentissements et au gel ; 4 phases : carapace et IEM géante, frénésie et escorte blindée, Abysse qui régénère et neutralise vos meilleures tourelles, Raz-de-marée où il fonce vers le noyau) ; vague 100 : **Oméga** (4 phases : failles d'élites, distorsions, boucliers miroirs, effondrement, puis 3 Échos). Ensuite toutes les 50 vagues. S'il atteint le noyau, la partie est perdue. |
 | **Cartes** | procédurales (portrait/paysage), dont la moitié avec **deux chemins** qui se rejoignent |
 | **Pièges** | **mines** et **barricades** à poser sur le chemin |
 | **Événements aléatoires** | pluie d'astéroïdes, capsule de ravitaillement, ruée vers l'or, surtension, tempête solaire, lune de sang, comète, faille dimensionnelle, orage IEM. L'IEM des astéroïdes et de la foudre met les tourelles **hors ligne jusqu'au débrouillage payant** |
@@ -79,6 +79,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | `U` / `X` | Améliorer / vendre la tourelle sélectionnée |
 | `T` / `O` | Changer le ciblage / surcadence |
 | `D` | Débrouiller contre crédits la tourelle sélectionnée, ou toutes les tourelles brouillées |
+| `Tab` | Classement des joueurs (multijoueur) |
 
 Toutes ces touches se changent dans **Options → Raccourcis clavier**, où l'on peut aussi donner une touche à chaque tourelle ou piège.
 | `R` | Recycler le débris sélectionné |
@@ -127,6 +128,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.16** : Léviathan rééquilibré (PV 19 000, bouclier 2 500, ralentissements à 70 %) ; coopération : pause pour tous même en pleine vague, retour d'un joueur déconnecté avec le code du salon (à la fin de la vague), tourelles d'un joueur parti revendables par les autres ; classement des joueurs (touche `Tab`, panneau multijoueur, fin de partie) ; fenêtre des nouveautés au premier lancement d'une nouvelle version.
 - **v9.15** : Léviathan plus coriace : PV 15 000 → 24 000, bouclier de 4 000 rechargé en phase 2, blindage renforcé, ralentissements et gel à moitié efficaces, escortes et drains plus fréquents, régénération plus forte et 4ᵉ phase « Raz-de-marée » (prime 2 000, une abyssite de plus).
 - **v9.14** : raccourcis clavier modifiables (Options → Raccourcis clavier) : toutes les commandes, les emplacements de la barre, et une touche au choix pour chaque tourelle ou piège ; la barre, les boutons et le manuel affichent vos touches.
 - **v9.13** : zone des soutiens par crans (4 → 8 → 12 → 20 voisins) ; la 2ᵉ voie du Nexus, qui couvrait déjà les diagonales, devient **Grand rayonnement** (12 voisins), et la compétence Maillage agrandit aussi la zone du Nexus.

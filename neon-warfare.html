@@ -383,6 +383,9 @@ svg.links line.on{stroke:var(--bc);stroke-width:2.5;opacity:.85}
 .rcard .ms b{color:#fff}
 
 /* options / lists */
+#news-list{max-height:min(58vh,520px);overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:12px}
+.nv h4{margin:0 0 4px;font-size:13px;letter-spacing:.15em;color:#fff}
+.nv ul{margin:0;padding-left:18px;font-size:12px;line-height:1.55;color:#c4d2e8}
 #keys-list{max-height:min(60vh,560px);overflow-y:auto;padding-right:6px}
 .kg{font-size:9px;letter-spacing:2px;color:var(--accent);font-weight:800;margin:14px 0 4px}
 .kg:first-child{margin-top:0}
@@ -509,6 +512,23 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 #mp-em.on{display:flex}
 #mp-em button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:5px;color:#cfe3ff;font:11px var(--font);padding:3px 6px;cursor:pointer}
 #mp-em button:hover{border-color:var(--accent)}
+#mp-pause{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);z-index:45;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:10px;background:rgba(3,6,12,.92);border:1px solid var(--accent);box-shadow:0 0 30px -8px var(--accent);font-size:12px;color:var(--dim);max-width:calc(100vw - 32px);flex-wrap:wrap;justify-content:center}
+#mp-pause b{color:#fff;letter-spacing:.2em}
+#score{position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:44;min-width:min(560px,calc(100vw - 32px));max-width:calc(100vw - 32px);overflow-x:auto;padding:12px 14px;border-radius:10px;background:rgba(3,6,12,.94);border:1px solid rgba(255,210,63,.45);box-shadow:0 0 30px -10px var(--gold)}
+#score h4{margin:0 0 8px;font-size:11px;letter-spacing:.25em;color:var(--gold);display:flex;justify-content:space-between;gap:10px}
+#score h4 small{color:var(--dim);letter-spacing:0;font-weight:500}
+.sc-t{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.sc-t th{font-size:9px;letter-spacing:1.5px;color:var(--dim);text-align:right;padding:3px 8px;font-weight:700}
+.sc-t th:first-child,.sc-t td:first-child{text-align:left}
+.sc-t td{padding:5px 8px;text-align:right;border-top:1px solid rgba(255,255,255,.06);font-family:var(--mono);color:#cfe3ff}
+.sc-t td:first-child{font-family:var(--font);font-weight:800;color:var(--oc)}
+.sc-t tr.me td{background:rgba(255,255,255,.04)}
+.sc-t tr.out td{opacity:.45}
+.sc-t .rk{color:var(--gold);margin-right:6px}
+.sc-t .bar{display:block;height:3px;border-radius:2px;background:var(--oc);margin-top:3px;opacity:.7}
+.mp-sc{width:100%;margin-top:5px;padding:5px}
+.mpe-score{margin:10px 0;overflow-x:auto}
+.mpe-score h4{margin:0 0 6px;font-size:11px;letter-spacing:.25em;color:var(--gold)}
 #mp-wait{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:40;display:none;pointer-events:none;padding:10px 18px;border-radius:10px;background:rgba(3,6,12,.85);border:1px solid var(--gold);color:var(--gold);font-weight:800;letter-spacing:.2em;font-size:12px;animation:blink 1s infinite alternate}
 .bcard.send .tr{color:#ff2a6d}
 .bcard.sab{background:linear-gradient(170deg,rgba(255,138,61,.14),rgba(255,255,255,.02))}
@@ -781,6 +801,8 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   <div class="mxp"><s id="m-xp"></s></div><div id="mlist"></div></div>
 <div id="mp" class="hidden"><div id="mp-info"></div><div class="mp-emr"><button id="mp-emt">MESSAGES ▾</button><div id="mp-em"></div></div></div>
 <div id="mp-wait">EN ATTENTE DE VOTRE PARTENAIRE…</div>
+<div id="mp-pause" hidden><b>⏸ PARTIE EN PAUSE</b><span id="mp-pby"></span><button class="btn prim" id="mp-resume">REPRENDRE</button></div>
+<div id="score" hidden></div>
 <div id="tpanel" class="panel"></div>
 <div id="banner"></div>
 <div id="callout"></div>
@@ -812,6 +834,8 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <div class="ov" id="ov-pause"><div class="modal" style="width:390px;text-align:center">
   <h2>PAUSE</h2><div class="sub" id="pause-info"></div><div class="mbtns" style="margin:12px auto 0" id="pause-btns"></div></div></div>
 <div class="ov" id="ov-opts"><div class="modal" style="width:500px"><button class="mclose" data-close>✕</button><h2>OPTIONS</h2><div id="opts"></div></div></div>
+<div class="ov" id="ov-news"><div class="modal" style="width:560px"><button class="mclose" data-close>✕</button><h2>MISE À JOUR</h2><div class="sub" id="news-sub"></div>
+  <div id="news-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn prim" data-close>C'EST PARTI !</button></div></div></div>
 <div class="ov" id="ov-keys"><div class="modal" style="width:640px"><button class="mclose" data-close>✕</button><h2>RACCOURCIS CLAVIER</h2>
   <div class="sub">Cliquez sur une touche puis appuyez sur la nouvelle (Échap pour annuler, ✕ pour n'en mettre aucune). Une touche déjà utilisée est retirée de l'autre commande.</div>
   <div id="keys-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="keys-reset">TOUCHES PAR DÉFAUT</button></div></div></div>
@@ -871,7 +895,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.15';
+const VERSION = '9.16';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -1510,13 +1534,13 @@ const BOSSES = {
 };
 /* MÉGA-BOSS : vague 50 (Léviathan), vague 100 (Oméga), puis en alternance toutes les 50 vagues.
    Plusieurs phases : à chaque seuil de PV, 2,5 s d'invulnérabilité puis de nouveaux pouvoirs. S'il atteint le noyau, c'est fini. */
-// slowRes : les ralentissements et le gel n'ont que la moitié de leur effet sur lui
-BOSSES.leviathan = { name: 'LÉVIATHAN', hp: 24000, shield: 4000, armor: 6, spd: .36, bounty: 2000, leak: 9999, r: 30, color: '#00e1ff', shape: 'mega1', rot: true, boss: true, mega: true, heavy: true, slowRes: .5,
+// slowRes : les ralentissements et le gel n'ont que 70 % de leur effet sur lui
+BOSSES.leviathan = { name: 'LÉVIATHAN', hp: 19000, shield: 2500, armor: 5, spd: .36, bounty: 2000, leak: 9999, r: 30, color: '#00e1ff', shape: 'mega1', rot: true, boss: true, mega: true, heavy: true, slowRes: .7,
   phases: [
-    { n: 'Carapace abyssale', armor: 6, jam: { every: 330, r: 220, t: 120 } },
-    { at: .7, n: 'Frénésie des profondeurs', armor: 2, spd: 1.35, shieldBack: .5, summon: { types: ['ram', 'hive', 'tank'], every: 360, n: 4 }, jam: { every: 380, r: 220, t: 120 } },
-    { at: .4, n: 'Abysse', armor: 2.5, spd: 1.15, regen: .009, drain: { every: 360, n: 4, t: 240, r: 270 }, summon: { types: ['juggernaut', 'ram'], every: 480, n: 3 } },
-    { at: .12, n: 'Raz-de-marée', armor: 1, spd: 1.6, jam: { every: 300, r: 250, t: 150 }, summon: { types: ['ram', 'juggernaut', 'hive'], every: 300, n: 3 } }
+    { n: 'Carapace abyssale', armor: 5, jam: { every: 360, r: 210, t: 120 } },
+    { at: .7, n: 'Frénésie des profondeurs', armor: 1.5, spd: 1.3, shieldBack: .4, summon: { types: ['ram', 'hive', 'tank'], every: 420, n: 3 }, jam: { every: 420, r: 210, t: 120 } },
+    { at: .4, n: 'Abysse', armor: 2, spd: 1.15, regen: .007, drain: { every: 420, n: 3, t: 240, r: 260 }, summon: { types: ['juggernaut', 'ram'], every: 540, n: 2 } },
+    { at: .1, n: 'Raz-de-marée', armor: 1, spd: 1.4, jam: { every: 360, r: 230, t: 120 }, summon: { types: ['ram', 'juggernaut', 'hive'], every: 360, n: 2 } }
   ] };
 BOSSES.omega = { name: 'OMÉGA', hp: 32000, shield: 9000, armor: 4, spd: .32, bounty: 4000, leak: 9999, r: 34, color: '#ff2bd6', shape: 'mega2', boss: true, mega: true, heavy: true,
   spawn: { type: 'echo', n: 3, hp: 1 },
@@ -1561,7 +1585,7 @@ const LORE = {
   mite: 'Essaim libéré par une Ruche. Rapide, fragile, nombreux.',
   wraith: 'Mort revenu à la vie par un Nécromant.',
   shardlet: 'Dernier éclat d\'une Scission. Rapide, mais fragile.',
-  leviathan: 'Méga-boss de la vague 50, protégé par un bouclier et à moitié insensible aux ralentissements et au gel. Quatre phases : carapace et IEM géantes, puis frénésie et escorte blindée (bouclier rechargé), puis l\'Abysse qui régénère et neutralise vos meilleures tourelles, enfin le Raz-de-marée où il fonce vers le noyau. S\'il touche le noyau, la partie est perdue.',
+  leviathan: 'Méga-boss de la vague 50, protégé par un bouclier et en partie insensible aux ralentissements et au gel. Quatre phases : carapace et IEM géantes, puis frénésie et escorte blindée (bouclier rechargé), puis l\'Abysse qui régénère et neutralise vos meilleures tourelles, enfin le Raz-de-marée où il fonce vers le noyau. S\'il touche le noyau, la partie est perdue.',
   omega: 'Méga-boss de la vague 100. Quatre phases : failles d\'élites, distorsions, miroir de boucliers, puis effondrement. Abattu, il libère trois Échos. S\'il touche le noyau, la partie est perdue.',
   echo: 'Fragment d\'Oméga qui survit à sa destruction.',
   colosse: 'Forteresse ambulante au blindage massif. Lent, mais il encaisse tout.',
@@ -3125,6 +3149,8 @@ const Towers = {
     return t;
   },
   remove(t) {
+    // classement : ce qu'a fait une tourelle vendue ou fusionnée reste au crédit de son propriétaire
+    if (t.owner != null && G.pst) { const o = G.pst[t.owner] || (G.pst[t.owner] = { d: 0, k: 0 }); o.d += t.dealt || 0; o.k += t.kills || 0; }
     G.tgrid[t.ty * G.map.C + t.tx] = null;
     const i = G.towers.indexOf(t); if (i >= 0) G.towers.splice(i, 1);
     t.dead = true; t.beam = null; t.target = null;
@@ -3132,7 +3158,7 @@ const Towers = {
   sellValue(t) { return t.fresh ? t.invested : Math.floor(t.invested * G.mod.refund); },
   sell(t) {
     const v = this.sellValue(t);
-    gain(v, Net.coop && t.owner != null ? t.owner : G.actor); G.stats.gold -= v;
+    gain(v, Net.coop && t.owner != null && !(G.gone && G.gone[t.owner]) ? t.owner : G.actor); G.stats.gold -= v;
     if (t.fresh && t.elem) Res.gain(this.elemOf(t.key), t.elem);
     FX.float(t.cx, t.cy - 12, '+' + v, '#ffd23f', 14); FX.spark(t.cx, t.cy, '#ffd23f', 10, 2.5); FX.ring(t.cx, t.cy, t.d.color, 26, 16, 2);
     Sfx.play('sell');
@@ -3774,7 +3800,7 @@ const Abil = {
       Strikes.add(x, y, ABILS.orbital.radius, this.orbDmg(), null, ABILS.orbital.color, 45, true);
       Sfx.play('nuke');
     } else if (k === 'emp') {
-      for (const e of G.enemies) { if (!e.alive || e.d.noSlow) continue; e.freezeT = e.d.slowRes ? 45 : e.boss ? 90 : 180; FX.spark(e.x, e.y, '#bff4ff', 4, 1.5); }
+      for (const e of G.enemies) { if (!e.alive || e.d.noSlow) continue; e.freezeT = e.d.slowRes ? Math.round(90 * e.d.slowRes) : e.boss ? 90 : 180; FX.spark(e.x, e.y, '#bff4ff', 4, 1.5); }
       const M = G.map;
       FX.ring(M.C * TILE / 2, M.R * TILE / 2, '#3ad7ff', Math.max(M.C, M.R) * TILE * .7, 40, 6, 20);
       Render.flash(.45, '#3ad7ff'); Sfx.play('freeze');
@@ -4796,11 +4822,19 @@ const Net = {
       MP.connected();
       return;
     }
-    // hôte : une place libre, et pas de nouvel arrivant pendant une partie
+    // hôte : une place libre ; pendant une partie, seulement pour reprendre la place d'un joueur parti (coopération)
+    if (MP.live) {
+      const rp = Net.coop ? MP.rejoinSlot() : null;
+      if (rp == null) { this.raw(L, { t: 'busy' }); setTimeout(() => this.dropLink(L), 600); return; }
+      L.p = rp;
+      this.raw(L, { t: 'welcome', you: rp, code: this.code });
+      MP.rejoinAdmit(rp);
+      return;
+    }
     const used = new Set(this.links.filter(l => l.open && l.p).map(l => l.p));
     let p = 0; for (let i = 1; i < NET_MAX; i++) if (!used.has(i)) { p = i; break; }
-    if (!p || MP.live) {
-      this.raw(L, { t: p ? 'busy' : 'full' });
+    if (!p) {
+      this.raw(L, { t: 'full' });
       setTimeout(() => this.dropLink(L), 600);
       return;
     }
@@ -5109,10 +5143,11 @@ const MP = {
     if (!Net.on || !G || Game.state !== 'play') return;
     if (now - this.stT > 700) {
       this.stT = now;
-      if (Net.versus && !G.over) Net.send({ t: 'st', lives: Math.ceil(G.lives), max: G.maxLives, wave: G.waveNum, kills: G.stats.kills, inc: G.income || 0 });
+      if (Net.versus && !G.over) Net.send({ t: 'st', lives: Math.ceil(G.lives), max: G.maxLives, wave: G.waveNum, kills: G.stats.kills, inc: G.income || 0, dmg: Score.myDmg(), tw: G.towers.length });
       if (Net.versus) this.flushSurv();
     }
     if (Net.coop && Lock.desync) this.resync();
+    if (Net.coop && Net.role === 'host') this.tryRejoin();
     if (Net.coop && now - (this.curT || 0) > (Net.relayed() ? 250 : 90)) {
       const h = UI.hover;
       if (h.inside && (h.wx !== this.cwx || h.wy !== this.cwy || UI.placing !== this.cpl)) {
@@ -5240,10 +5275,44 @@ const MP = {
     if (Game.state === 'play') Game.quit(false);
     UI.closeAll(); UI.showMenu();
   },
+  // hôte : place d'un joueur parti, ou dont on n'a plus de nouvelles depuis 5 s (il se reconnecte avant la fin du délai)
+  rejoinSlot() {
+    const now = performance.now();
+    for (const p of this.slots) {
+      if (!p || (this.rejoinQ && this.rejoinQ.has(p))) continue;
+      const L = Net.links.find(l => l.p === p && l.open);
+      if (this.out[p] && !L) return p;
+      if (L && now - (L.lastRx || 0) > 5000) { L.open = false; Net.dropLink(L); this.onLeave(p, 'lost'); return p; }
+    }
+    return null;
+  },
+  // hôte : le joueur revenu reçoit la partie de départ, puis l'état complet dès que la vague en cours est finie
+  rejoinAdmit(p) {
+    (this.rejoinQ || (this.rejoinQ = new Set())).add(p);
+    this.pl[p] = { name: (this.names && this.names[p]) || 'Joueur ' + (p + 1), ready: true, v: '?', ping: 0 };
+    Net.sendTo(p, { t: 'start', o: this.last, pl: this.pl, rejoin: true });
+    this.syncRoster();
+    UI.toast('Multijoueur', `${this.esc(this.pl[p].name)} revient : il reprendra sa place à la fin de la vague en cours.`, MP_COL[p], 5);
+  },
+  tryRejoin() {
+    if (!this.rejoinQ || !this.rejoinQ.size || Lock.hold || !G || G.over || !this.quiet()) return;
+    for (const p of this.rejoinQ) {
+      if (!Net.links.some(l => l.p === p && l.open)) continue;
+      delete this.out[p]; if (G.gone) delete G.gone[p];
+      Net.send({ t: 'back', who: p });
+      UI.toast('Multijoueur', `${this.esc(this.name(p))} est de retour dans la partie !`, MP_COL[p], 4);
+    }
+    this.rejoinQ.clear();
+    Lock.hold = true; Lock.snapWait = new Set(this.peersIn()); this.quietSnap = true;
+    Net.send({ t: 'snap', s: this.snap() });
+    this.snapDone();
+  },
   // hôte : un invité est parti (départ, coupure ou exclusion)
   onLeave(p, why) {
     if (!this.pl[p]) return;
     const n = this.pl[p].name;
+    (this.names || (this.names = {}))[p] = n;
+    if (this.rejoinQ) this.rejoinQ.delete(p);
     delete this.pl[p]; delete this.curs[p];
     Net.send({ t: 'left', who: p, why, name: n });
     this.on.left.call(this, { who: p, why, name: n });
@@ -5268,7 +5337,7 @@ const MP = {
   snap() {
     const s = SaveSys.pack();
     const keys = ['tick', 'nextId', 'autoT', 'autoWave', 'tokens', 'jpot', 'bets', 'curse', 'lastDur', 'lastMc', 'leakHist', 'betsWon', 'cardN', 'evCount', 'mLast',
-      'perks', 'net', 'events', 'recycling', 'combo', 'comboT', 'overdriveT', 'ev', 'evSpd', 'evQ', 'pods', 'craters', 'wallets', 'jpot', 'slot', 'income', 'sendStock', 'np', 'gone'];
+      'perks', 'net', 'events', 'recycling', 'paused', 'pst', 'combo', 'comboT', 'overdriveT', 'ev', 'evSpd', 'evQ', 'pods', 'craters', 'wallets', 'jpot', 'slot', 'income', 'sendStock', 'np', 'gone'];
     s.x = {}; for (const k of keys) s.x[k] = G[k];
     s.x.drops = G.drops.map(d => Object.assign({}, d));
     s.tw = G.towers.map(t => [t.owner, t.heat, t.over ? 1 : 0, t.cd, t.ang, t.aimT, t.ramp, t.stun, t.fresh ? 1 : 0, t.id, t.jamP ? 1 : 0]);
@@ -5308,7 +5377,8 @@ const MP = {
   snapDone() {
     if (!Lock.snapWait || Lock.snapWait.size || !G) return;
     Lock.reset(G.tick);
-    UI.toast('Resynchronisé', 'Toutes les parties sont de nouveau identiques.', '#39ff88', 3);
+    if (!this.quietSnap) UI.toast('Resynchronisé', 'Toutes les parties sont de nouveau identiques.', '#39ff88', 3);
+    this.quietSnap = false;
   },
   flagDesync() { if (Lock.desync) return; Lock.desync = true; Net.send({ t: 'desync' }); this.on.desync.call(this); },
   // messages reçus (m.p : numéro de l'expéditeur)
@@ -5344,7 +5414,13 @@ const MP = {
       Sfx.play('ui');
     },
     emote(m) { if (EMOTES[m.i]) { UI.toast(MP.esc(MP.name(m.p)), EMOTES[m.i], MP_COL[m.p], 3); Sfx.play('mission'); } },
-    start(m) { if (m.pl) MP.pl = m.pl; MP.begin(m.o); },
+    start(m) {
+      if (m.pl) MP.pl = m.pl;
+      MP.begin(m.o);
+      // retour dans une partie en cours : on attend l'état complet de l'hôte (fin de la vague en cours)
+      if (m.rejoin) { MP.rejoining = true; Lock.hold = true; UI.toast('Retour en jeu', 'Vous reprendrez votre place, vos tourelles et vos crédits à la fin de la vague en cours.', MP_COL[Net.me], 6); }
+    },
+    back(m) { delete MP.out[m.who]; },
     lobby() { MP.toLobby(false); UI.toast('Multijoueur', 'L\'hôte a ramené tout le monde au salon.', '#9fb0cc', 3); },
     st(m) { MP.opps[m.p] = Object.assign(MP.opps[m.p] || {}, m); },
     send(m) { if (m.to === Net.me) MP.incoming(m); },
@@ -5385,7 +5461,11 @@ const MP = {
       if (!G || !Net.coop) return;
       MP.restore(m.s); Lock.reset(G.tick);
       Net.send({ t: 'snapok' });
-      UI.toast('Resynchronisé', 'Votre partie a été réalignée sur celle de l\'hôte.', '#39ff88', 3);
+      if (MP.rejoining) {
+        MP.rejoining = false;
+        for (const p in G.gone || {}) MP.out[p] = 1;
+        UI.toast('De retour !', 'Vous avez retrouvé votre place dans la partie.', '#39ff88', 4);
+      } else if (!MP.out[Net.me]) UI.toast('Resynchronisé', 'Votre partie a été réalignée sur celle de l\'hôte.', '#39ff88', 3);
     },
     snapok(m) { if (Lock.snapWait) { Lock.snapWait.delete(m.p); MP.snapDone(); } },
     desync() { Lock.desync = true; if (G && G.net) G.desync = true; UI.toast('Désynchronisation', 'Les parties ont divergé (navigateurs différents ?). Elles seront réalignées automatiquement entre deux vagues.', '#ffd23f', 6); }
@@ -5690,21 +5770,26 @@ const Act = {
     bet: (k, pi) => Casino.bet(k, pi),
     speed: v => Game.setSpeed(v),
     auto: on => { G.autoWave = !!on; if (G.phase === 'prep') G.autoT = 480; UI.refreshAuto(); },
-    leave: p => { (G.gone || (G.gone = {}))[p] = 1; }   // départ d'un joueur, appliqué au même tick chez tous
+    leave: p => { (G.gone || (G.gone = {}))[p] = 1; },   // départ d'un joueur, appliqué au même tick chez tous
+    // coopération : pause pour tous, demandée par n'importe quel joueur (G.paused = numéro du joueur + 1)
+    mpause: on => { G.paused = on ? (G.actor != null ? G.actor : 0) + 1 : 0; UI.refreshMpPause(); }
   },
   do(type, ...a) {
     if (!G || G.over) return false;
+    if (G.paused && type !== 'mpause') { UI.toast('Partie en pause', 'Reprenez la partie pour agir.', '#9fb0cc', 2); return false; }
     if (Net.coop) return Lock.push(type, a);
     return this.run(null, type, a);
   },
   run(p, type, a) {
     const h = this.H[type]; if (!h) return false;
+    if (G.paused && type !== 'mpause' && type !== 'leave') return false;
     const prev = G.actor; G.actor = p;
     try { return h(...a); } finally { G.actor = prev; if (Net.coop) UI.afterAct(type, p); }
   },
   // l'action en cours vient-elle de ce poste ? (pour n'afficher erreurs et sélections qu'à son auteur)
   mine() { return !Net.coop || G.actor == null || G.actor === Net.me; },
-  owns(t, p = G.actor != null ? G.actor : Net.me) { return !Net.coop || t.owner == null || t.owner === p; }
+  // la tourelle d'un joueur parti appartient à tout le monde (on peut la vendre, l'argent va au vendeur)
+  owns(t, p = G.actor != null ? G.actor : Net.me) { return !Net.coop || t.owner == null || t.owner === p || !!(G.gone && G.gone[t.owner]); }
 };
 
 /* historique des dernières parties (menu Palmarès) */
@@ -5769,7 +5854,7 @@ const Game = {
     G = {
       diffKey, diff: DIFFS[diffKey], seed, rs: seed ^ 0x5bd1e995, map, towers: [], tgrid: new Array(map.C * map.R).fill(null), enemies: [], drops: [],
       strikes: [], vortices: [], spawnQ: [], waves: {}, money: 0, lives: 0, maxLives: 0, nanites: 0, res: { p: 0, a: 0, ref: 0 }, recycle: 0, waveNum: 0,
-      cus: null, phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
+      cus: null, paused: 0, pst: {}, phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
       doctrine: 'standard', missions: [], cards: {}, timed: [], cardQ: 0, offer: null, xpRun: 0, cmdStart: null, traps: [], cx: {},
@@ -5891,6 +5976,7 @@ const Game = {
   },
   update() {
     G.tick++;
+    if (G.paused) return;   // pause en coopération : le temps de jeu est figé, le lockstep continue
     Waves.update(); Abil.update();
     if (G.comboT > 0 && --G.comboT === 0) G.combo = 0;
     Enemies.update();
@@ -6980,6 +7066,7 @@ const Input = {
       case 'stats': UI.openStats(); break;
       case 'casino': UI.openCasino(); break;
       case 'help': UI.openHelp(); break;
+      case 'score': e.preventDefault(); Score.toggle(); break;
       case 'orbital': case 'emp': case 'overdrive': Abil.trigger(act); break;
       case 'up': if (UI.sel && Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); break;
       case 'sell': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;
@@ -6988,6 +7075,42 @@ const Input = {
       case 'unjam': UI.unjam(); break;
       case 'recycle': if (UI.selDebris && !UI.selDebris.trap) Act.do('recycle', UI.selDebris.tx, UI.selDebris.ty); break;
     }
+  }
+};
+
+/* ============================== CLASSEMENT DES JOUEURS ============================== */
+const Score = {
+  on: false, t: 0,
+  // coopération : tout se calcule sur l'état partagé ; versus : chiffres envoyés par chaque joueur
+  rows() {
+    if (!G || !G.net) return [];
+    if (G.net === 'coop') return MP.slots.map(p => {
+      const T = G.towers.filter(t => t.owner === p), o = (G.pst || {})[p] || { d: 0, k: 0 };
+      return { p, d: o.d + T.reduce((a, t) => a + (t.dealt || 0), 0), k: o.k + T.reduce((a, t) => a + (t.kills || 0), 0), n: T.length,
+        inv: T.reduce((a, t) => a + (t.invested || 0), 0), c: G.wallets ? G.wallets[p] || 0 : 0, out: !!((G.gone && G.gone[p]) || MP.out[p]) };
+    });
+    const mine = { p: Net.me, d: this.myDmg(), k: G.stats.kills, w: G.waveNum, l: Math.ceil(G.lives), n: G.towers.length };
+    return [mine].concat(MP.others().map(p => { const o = MP.opps[p] || {}; return { p, d: o.dmg || 0, k: o.kills || 0, w: o.wave, l: o.over ? 0 : o.lives, n: o.tw, out: !!(o.over || MP.out[p]) }; }));
+  },
+  myDmg() { let d = 0; for (const k in G.tstats) d += G.tstats[k].dealt || 0; return Math.round(d); },
+  html(big) {
+    const R = this.rows().sort((a, b) => b.d - a.d), max = Math.max(1, ...R.map(r => r.d)), coop = G.net === 'coop';
+    const head = coop ? '<th>JOUEUR</th><th>DÉGÂTS</th><th>ÉLIM.</th><th>TOURELLES</th><th>INVESTI</th><th>CRÉDITS</th>' : '<th>JOUEUR</th><th>DÉGÂTS</th><th>ÉLIM.</th><th>VAGUE</th><th>INTÉGRITÉ</th>';
+    return `<h4>🏆 CLASSEMENT${big ? '' : ` <small>${Keys.lbl('score') ? Keys.lbl('score') + ' pour fermer' : ''}</small>`}</h4><table class="sc-t"><tr>${head}</tr>` + R.map((r, i) =>
+      `<tr class="${r.p === Net.me ? 'me' : ''}${r.out ? ' out' : ''}" style="--oc:${MP_COL[r.p]}"><td><span class="rk">${i + 1}</span>${MP.esc(MP.name(r.p))}${r.p === Net.me ? ' (vous)' : ''}${r.out ? ' · parti' : ''}<span class="bar" style="width:${(r.d / max * 100).toFixed(0)}%"></span></td>
+      <td>${fmt(Math.round(r.d))}</td><td>${fmt(r.k)}</td>` + (coop ? `<td>${r.n}</td><td>${fmt(Math.round(r.inv))}¢</td><td>${fmt(Math.floor(r.c))}¢</td>` : `<td>${r.w != null ? r.w : '?'}</td><td>${r.l != null ? r.l + ' ♥' : '?'}</td>`) + '</tr>').join('') + '</table>';
+  },
+  toggle(v) {
+    if (!G || !G.net) { UI.toast('Classement', 'Le classement des joueurs est disponible en multijoueur.', '#9fb0cc', 2.5); return; }
+    this.on = v != null ? v : !this.on;
+    $('score').hidden = !this.on; this.t = 0;
+    if (this.on) this.refresh(true);
+  },
+  refresh(force) {
+    if (!this.on) return;
+    if (!G || !G.net) { this.on = false; $('score').hidden = true; return; }
+    const now = performance.now(); if (!force && now - this.t < 500) return; this.t = now;
+    $('score').innerHTML = this.html();
   }
 };
 
@@ -7003,6 +7126,7 @@ const KEYDEF = [
   { g: 'PARTIE', id: 'stats', n: 'Analyse de combat', d: ['KeyG'] },
   { g: 'PARTIE', id: 'casino', n: 'Casino', d: ['KeyC'] },
   { g: 'PARTIE', id: 'help', n: 'Manuel', d: ['KeyH'] },
+  { g: 'PARTIE', id: 'score', n: 'Classement des joueurs (multijoueur)', d: ['Tab'] },
   { g: 'CAPACITÉS', id: 'orbital', n: 'Frappe orbitale', d: ['KeyQ'] },
   { g: 'CAPACITÉS', id: 'emp', n: 'Cryo-Bombe', d: ['KeyW'] },
   { g: 'CAPACITÉS', id: 'overdrive', n: 'Surcharge', d: ['KeyE'] },
@@ -7014,6 +7138,39 @@ const KEYDEF = [
   { g: 'TOURELLE CHOISIE', id: 'recycle', n: 'Recycler le débris', d: ['KeyR'] },
   ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => ({ g: 'EMPLACEMENTS DE LA BARRE', id: 'slot' + i, n: 'Emplacement ' + i, d: ['Digit' + (i % 10), 'Numpad' + (i % 10)] }))
 ];
+/* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
+const CHANGELOG = [
+  { v: '9.16', d: ['Léviathan rééquilibré : coriace mais battable (PV 19 000, bouclier 2 500, ralentissements à 70 %, 4 phases).',
+    'Coopération : pause pour tous, même en pleine vague (menu pause).', 'Classement des joueurs : dégâts, éliminations, tourelles (touche Tab, panneau multijoueur, fin de partie).',
+    'Coopération : un joueur déconnecté peut revenir avec le code du salon et retrouve sa place à la fin de la vague.',
+    'Les tourelles d\'un joueur parti peuvent être vendues par les autres.', 'Cette fenêtre des nouveautés à chaque mise à jour.'] },
+  { v: '9.15', d: ['Léviathan renforcé : bouclier, 4ᵉ phase « Raz-de-marée ».'] },
+  { v: '9.14', d: ['Raccourcis clavier modifiables, et une touche au choix pour chaque canon (Options → Raccourcis clavier).'] },
+  { v: '9.13', d: ['Nexus : 2ᵉ voie « Grand rayonnement » (12 voisins) ; zone des soutiens par crans 4 → 8 → 12 → 20.'] },
+  { v: '9.12', d: ['Coopération fluide même avec beaucoup de ping : un joueur lent ne fige plus les autres.'] },
+  { v: '9.11', d: ['Partie perso (17 réglages).', 'Pose des T3/T4 au prix progressif, plus de plasma par boss.', 'IEM des astéroïdes et de la foudre à débrouiller contre crédits.'] },
+  { v: '9.10', d: ['Fusions T3 et T4 payées en plasma et en abyssite, selon la difficulté.'] },
+  { v: '9.9', d: ['Arbre de 30 compétences, plasma et abyssite, raffinerie, niveaux Oméga après le Léviathan.'] },
+  { v: '9.8', d: ['Multijoueur : relais de secours quand la liaison directe est impossible.'] },
+  { v: '9.7', d: ['Fin de partie rééquilibrée, niveaux Oméga, Recherche Oméga.'] },
+  { v: '9.6', d: ['Tourelles brouillées : débrouillage payant (touche D).'] }
+];
+const News = {
+  cmp(a, b) { const A = String(a).split('.').map(Number), B = String(b).split('.').map(Number); for (let i = 0; i < Math.max(A.length, B.length); i++) { const d = (A[i] || 0) - (B[i] || 0); if (d) return d; } return 0; },
+  // au démarrage : première visite → rien ; version déjà vue → rien ; sinon les nouveautés depuis la version précédente
+  check() {
+    const seen = Store.data.seenV;
+    Store.data.seenV = VERSION; Store.save();
+    if (!Store.data.stats.games || (seen && this.cmp(seen, VERSION) >= 0)) return;
+    const L = CHANGELOG.filter(c => (seen ? this.cmp(c.v, seen) > 0 : c.v === VERSION) && this.cmp(c.v, VERSION) <= 0);
+    if (L.length) this.show(seen, L);
+  },
+  show(from, L) {
+    $('news-sub').innerHTML = from ? `Version <b>${from}</b> → <b style="color:var(--accent)">${VERSION}</b>` : `Nouvelle version <b style="color:var(--accent)">${VERSION}</b>`;
+    $('news-list').innerHTML = L.map(c => `<div class="nv"><h4>v${c.v}${c.v === VERSION ? ' <span class="tag g">NOUVEAU</span>' : ''}</h4><ul>${c.d.map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('');
+    UI.open('ov-news');
+  }
+};
 const Keys = {
   wait: null, map: null,
   // touches d'une commande : réglage du joueur (tableau, éventuellement vide) sinon défaut
@@ -7252,8 +7409,9 @@ const UI = {
   /* ---------- HUD ---------- */
   frame() {
     this.frameN++;
-    if (Game.state !== 'play' || !G) return;
+    if (Game.state !== 'play' || !G) { if (Score.on) Score.refresh(); if (this.last.mpp) this.refreshMpPause(); return; }
     const f = this.frameN;
+    if (f % 10 === 0) { Score.refresh(); this.refreshMpPause(); }
     if (f % 6 === 0) { this.refreshHUD(); this.refreshCombo(); this.refreshBoss(); this.refreshEvent(); this.refreshUnjam(); }
     if (f % 4 === 0) this.refreshAbils();
     if (this.sel && f % 12 === 0) this.refreshPanelLive();
@@ -7263,7 +7421,7 @@ const UI = {
     const h = this.hover;
     if (h.inside && !h.touch && G.drops.length && !G.over) Drops.near(h.wx, h.wy, 40);
     if (f % 20 === 0 && G.net) this.refreshMP();
-    if (f % 10 === 0) { const w = Net.coop && Lock.stall > 600; if (w !== this.last.wait) { this.last.wait = w; $('mp-wait').style.display = w ? 'block' : 'none'; if (w) $('mp-wait').textContent = MP.slots.length > 2 ? 'EN ATTENTE DES AUTRES JOUEURS…' : `EN ATTENTE DE ${MP.name(MP.others()[0] || 0).toUpperCase()}…`; } }
+    if (f % 10 === 0) { const w = Net.coop && Lock.stall > 600; if (w !== this.last.wait) { this.last.wait = w; $('mp-wait').style.display = w ? 'block' : 'none'; if (w) $('mp-wait').textContent = MP.rejoining ? 'RETOUR EN JEU À LA FIN DE LA VAGUE EN COURS…' : MP.slots.length > 2 ? 'EN ATTENTE DES AUTRES JOUEURS…' : `EN ATTENTE DE ${MP.name(MP.others()[0] || 0).toUpperCase()}…`; } }
   },
   refreshHUD() {
     const L = this.last, lives = Math.max(0, Math.ceil(G.lives)), money = Math.floor(this.holdMoney != null ? this.holdMoney : G.money);
@@ -7935,9 +8093,11 @@ const UI = {
     if (!G || G.over) return;
     this.setPlacing(null, true); this.setTargeting(null);
     if (G.net) {
-      $('pause-info').innerHTML = `${G.net === 'versus' ? 'VERSUS' : 'COOPÉRATION'} avec <b>${MP.others().map(p => MP.esc(MP.name(p))).join(', ')}</b> · Vague <b>${G.waveNum}</b><br><span style="color:var(--gold)">La partie continue pendant que ce menu est ouvert.</span>`;
+      $('pause-info').innerHTML = `${G.net === 'versus' ? 'VERSUS' : 'COOPÉRATION'} avec <b>${MP.others().map(p => MP.esc(MP.name(p))).join(', ')}</b> · Vague <b>${G.waveNum}</b><br><span style="color:var(--gold)">La partie continue pendant que ce menu est ouvert${Net.coop ? ' (sauf si vous la mettez en pause pour tous)' : ''}.</span>`;
       this.btns($('pause-btns'), [
         ['REPRENDRE', 'prim', () => this.close('ov-pause')],
+        ...(Net.coop && !G.over ? [[G.paused ? 'RELANCER LA PARTIE<small>pour tous les joueurs</small>' : 'METTRE EN PAUSE<small>pour tous les joueurs, même en pleine vague</small>', 'gold', () => { Act.do('mpause', !G.paused); this.close('ov-pause'); }]] : []),
+        ['CLASSEMENT', '', () => { this.close('ov-pause'); Score.toggle(true); }],
         ['OPTIONS', '', () => this.openOptions()],
         ['ANALYSE DE COMBAT', '', () => this.openStats()],
         ['CASINO', '', () => this.openCasino()],
@@ -8367,6 +8527,17 @@ const UI = {
     L.scrollTop = L.scrollHeight;
   },
   /* ---------- multijoueur : en partie ---------- */
+  // bandeau de pause en coopération
+  refreshMpPause() {
+    const on = !!(G && G.paused && G.net === 'coop' && Game.state === 'play'), by = on ? G.paused - 1 : -1, k = on ? 'p' + by : '';
+    if (k === (this.last.mpp || '')) return;
+    this.last.mpp = k;
+    $('mp-pause').hidden = !on;
+    if (!on) return;
+    $('mp-pby').innerHTML = `demandée par <b style="color:${MP_COL[by]}">${MP.esc(MP.name(by))}</b>`;
+    $('mp-resume').onclick = () => Act.do('mpause', false);
+    Sfx.play('ui');
+  },
   mpHud(on) {
     const el = $('mp');
     el.classList.toggle('hidden', !on);
@@ -8398,8 +8569,10 @@ const UI = {
       }
       if (Net.coop) h += `<div class="mp-row"><span>Protocole</span><b style="color:${MP_COL[Cards.turn()]}">${esc(MP.name(Cards.turn()))}</b></div>`;
     }
+    h += `<button class="btn mp-sc" id="mp-score">🏆 CLASSEMENT${Keys.lbl('score') ? ` <span class="k">${Keys.lbl('score')}</span>` : ''}</button>`;
     if (this.survV && performance.now() - this.survT >= 2500) this.survV = 0;
     $('mp-info').innerHTML = h;
+    $('mp-score').onclick = () => Score.toggle();
     $('mp-info').querySelectorAll('.mp-op[data-p]').forEach(r => r.onclick = () => MP.setTarget(+r.dataset.p));
     const sg = $('mp-sendgo');
     if (sg) sg.onclick = () => { const c = this.cards['send:swarm']; if (c) { const bar = $('bar'); bar.scrollLeft = c.el.offsetLeft - bar.offsetLeft - 20; c.el.classList.add('fresh'); setTimeout(() => c.el.classList.remove('fresh'), 1500); } };
@@ -8425,7 +8598,9 @@ const UI = {
       }).sort((a, b) => (a.pl || 99) - (b.pl || 99));
       rank = `<div class="mp-rank">${L.map(r => `<div style="--oc:${MP_COL[r.p]}"><em>${r.pl ? ord(r.pl) : '–'}</em><i></i><b>${esc(MP.name(r.p))}${r.p === Net.me ? ' (vous)' : ''}</b><span>${r.txt}</span></div>`).join('')}</div>`;
     }
+    Score.toggle(false);
     $('mpend-body').innerHTML = `<h2 style="color:${col};text-shadow:0 0 18px ${col}">${title}</h2><div class="sub">${sub}</div>${rank}
+      <div class="mpe-score">${Score.html(true)}</div>
       <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
       ${G.net === 'versus' ? `<div>Ennemis envoyés <b>${G.sentTotal || 0}</b></div><div>Ennemis reçus <b>${G.recvTotal || 0}</b></div><div>Primes de survie <b>${fmt(G.survGain || 0)}¢</b></div><div>Revenu final <b>+${G.income || 0}¢</b></div>` : `<div>Tourelles <b>${G.towers.length}</b></div><div>Boss vaincus <b>${s.bosses}</b></div>`}</div>
       <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span></div>
@@ -8834,6 +9009,7 @@ function boot() {
   // fermeture de l'onglet : on prévient les autres joueurs tout de suite (sinon ils attendraient 20 s)
   window.addEventListener('pagehide', () => { if (Net.on) { try { Net.send({ t: 'bye' }); Net.flushAll(); } catch (e) { /* ignore */ } } });
   UI.showMenu();
+  News.check();
   requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });
   // accès console pour le débogage : NW.G, NW.give(5000), ...
   window.NW = {
