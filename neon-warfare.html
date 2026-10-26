@@ -836,6 +836,9 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <div class="ov" id="ov-opts"><div class="modal" style="width:500px"><button class="mclose" data-close>✕</button><h2>OPTIONS</h2><div id="opts"></div></div></div>
 <div class="ov" id="ov-news"><div class="modal" style="width:560px"><button class="mclose" data-close>✕</button><h2>MISE À JOUR</h2><div class="sub" id="news-sub"></div>
   <div id="news-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn prim" data-close>C'EST PARTI !</button></div></div></div>
+<div class="ov" id="ov-xfer"><div class="modal" style="width:560px"><button class="mclose" data-close>✕</button><h2 id="xf-t">PROGRESSION</h2><div class="sub" id="xf-sub"></div>
+  <textarea id="xf-txt" class="mp-ta" spellcheck="false" autocomplete="off" style="width:100%;height:150px;font:11px var(--mono);word-break:break-all"></textarea>
+  <div class="row" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" data-close>FERMER</button><button class="btn prim" id="xf-go">OK</button></div></div></div>
 <div class="ov" id="ov-keys"><div class="modal" style="width:640px"><button class="mclose" data-close>✕</button><h2>RACCOURCIS CLAVIER</h2>
   <div class="sub">Cliquez sur une touche puis appuyez sur la nouvelle (Échap pour annuler, ✕ pour n'en mettre aucune). Une touche déjà utilisée est retirée de l'autre commande.</div>
   <div id="keys-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="keys-reset">TOUCHES PAR DÉFAUT</button></div></div></div>
@@ -895,7 +898,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.16';
+const VERSION = '9.17';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -1699,6 +1702,14 @@ const SKILLS = {
 };
 
 /* Héritage : améliorations permanentes achetées avec les Fragments */
+/* coopération : Héritage d'équipe. Chacun garde ses crédits de départ ; pour le reste, l'équipe prend
+   le meilleur rang de chacun (intégrité, recharge, primes, recyclage), et additionne nanites et plans */
+function teamPerks(by) {
+  const L = Object.values(by || {}).map(x => x || {}), mx = k => Math.max(0, ...L.map(x => x[k] || 0)), sum = k => L.reduce((a, x) => a + (x[k] || 0), 0);
+  return { h_money: 0, h_lives: mx('h_lives'), h_cd: mx('h_cd'), h_bonus: mx('h_bonus'), h_recycle: mx('h_recycle'), h_nano: sum('h_nano'), h_bp: Math.min(4, sum('h_bp')) };
+}
+// rangs d'Héritage reçus d'un autre joueur : seulement des rangs connus, dans les limites
+function cleanPerks(o) { const r = {}; for (const k in PERKS) { const v = o && +o[k]; if (v > 0) r[k] = Math.min(PERKS[k].max, Math.floor(v)); } return r; }
 const PERKS = {
   h_money:   { n: 'Capital initial', i: '$', max: 5, cost: [3, 5, 8, 12, 16], d: '+40 crédits de départ par rang.' },
   h_lives:   { n: 'Blindage de coque', i: '♥', max: 3, cost: [4, 8, 14], d: '+15 intégrité maximale par rang.' },
@@ -2674,13 +2685,22 @@ const ELEM_COST = {
   hardcore:  { plan: [0, 0, 0, 7, 4], pose: { 3: [1, 1], 4: [0, 3] } },
   cauchemar: { plan: [0, 0, 0, 9, 5], pose: { 3: [1, 2], 4: [0, 4] } }
 };
+// coopération : G.res lit et écrit la réserve du joueur qui agit (ou du joueur local), comme G.money
+function bindRes() {
+  const W = G.resW, cur = () => W[G.actor != null ? G.actor : Net.me] || W[0], o = { sp: G.res.sp || 0, sa: G.res.sa || 0 };
+  for (const k of ['p', 'a', 'ref']) Object.defineProperty(o, k, { get() { return cur()[k] || 0; }, set(v) { cur()[k] = v; }, enumerable: true });
+  G.res = o;
+}
 const Res = {
   get(c) { return c === 'p' ? G.res.p : c === 'a' ? G.res.a : G.nanites; },
   take(c, v) { if (c === 'p') G.res.p -= v; else if (c === 'a') G.res.a -= v; else G.nanites -= v; },
   gain(c, v, x, y) {
     if (!(v > 0)) return;
     const first = !G.res['s' + c];
-    G.res[c] += v; G.res['s' + c] = 1;
+    // coopération : un butin (boss, élite) revient en entier à chaque joueur présent ; une action ne crédite que son auteur
+    if (G.resW && G.actor == null) { G.resW.forEach((w, i) => { if (!(G.gone && G.gone[i])) w[c] = (w[c] || 0) + v; }); }
+    else G.res[c] += v;
+    G.res['s' + c] = 1;
     if (G.demo) return;
     if (x != null) FX.float(x, y, `+${v} ${RES[c].i}`, RES[c].c, 17);
     if (first) UI.toast(c === 'p' ? 'Nouvel élément : plasma ✺' : 'Nouvel élément : abyssite ⬟',
@@ -2695,6 +2715,7 @@ const Res = {
     this.gain(c, v, x, y);
   }
 };
+const SAB_SHIELD = 30;   // versus : secondes de protection contre les sabotages après en avoir subi un
 const VERSUS = { hp: 1.3, esc: 1.05, escFrom: 12, lives: .7, money: .85, elite: 1.5, sendHp: 1.1, prep: 600, first: 1200 };
 function gain(v, p = G.actor) {
   if (G.wallets && p == null && !Net.coop) p = Net.me;   // partenaire parti : tout revient au joueur restant
@@ -4008,7 +4029,8 @@ const Skills = {
   },
   // tous les modificateurs de la partie : compétences + Héritage + doctrine + protocoles choisis
   apply() {
-    const r = k => G.skills[k] || 0, pk = G.perks || Store.data.meta.perks, D = DOCTRINES[G.doctrine] || DOCTRINES.standard;
+    const r = k => G.skills[k] || 0, pk = G.perks || Store.data.meta.perks;
+    const DL = (G.docs && G.docs.length ? G.docs : [G.doctrine]).map(k => DOCTRINES[k] || DOCTRINES.standard);
     const m = {
       dmg: (1 + .08 * r('a1')) * (1 + OMEGA.ars * r('ars')) * (1 + .12 * r('a7')) * (1 + .25 * r('a10')), crit: .05 + .04 * r('a2') + .05 * r('a10'), range: 1 + .06 * r('a3'), critDmg: 2 + .5 * r('a4'), pierce: .25 * r('a5'),
       cool: 1 + .25 * r('e1'), cost: 1 - .05 * r('e2'), heat: 1 - .2 * r('e3'), refund: .7 + .1 * r('e4'), support: 1 + .4 * r('e5'),
@@ -4019,10 +4041,14 @@ const Skills = {
       exec: .08 * r('a9'), bossDmg: 1 + .25 * r('a8'), fresh: 0, frostDmg: 0, airDmg: 0, armDmg: 0, vet: 0, aegis: 2 * r('c9'),
       prosp: r('c7'), supDiag: r('e8') > 0, stunMul: 1 - .35 * r('e9'), omegaDmg: r('e10') ? 1.5 : OMEGA.dmg, abyssB: r('c10'), vamp: 0, t0cost: 1, choices: 0, bossHp: 1, bossCard: 0,
       earmor: 0, nanoW: 0, towerCash: 0, chainx: 0, revive: 0, omni: 0, lucky: 0,
-      kdmg: Object.assign({}, D.kdmg), kcost: Object.assign({}, D.kcost)
+      kdmg: {}, kcost: {}
     };
-    for (const p of ['dmg', 'heat', 'splash', 'rate', 'espd', 'bp']) if (D[p]) m[p] *= D[p];
-    for (const p of ['crit', 'interest', 'regen']) if (D[p]) m[p] += D[p];
+    for (const D of DL) {
+      for (const k in D.kdmg || {}) m.kdmg[k] = (m.kdmg[k] || 1) * D.kdmg[k];
+      for (const k in D.kcost || {}) m.kcost[k] = (m.kcost[k] || 1) * D.kcost[k];
+      for (const p of ['dmg', 'heat', 'splash', 'rate', 'espd', 'bp']) if (D[p]) m[p] *= D[p];
+      for (const p of ['crit', 'interest', 'regen']) if (D[p]) m[p] += D[p];
+    }
     for (const id in G.cards) {
       const c = CARDS[id], s = G.cards[id]; if (!c) continue;
       if (c.mod) for (const p in c.mod) m[p] *= Math.pow(c.mod[p], s);
@@ -4817,7 +4843,7 @@ const Net = {
     if (this.role === 'guest') {
       this.on = true; this.status = ''; this.err = false;
       this.keepAlive();
-      this.raw(L, { t: 'hello', name: MP.myName(), v: VERSION });
+      this.raw(L, { t: 'hello', name: MP.myName(), v: VERSION, doc: MP.myDoc(), perks: MP.myPerks() });
       if (!L.dcUp) this.planUpgrade(L);
       MP.connected();
       return;
@@ -5002,6 +5028,7 @@ const Lock = {
     let h = (G.rs ^ Math.imul(G.tick, 2654435761) ^ Math.round(G.lives * 100)) | 0;
     for (const e of G.enemies) if (e.alive) h = (Math.imul(h, 31) + Math.round(e.hp) + Math.round(e.dist)) | 0;
     for (const w of G.wallets || []) h = (Math.imul(h, 17) + Math.round(w)) | 0;
+    for (const w of G.resW || []) h = (Math.imul(h, 13) + (w.p | 0) * 7 + (w.a | 0)) | 0;
     return (h ^ G.towers.length) >>> 0;
   },
   check(t) {
@@ -5061,7 +5088,7 @@ const MP = {
   /* ----- salon ----- */
   hosted(lobby) {
     this.clear(); this.banned = new Set();
-    this.pl = { 0: { name: this.myName(), ready: true, v: VERSION, ping: 0 } };
+    this.pl = { 0: { name: this.myName(), ready: true, v: VERSION, ping: 0, doc: this.myDoc(), perks: this.myPerks() } };
     if (lobby) { UI.mpState = 'lobby'; UI.openMP(); }
   },
   connected() {   // invité : canal ouvert vers l'hôte
@@ -5081,6 +5108,13 @@ const MP = {
     this.pl[0].name = this.myName();
     Net.send({ t: 'roster', pl: this.pl, code: Net.code });
     if (UI.top() === 'ov-mp') UI.renderMP();
+  },
+  myDoc() { const k = Store.data.doctrine; return DOCTRINES[k] && DOCTRINES[k].lvl <= Store.data.cmd.lvl ? k : 'standard'; },
+  myPerks() { return cleanPerks(Store.data.meta.perks); },
+  // doctrine changée dans le salon
+  sendMe() {
+    if (Net.role === 'host') { this.pl[0].doc = this.myDoc(); this.pl[0].perks = this.myPerks(); this.syncRoster(); }
+    else Net.send({ t: 'me', doc: this.myDoc(), perks: this.myPerks() });
   },
   setPing(p, v, rl) { if (this.pl[p]) { this.pl[p].ping = v; this.pl[p].rl = !!rl; } },
   sendCfg() { if (Net.role === 'host') Net.send({ t: 'cfg', mode: this.mode, diff: this.diff }); },
@@ -5118,6 +5152,8 @@ const MP = {
     const o = {
       seed: (Math.random() * 2147483647) | 0, diff: this.diff, mode: this.mode, portrait: View.w < View.h * .9,
       perks: coop ? Object.assign({}, Store.data.meta.perks) : {}, doctrine: coop && docOk ? dk : 'standard',
+      docs: coop ? Object.fromEntries(slots.map(p => [p, (this.pl[p] || {}).doc || 'standard'])) : null,
+      perksBy: coop ? Object.fromEntries(slots.map(p => [p, (this.pl[p] || {}).perks || {}])) : null,
       events: Store.s.events !== false, autoWave: coop ? !!Store.s.autoWave : true, slots
     };
     Net.send({ t: 'start', o, pl: this.pl });
@@ -5131,19 +5167,19 @@ const MP = {
     const others = this.others();
     this.target = others.find(p => p > Net.me); if (this.target == null) this.target = others[0];
     if (Net.coop) Lock.reset(0);
-    Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, mp: o.mode, events: o.events, autoWave: o.autoWave, slots: this.slots });
+    Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, docs: o.docs, perksBy: o.perksBy, mp: o.mode, events: o.events, autoWave: o.autoWave, slots: this.slots });
     UI.mpHud(true);
     UI.banner(Net.versus ? 'VERSUS' : 'COOPÉRATION', this.slots.map(p => this.name(p).toUpperCase()).join(' · '), MP_COL[Net.me]);
     const n = this.slots.length;
     if (Net.versus) UI.toast('Versus', `Même carte, mêmes vagues, ${n} joueurs. Envoyez des ennemis chez ${n > 2 ? 'l\'adversaire ciblé (cliquez sur un nom à gauche pour changer de cible)' : 'l\'adversaire'} : chaque envoi augmente votre <b>revenu par vague</b>. Le dernier debout gagne !`, '#ff2a6d', 8);
-    else UI.toast('Coopération', `Une seule carte pour ${n} joueurs, une intégrité commune, mais <b>chacun ses crédits</b>. Les nanites, compétences et plans sont partagés ; les protocoles se choisissent à tour de rôle. Les ennemis sont plus résistants.`, '#39ff88', 8);
+    else UI.toast('Coopération', `Une seule carte pour ${n} joueurs, une intégrité commune, mais <b>chacun ses crédits, son plasma et son abyssite</b>. Les nanites, compétences et plans sont partagés ; les protocoles se choisissent à tour de rôle. Les ennemis sont plus résistants.`, '#39ff88', 8);
   },
   // appelé par la boucle : statut envoyé aux adversaires (versus), curseur aux partenaires (coop)
   tick(now) {
     if (!Net.on || !G || Game.state !== 'play') return;
     if (now - this.stT > 700) {
       this.stT = now;
-      if (Net.versus && !G.over) Net.send({ t: 'st', lives: Math.ceil(G.lives), max: G.maxLives, wave: G.waveNum, kills: G.stats.kills, inc: G.income || 0, dmg: Score.myDmg(), tw: G.towers.length });
+      if (Net.versus && !G.over) Net.send({ t: 'st', lives: Math.ceil(G.lives), max: G.maxLives, wave: G.waveNum, kills: G.stats.kills, inc: G.income || 0, dmg: Score.myDmg(), tw: G.towers.length, sh: Math.max(0, ((G.sabSh || 0) - G.tick) / 60) });
       if (Net.versus) this.flushSurv();
     }
     if (Net.coop && Lock.desync) this.resync();
@@ -5163,25 +5199,38 @@ const MP = {
   // coût d'un envoi, qui grimpe avec la vague de l'envoyeur
   sendCost(k) { return Math.round(SENDS[k].cost * (1 + .12 * (Math.max(1, G.waveNum) - 1)) / 5) * 5; },
   stock(k) { return G.sendStock[k] == null ? (SENDS[k].stock || SEND_STOCK) : G.sendStock[k]; },
-  canSend(k) { const S = SENDS[k]; return S.from <= Math.max(1, G.waveNum) && this.stock(k) > 0; },
+  canSend(k) { const S = SENDS[k]; return S.from <= Math.max(1, G.waveNum) && this.stock(k) > 0 && !(S.sab && this.shielded(this.aim())); },
+  // adversaire protégé des sabotages (il vient d'en subir un) : secondes restantes, d'après son dernier statut
+  shielded(p) { const o = this.opps[p]; if (!o || !o.sh) return 0; return Math.max(0, Math.ceil(o.sh - (performance.now() - (o.shT || 0)) / 1000)); },
   sendPack(k) {
     if (!Net.versus || !G || G.over) return;
     const S = SENDS[k], c = this.sendCost(k), to = this.aim();
     if (to == null) return;
     if (S.from > Math.max(1, G.waveNum)) { Sfx.play('error'); UI.toast('Envoi verrouillé', `Disponible à partir de la vague ${S.from}.`, '#9fb0cc', 2.5); return; }
+    if (S.sab && this.shielded(to)) { Sfx.play('error'); UI.toast('Cible protégée', `${this.esc(this.name(to))} vient de subir un sabotage : protégé encore ${this.shielded(to)} s.`, '#9fb0cc', 3); return; }
     if (!this.canSend(k)) { Sfx.play('error'); UI.toast('Stock épuisé', 'Les envois se rechargent à chaque vague repoussée.', '#9fb0cc', 2.5); return; }
     if (G.money < c) { UI.noMoney(); return; }
     G.money -= c; G.income += S.inc;
     G.sendStock[k] = this.stock(k) - 1;
     if (!S.sab) G.sentTotal = (G.sentTotal || 0) + S.cnt;
-    Net.send({ t: 'send', k, to, hp: Waves.hpMul(Math.max(1, G.waveNum)) * VERSUS.sendHp, u: Math.round(c / S.cnt) });
+    Net.send({ t: 'send', k, to, c, hp: Waves.hpMul(Math.max(1, G.waveNum)) * VERSUS.sendHp, u: Math.round(c / S.cnt) });
     UI.toast((S.sab ? 'Sabotage : ' : 'Envoi : ') + S.n, `${S.sab ? S.n : S.cnt + ' × ' + EDEF(S.type).name} vers <b style="color:${MP_COL[to]}">${this.esc(this.name(to))}</b> · revenu <b>+${S.inc}¢</b> par vague (total ${G.income}¢)${S.sab ? '' : ' · plus ils survivent, plus ils rapportent'}`, S.sab ? S.c : '#ff2a6d', 2.5);
     Sfx.play('missile'); UI.buildBar(); UI.refreshHUD();
   },
   incoming(m) {
     if (!G || G.over || !Net.versus) return;
     const S = SENDS[m.k]; if (!S) return;
-    if (S.sab) { this.sabotage(S, m.p); return; }
+    if (S.sab) {
+      // déjà sabotés il y a peu : le sabotage est bloqué et remboursé à son auteur
+      if ((G.sabSh || 0) > G.tick) {
+        Net.send({ t: 'sabref', to: m.p, k: m.k, c: m.c || 0 });
+        UI.toast('Sabotage bloqué', `${this.esc(this.name(m.p))} a tenté un sabotage, mais vous êtes protégé.`, '#39ff88', 3);
+        return;
+      }
+      this.sabotage(S, m.p);
+      G.sabSh = G.tick + SAB_SHIELD * 60; this.stT = 0;
+      return;
+    }
     const nP = G.map.P.length;
     for (let i = 0; i < S.cnt; i++) G.spawnQ.push({ at: G.tick + 45 + i * 16, type: S.type, wave: 0, hpMul: m.hp, pi: i % nP, sent: true, from: m.p, u: m.u || 0 });
     G.spawnQ.sort((a, b) => a.at - b.at);
@@ -5337,7 +5386,7 @@ const MP = {
   snap() {
     const s = SaveSys.pack();
     const keys = ['tick', 'nextId', 'autoT', 'autoWave', 'tokens', 'jpot', 'bets', 'curse', 'lastDur', 'lastMc', 'leakHist', 'betsWon', 'cardN', 'evCount', 'mLast',
-      'perks', 'net', 'events', 'recycling', 'paused', 'pst', 'combo', 'comboT', 'overdriveT', 'ev', 'evSpd', 'evQ', 'pods', 'craters', 'wallets', 'jpot', 'slot', 'income', 'sendStock', 'np', 'gone'];
+      'perks', 'net', 'events', 'recycling', 'paused', 'pst', 'docs', 'resW', 'combo', 'comboT', 'overdriveT', 'ev', 'evSpd', 'evQ', 'pods', 'craters', 'wallets', 'jpot', 'slot', 'income', 'sendStock', 'np', 'gone'];
     s.x = {}; for (const k of keys) s.x[k] = G[k];
     s.x.drops = G.drops.map(d => Object.assign({}, d));
     s.tw = G.towers.map(t => [t.owner, t.heat, t.over ? 1 : 0, t.cd, t.ang, t.aimT, t.ramp, t.stun, t.fresh ? 1 : 0, t.id, t.jamP ? 1 : 0]);
@@ -5352,6 +5401,7 @@ const MP = {
     G.rs = s.rs;   // la reconstruction des tourelles consomme du hasard : on remet la graine de l'hôte
     G.missions = (s.missions || []).filter(m => MDEF[m.id]);
     G.preview = Waves.plan(G.waveNum + 1);   // après G.net : les PV dépendent du mode
+    if (G.resW) bindRes();
     if (X.wallets) {
       G.wallets = X.wallets.slice(); delete G.money;
       Object.defineProperty(G, 'money', {
@@ -5386,10 +5436,12 @@ const MP = {
     hello(m) {   // hôte : présentation d'un invité
       const P = MP.pl[m.p]; if (!P) return;
       P.name = String(m.name || 'Joueur').slice(0, 24); P.v = m.v || '?';
+      P.doc = DOCTRINES[m.doc] ? m.doc : 'standard'; P.perks = cleanPerks(m.perks);
       if (MP.banned.has(P.name.toLowerCase())) { MP.kick(m.p); return; }
       if (m.v !== VERSION) UI.toast('Versions différentes', `${MP.esc(P.name)} a la ${MP.esc(P.v)}, vous la ${VERSION}. Mettez à jour vos fichiers pour éviter les surprises.`, '#ffd23f', 6);
       MP.syncRoster();
     },
+    me(m) { const P = MP.pl[m.p]; if (!P || Net.role !== 'host') return; P.doc = DOCTRINES[m.doc] ? m.doc : 'standard'; P.perks = cleanPerks(m.perks); MP.syncRoster(); },
     welcome(m) { Net.me = m.you; Net.code = m.code || Net.code; UI.renderMP(); },
     roster(m) {
       MP.pl = m.pl || {}; if (m.code) Net.code = m.code;
@@ -5422,7 +5474,13 @@ const MP = {
     },
     back(m) { delete MP.out[m.who]; },
     lobby() { MP.toLobby(false); UI.toast('Multijoueur', 'L\'hôte a ramené tout le monde au salon.', '#9fb0cc', 3); },
-    st(m) { MP.opps[m.p] = Object.assign(MP.opps[m.p] || {}, m); },
+    st(m) { MP.opps[m.p] = Object.assign(MP.opps[m.p] || {}, m, { shT: performance.now() }); },
+    sabref(m) {   // notre sabotage a été bloqué par la protection de la cible : remboursement complet
+      if (m.to !== Net.me || !G || G.over || G.net !== 'versus' || !SENDS[m.k]) return;
+      G.money += Math.max(0, m.c || 0); G.income = Math.max(0, (G.income || 0) - SENDS[m.k].inc); G.sendStock[m.k] = MP.stock(m.k) + 1;
+      UI.toast('Sabotage bloqué', `${MP.esc(MP.name(m.p))} était déjà protégé : sabotage remboursé.`, '#9fb0cc', 3.5);
+      UI.buildBar(); UI.refreshHUD();
+    },
     send(m) { if (m.to === Net.me) MP.incoming(m); },
     surv(m) {   // primes de survie de nos envois
       if (m.to !== Net.me || !G || G.over || G.net !== 'versus') return;
@@ -5868,12 +5926,18 @@ const Game = {
   },
   newGame(diffKey, opts = {}) {
     Demo.stop();
-    const pk = opts.perks || Store.data.meta.perks, diff = DIFFS[diffKey];
+    let pk = opts.perks || Store.data.meta.perks;
+    const diff = DIFFS[diffKey];
     const daily = opts.daily ? dailyInfo() : null;
     const seed = daily ? daily.seed : opts.seed != null ? opts.seed : (Math.random() * 2147483647) | 0;
     const portrait = opts.portrait != null ? opts.portrait : View.w < View.h * .9;
     this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
     G.perks = pk; G.net = opts.mp || null; G.portrait = !!portrait;
+    // coopération : Héritage d'équipe et doctrines de tous les joueurs (une doctrine en double ne compte qu'une fois)
+    if (G.net === 'coop' && opts.perksBy) {
+      pk = G.perks = teamPerks(opts.perksBy);
+      G.docs = [...new Set(Object.values(opts.docs || {}).filter(k => DOCTRINES[k] && k !== 'standard'))].sort();
+    }
     G.gm = GMODES[opts.gm] && !opts.daily ? opts.gm : 'classic';
     if (G.gm === 'chaos') { G.mutKeys = ['chaos']; G.mut = makeMut(G.mutKeys); }
     if (opts.events != null) G.events = opts.events;
@@ -5883,9 +5947,10 @@ const Game = {
     const dk = opts.doctrine != null ? opts.doctrine : Store.data.doctrine;
     const D = opts.doctrine != null ? DOCTRINES[dk] || DOCTRINES.standard : DOCTRINES[dk] && DOCTRINES[dk].lvl <= Store.data.cmd.lvl ? DOCTRINES[dk] : DOCTRINES.standard;
     G.doctrine = D === DOCTRINES.standard ? 'standard' : dk;
+    const DL = G.docs ? G.docs.map(k => DOCTRINES[k]) : [D], dsum = f => DL.reduce((a, d) => a + (d[f] || 0), 0);
     G.money = Math.round((diff.money + 40 * (pk.h_money || 0)) * G.mut.money);
-    G.maxLives = G.lives = Math.max(5, Math.round((diff.lives + 15 * (pk.h_lives || 0) + (D.lives || 0)) * G.mut.lives));
-    G.nanites = 3 + 2 * (pk.h_nano || 0) + (D.nano || 0);
+    G.maxLives = G.lives = Math.max(5, Math.round((diff.lives + 15 * (pk.h_lives || 0) + dsum('lives')) * G.mut.lives));
+    G.nanites = 3 + 2 * (pk.h_nano || 0) + dsum('nano');
     G.recycle = 2 + (pk.h_recycle || 0);
     for (let i = 0; i < (pk.h_bp || 0); i++) {
       const c = RECIPES.filter(r => TOWERS[r.r].tier === 2 && !G.unlocked.has(r.r));
@@ -5897,8 +5962,12 @@ const Game = {
     if (G.gm === 'sandbox') { G.money = 99999; G.nanites = 999; G.res.p = G.res.a = 999; for (const r of RECIPES) G.unlocked.add(r.r); }
     if (G.net === 'coop') {
       // un portefeuille par joueur : G.money désigne celui de l'auteur de l'action (ou du joueur local)
-      const m = Math.round(G.money * COOP.start), S = opts.slots || [0, 1], n = Math.max(...S) + 1;
-      G.wallets = Array(n).fill(m); delete G.money;
+      const S = opts.slots || [0, 1], n = Math.max(...S) + 1;
+      // crédits de départ : chacun selon son propre Héritage
+      const m0 = i => Math.round((opts.perksBy ? (diff.money + 40 * ((opts.perksBy[i] || {}).h_money || 0)) * G.mut.money : G.money) * COOP.start);
+      G.wallets = Array.from({ length: n }, (_, i) => m0(i)); delete G.money;
+      // plasma et abyssite : chacun les siens (chaque boss en donne à tous les joueurs présents)
+      G.resW = Array.from({ length: n }, () => ({ p: 0, a: 0, ref: 0 })); bindRes();
       G.np = S.length; G.gone = {}; for (let i = 0; i < n; i++) if (!S.includes(i)) G.gone[i] = 1;
       G.tokens = Array(n).fill(Casino.TOKENS);
       Object.defineProperty(G, 'money', {
@@ -7068,9 +7137,9 @@ const Input = {
       case 'help': UI.openHelp(); break;
       case 'score': e.preventDefault(); Score.toggle(); break;
       case 'orbital': case 'emp': case 'overdrive': Abil.trigger(act); break;
-      case 'up': if (UI.sel && Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); break;
+      case 'up': if (UI.sel) { if (e.shiftKey) UI.upAll(); else if (Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); } break;
       case 'sell': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;
-      case 'strat': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % 4); break;
+      case 'strat': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % 4, e.shiftKey); break;
       case 'oc': if (UI.sel) UI.toggleOC(); break;
       case 'unjam': UI.unjam(); break;
       case 'recycle': if (UI.selDebris && !UI.selDebris.trap) Act.do('recycle', UI.selDebris.tx, UI.selDebris.ty); break;
@@ -7140,6 +7209,11 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '9.17', d: ['Coopération : chacun apporte sa doctrine (choisie dans le salon) et son Héritage ; les doctrines de l\'équipe s\'additionnent.',
+    'Coopération : chacun son plasma et son abyssite ; chaque boss en donne à tous les joueurs présents.',
+    'Versus : après un sabotage, 30 s de protection contre les suivants (fini les acharnements à plusieurs).',
+    'Maj + T / Maj + U : ciblage ou amélioration de toutes vos tourelles du même type.',
+    'Options → Transférer la progression : un code pour passer d\'un appareil à l\'autre.'] },
   { v: '9.16', d: ['Léviathan rééquilibré : coriace mais battable (PV 19 000, bouclier 2 500, ralentissements à 70 %, 4 phases).',
     'Coopération : pause pour tous, même en pleine vague (menu pause).', 'Classement des joueurs : dégâts, éliminations, tourelles (touche Tab, panneau multijoueur, fin de partie).',
     'Coopération : un joueur déconnecté peut revenir avec le code du salon et retrouve sa place à la fin de la vague.',
@@ -7838,7 +7912,23 @@ const UI = {
     if (this.targeting || this.placing || this.sel || this.selDebris) { this.cancel(); return; }
     if (Game.state === 'play' && G && !G.over) this.openPause();
   },
-  setStrat(i) { const t = this.sel; if (!t) return; Act.do('strat', t.tx, t.ty, i); Sfx.play('ui'); this.renderPanel(); },
+  // Maj : même ciblage pour toutes vos tourelles de ce type
+  setStrat(i, all) {
+    const t = this.sel; if (!t) return;
+    const L = all ? G.towers.filter(o => o.key === t.key && Act.owns(o)) : [t];
+    for (const o of L) Act.do('strat', o.tx, o.ty, i);
+    if (all) this.toast('Ciblage groupé', `${STRATS[i]} pour ${L.length} ${t.d.name}.`, t.d.color, 2.5);
+    Sfx.play('ui'); this.renderPanel();
+  },
+  // Maj + améliorer : un niveau de plus pour chacune de vos tourelles de ce type, les plus faibles d'abord
+  upAll() {
+    const t = this.sel; if (!t) return;
+    const L = G.towers.filter(o => o.key === t.key && Act.owns(o) && o.level < Towers.maxLevel(o) && !Towers.needsSpec(o)).sort((a, b) => a.level - b.level || a.id - b.id);
+    let n = 0, money = G.money;
+    for (const o of L) { const c = Towers.upCost(o); if (money < c || (o.level >= 10 && G.res.a < OMEGA.abyss)) break; if (Act.do('up', o.tx, o.ty)) { n++; money -= c; } }
+    this.toast('Amélioration groupée', n ? `${n} ${t.d.name} amélioré${n > 1 ? 'es' : 'e'} d'un niveau.` : 'Pas assez de crédits.', t.d.color, 2.5);
+    if (n) this.renderPanel(); else Sfx.play('error');
+  },
   toggleOC() {
     const t = this.sel;
     if (!t || t.d.kind === 'support' || t.d.kind === 'radar') return;
@@ -7920,10 +8010,10 @@ const UI = {
       <div class="pbtns"><button class="btn prim" id="tp-up">${upTxt}</button><button class="btn danger" id="tp-sell" data-tip="${t.fresh ? 'Remboursement intégral : tourelle construite pendant cette préparation.' : 'Revente à ' + Math.round(G.mod.refund * 100) + '% de la valeur investie.'}">VENDRE · ${fmt(Towers.sellValue(t))}¢ <span class="k">${Keys.lbl('sell')}</span></button></div>`;
     Spr.icon($('tp-ic'), t.key, 42);
     $('tp-x').onclick = () => this.deselect();
-    $('tp-up').onclick = () => { if (Act.do('up', t.tx, t.ty)) this.renderPanel(); };
+    $('tp-up').onclick = e => { if (e.shiftKey) this.upAll(); else if (Act.do('up', t.tx, t.ty)) this.renderPanel(); };
     P.querySelectorAll('.spec').forEach(b => { b.onclick = () => { Act.do('spec', t.tx, t.ty, +b.dataset.sp); this.renderPanel(); }; });
     $('tp-sell').onclick = () => this.sellSel();
-    const st = $('tp-strat'); if (st) st.onclick = e => { const b = e.target.closest('button'); if (b) this.setStrat(+b.dataset.s); };
+    const st = $('tp-strat'); if (st) st.onclick = e => { const b = e.target.closest('button'); if (b) this.setStrat(+b.dataset.s, e.shiftKey); };
     const oc = $('tp-oc'); if (oc) oc.onclick = () => this.toggleOC();
     $('tp-unjam').onclick = () => { Act.do('unjam', t.tx, t.ty); this.refreshPanelLive(); this.refreshUnjam(); };
     $('tp-unjall').onclick = () => { Act.do('unjamAll'); this.refreshPanelLive(); this.refreshUnjam(); };
@@ -8109,7 +8199,7 @@ const UI = {
       this.open('ov-pause'); Sfx.play('ui'); return;
     }
     $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · Code de carte <b>${Hist.code()}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
-      `<br>Doctrine <b>${DOCTRINES[G.doctrine].n}</b> · Commandant niv. <b>${Store.data.cmd.lvl}</b>` +
+      `<br>Doctrine <b>${G.docs && G.docs.length ? G.docs.map(k => DOCTRINES[k].n).join(' + ') : DOCTRINES[G.doctrine].n}</b> · Commandant niv. <b>${Store.data.cmd.lvl}</b>` +
       (G.daily ? '<br>' + G.mutKeys.map(k => `<b style="color:var(--gold)">${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>') : '') +
       (G.cus ? '<br><b style="color:#b48cff">Partie perso</b> : ' + (CUSTOM.filter(d => G.cus[d.k] !== d.d).map(d => `${d.n} ${Custom.txt(d, G.cus[d.k])}`).join(' · ') || 'réglages par défaut') : '');
     this.btns($('pause-btns'), [
@@ -8127,6 +8217,31 @@ const UI = {
     ]);
     this.open('ov-pause'); Sfx.play('ui');
   },
+  // transfert de progression : tout Store.data, encodé en texte copiable
+  xferCode() { const b = new TextEncoder().encode(JSON.stringify(Store.data)); let t = ''; for (let i = 0; i < b.length; i += 8192) t += String.fromCharCode.apply(null, b.subarray(i, i + 8192)); return 'NW1:' + btoa(t); },
+  xferRead(code) {
+    const m = /^NW1:([A-Za-z0-9+/=\s]+)$/.exec(String(code || '').trim()); if (!m) return null;
+    try { const bin = atob(m[1].replace(/\s+/g, '')), b = Uint8Array.from(bin, c => c.charCodeAt(0)), d = JSON.parse(new TextDecoder().decode(b)); return d && typeof d === 'object' && d.meta && d.settings ? d : null; } catch (e) { return null; }
+  },
+  openXfer(exp) {
+    const ta = $('xf-txt'), go = $('xf-go');
+    $('xf-t').textContent = exp ? 'EXPORTER LA PROGRESSION' : 'IMPORTER UNE PROGRESSION';
+    $('xf-sub').innerHTML = exp ? 'Copiez ce code, puis collez-le dans <b>Options → Transférer la progression → Importer</b> sur l\'autre appareil ou navigateur.'
+      : 'Collez ici un code exporté depuis un autre appareil. <b style="color:var(--dang)">Votre progression actuelle sur cet appareil sera remplacée.</b>';
+    ta.value = exp ? this.xferCode() : ''; ta.readOnly = exp;
+    go.textContent = exp ? 'COPIER LE CODE' : 'IMPORTER';
+    go.onclick = () => {
+      if (exp) { this.copy(ta.value, ta); return; }
+      const d = this.xferRead(ta.value);
+      if (!d) { Sfx.play('error'); this.toast('Code invalide', 'Ce texte n\'est pas un code de progression Neon Warfare complet.', '#ff2a6d', 4); return; }
+      this.confirm('REMPLACER LA PROGRESSION ?', `Héritage (${(d.meta.frags || 0)} fragments), succès, records et partie en cours de cet appareil seront remplacés par ceux du code.`, () => {
+        try { localStorage.setItem(Store.KEY, JSON.stringify(d)); } catch (e) { this.toast('Impossible', 'Le stockage du navigateur est indisponible.', '#ff2a6d', 4); return; }
+        location.reload();
+      });
+    };
+    this.open('ov-xfer');
+    if (exp) setTimeout(() => { ta.focus(); ta.select(); }, 50);
+  },
   openOptions() {
     const s = Store.s, O = $('opts'), q = { auto: 'AUTO', high: 'HAUTE', low: 'BASSE' };
     const tg = (v) => v ? 'ON' : 'OFF';
@@ -8141,6 +8256,7 @@ const UI = {
       <div class="opt"><span>Chiffres de dégâts</span><button class="btn" id="o-dn">${tg(s.dmgNums)}</button></div>
       <div class="opt"><span>Événements aléatoires<small>Astéroïdes, ravitaillements, tempêtes… (prochaines parties)</small></span><button class="btn" id="o-ev">${tg(s.events !== false)}</button></div>
       <div class="opt"><span>Compteur FPS<small>Touche F3</small></span><button class="btn" id="o-fps">${tg(s.fps)}</button></div>
+      <div class="opt"><span>Transférer la progression<small>Héritage, succès, records et partie en cours, vers un autre appareil ou navigateur</small></span><span class="row" style="gap:6px"><button class="btn" id="o-exp">EXPORTER</button><button class="btn" id="o-imp">IMPORTER</button></span></div>
       <div class="opt"><span>Raccourcis clavier<small>Changer les touches, en donner une à chaque canon</small></span><button class="btn" id="o-keys">MODIFIER</button></div>
       <div class="opt"><span>Démo IA du menu<small>Une partie jouée par l'IA en fond du menu principal</small></span><button class="btn" id="o-demo">${tg(s.demo)}</button></div>
       <div class="opt" style="border:0"><span>Réinitialiser la progression<small>Héritage, succès, records et sauvegarde</small></span><button class="btn danger" id="o-reset">EFFACER</button></div>`;
@@ -8156,6 +8272,8 @@ const UI = {
     $('o-dn').onclick = () => { s.dmgNums = !s.dmgNums; this.dmgNums = s.dmgNums; Store.save(); this.openOptions(); };
     $('o-fps').onclick = () => { this.toggleFps(); this.openOptions(); };
     $('o-keys').onclick = () => Keys.open();
+    $('o-exp').onclick = () => this.openXfer(true);
+    $('o-imp').onclick = () => this.openXfer(false);
     $('keys-reset').onclick = () => { Keys.wait = null; Keys.reset(); Sfx.play('ui'); Keys.render(); };
     $('o-ev').onclick = () => { s.events = s.events === false; Store.save(); this.openOptions(); };
     $('o-demo').onclick = () => {
@@ -8412,7 +8530,7 @@ const UI = {
       const host = Net.role === 'host', ids = Object.keys(MP.pl).map(Number).sort((a, b) => a - b), n = ids.length;
       const row = p => {
         const P = MP.pl[p], me = p === Net.me, ping = host ? P.ping : me ? Net.ping : 0, rl = host ? P.rl : me ? Net.relayed() : false;
-        return `<div class="mp-pl" style="--pc:${MP_COL[p]}"><i></i><b>${esc(P.name)}</b><span>${p ? 'INVITÉ' : 'HÔTE'}${me ? ' · VOUS' : ''}${p && ping ? ` · ${ping} ms` : ''}${p && rl ? ' · <em class="rl">RELAIS</em>' : ''}</span>${p && P.ready ? '<em>PRÊT</em>' : ''}${host && p ? `<button class="mp-kick" data-p="${p}" title="Exclure ${esc(P.name)}">✕</button>` : ''}</div>`;
+        return `<div class="mp-pl" style="--pc:${MP_COL[p]}"><i></i><b>${esc(P.name)}</b><span>${p ? 'INVITÉ' : 'HÔTE'}${me ? ' · VOUS' : ''}${P.doc && DOCTRINES[P.doc] ? ` · ${TXT(DOCTRINES[P.doc].i)} ${DOCTRINES[P.doc].n}` : ''}${p && ping ? ` · ${ping} ms` : ''}${p && rl ? ' · <em class="rl">RELAIS</em>' : ''}</span>${p && P.ready ? '<em>PRÊT</em>' : ''}${host && p ? `<button class="mp-kick" data-p="${p}" title="Exclure ${esc(P.name)}">✕</button>` : ''}</div>`;
       };
       const free = Array.from({ length: Math.max(0, NET_MAX - n) }, () => '<div class="mp-pl free"><i></i><b>Place libre</b><span>EN ATTENTE…</span></div>').join('');
       const ready = host ? MP.allReady() : MP.ready;
@@ -8426,6 +8544,8 @@ const UI = {
         </div>
         <div class="lbl-s" style="margin:12px 0 6px">MENACE</div>
         <div class="seg" id="mp-diff">${Object.keys(DIFFS).map(k => `<button data-d="${k}" class="${MP.diff === k ? 'on' : ''}" style="--tc:${DIFFS[k].color}">${DIFFS[k].name.toUpperCase()}</button>`).join('')}</div>
+        <div class="lbl-s" style="margin:12px 0 6px">VOTRE DOCTRINE <span style="opacity:.6">(en coopération, les doctrines de tous les joueurs s'additionnent ; une doctrine en double ne compte qu'une fois)</span></div>
+        <div class="docs" id="mp-docs">${Object.keys(DOCTRINES).filter(k => DOCTRINES[k].lvl <= Store.data.cmd.lvl).map(k => `<button class="doc${MP.myDoc() === k ? ' on' : ''}" data-k="${k}" title="${esc(DOCTRINES[k].d)}"><i>${TXT(DOCTRINES[k].i)}</i>${DOCTRINES[k].n}</button>`).join('')}</div>
         <div class="mp-chat"><div class="mp-log" id="mp-log"></div><form id="mp-form"><input id="mp-msg" maxlength="140" placeholder="Message…" autocomplete="off"><button class="btn">ENVOYER</button></form></div>
         <div class="row" style="gap:10px;margin-top:12px">
           <button class="btn danger" id="mp-quit">QUITTER LE SALON</button>
@@ -8434,6 +8554,7 @@ const UI = {
         </div>`;
       B.querySelectorAll('.mp-mode').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setMode(b.dataset.m); });
       B.querySelectorAll('#mp-diff button').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setDiff(b.dataset.d); });
+      B.querySelectorAll('#mp-docs button').forEach(b => b.onclick = () => { Store.data.doctrine = b.dataset.k; Store.save(); Sfx.play('ui'); MP.sendMe(); this.renderMP(); });
       $('mp-quit').onclick = () => MP.leave();
       if (host) $('mp-go').onclick = () => MP.launch(); else $('mp-ready').onclick = () => { Sfx.play('ui'); MP.toggleReady(); };
       if ($('mp-copy')) $('mp-copy').onclick = () => this.copy('NEON-' + Net.code);
@@ -8556,10 +8677,10 @@ const UI = {
       for (const p of MP.others()) {
         const o = MP.opps[p] || {}, out = o.over || MP.out[p], pc = out ? 0 : o.max ? Math.max(0, o.lives / o.max) : 1;
         h += `<div class="mp-op${p === tg && many ? ' tg' : ''}${out ? ' out' : ''}" data-p="${p}" style="--oc:${MP_COL[p]}"${many && !out ? ' title="Cibler ce joueur"' : ''}>
-          <div class="mp-on"><i></i><b>${esc(MP.name(p))}</b><span>${out ? (o.forfeit ? 'PARTI' : 'ÉLIMINÉ') : `${o.lives != null ? o.lives + ' ♥ · ' : ''}V${o.wave != null ? o.wave : '?'}${p === tg && many ? ' · ◎ CIBLE' : ''}`}</span></div>
+          <div class="mp-on"><i></i><b>${esc(MP.name(p))}</b><span>${out ? (o.forfeit ? 'PARTI' : 'ÉLIMINÉ') : `${o.lives != null ? o.lives + ' ♥ · ' : ''}V${o.wave != null ? o.wave : '?'}${MP.shielded(p) ? ` · 🛡 ${MP.shielded(p)} s` : ''}${p === tg && many ? ' · ◎ CIBLE' : ''}`}</span></div>
           <div class="mp-bar"><s style="width:${(pc * 100).toFixed(1)}%"></s></div></div>`;
       }
-      h += `<div class="mp-row"><span>Votre revenu</span><b style="color:var(--gold)">+${G.income || 0}¢</b><span>Envoyés</span><b>${G.sentTotal || 0}</b></div>
+      h += `${(G.sabSh || 0) > G.tick ? `<div class="mp-row"><span>Protection anti-sabotage</span><b style="color:#39ff88">🛡 ${Math.ceil((G.sabSh - G.tick) / 60)} s</b></div>` : ''}<div class="mp-row"><span>Votre revenu</span><b style="color:var(--gold)">+${G.income || 0}¢</b><span>Envoyés</span><b>${G.sentTotal || 0}</b></div>
         <div class="mp-row"><span>Primes de survie</span><b style="color:var(--gold)">${fmt(G.survGain || 0)}¢</b>${this.survV && performance.now() - this.survT < 2500 ? `<span></span><b style="color:#39ff88">+${fmt(this.survV)}¢</b>` : ''}</div>
         <button class="btn danger" id="mp-sendgo" style="width:100%;margin-top:5px;padding:5px">ENVOYER DES ENNEMIS ▸</button>`;
     } else if (G.wallets) {
@@ -8908,7 +9029,7 @@ const UI = {
       <h3>RACCOURCIS <small style="font-size:10px;letter-spacing:1px;color:var(--dim)">modifiables dans Options → Raccourcis clavier</small></h3><div class="cols">
         <p>${K('wave')} Lancer / appeler la vague</p><p>${K('slot1')}…${K('slot10')} Choisir une tourelle</p>
         <p>${K('orbital')} ${K('emp')} ${K('overdrive')} Capacités</p><p>${K('up')} Améliorer · ${K('sell')} Vendre</p>
-        <p>${K('strat')} Ciblage · ${K('oc')} Surcadence</p><p>${K('recycle')} Recycler le débris sélectionné</p>
+        <p>${K('strat')} Ciblage · ${K('oc')} Surcadence</p><p><kbd>Maj</kbd> + ${K('strat')} / ${K('up')} : pour toutes vos tourelles du même type</p><p>${K('recycle')} Recycler le débris sélectionné</p>
         <p>${K('unjam')} Débrouiller (la tourelle choisie, sinon toutes)</p>
         <p>${K('speed')} Vitesse · ${K('pause')} Pause</p><p>${K('tree')} Arbre · ${K('lab')} Labo · ${K('stats')} Stats · ${K('casino')} Casino · ${K('help')} Manuel</p>
         <p><kbd>Échap</kbd> / clic droit : annuler</p><p><kbd>F3</kbd> Compteur FPS</p></div>`;

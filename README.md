@@ -13,6 +13,7 @@ récent (PC, tablette ou téléphone). Se joue **seul ou de 2 à 4 joueurs** (ve
    puis lancer la vague avec `Espace`.
 
 La partie est sauvegardée automatiquement entre deux vagues (dans le `localStorage` du navigateur).
+Pour changer d'appareil ou de navigateur : **Options → Transférer la progression** (un code à copier puis à importer).
 
 ## Multijoueur
 
@@ -35,8 +36,8 @@ manuelle** échange deux codes par copier-coller, sans aucun serveur (une invita
 
 | Mode | Principe |
 |---|---|
-| **Versus** | même carte et mêmes vagues, chacun chez soi. Envoyez des paquets d'ennemis chez l'adversaire **ciblé** (cliquez sur un nom dans le panneau de gauche) : ils coûtent des crédits mais augmentent votre **revenu par vague**. Chaque ennemi envoyé rapporte une **prime de survie** (jusqu'à 60 % de son prix s'il tient 20 s, +50 % s'il atteint le noyau adverse). **Sabotages** une fois par vague : *pluie de météores* (sonne ses meilleures tourelles, deux perdent un niveau) et *météore géant* (pulvérise sa tourelle la plus chère, sauf s'il la vend dans les 4 s). Le dernier debout gagne ; classement affiché en fin de partie. Plus dur qu'en solo : ennemis +30 % de PV, plus d'élites, intégrité -30 %, crédits de départ -15 %, 10 s de préparation, et **escalade** de +5 % de PV par vague dès la vague 13. |
-| **Coopération** | une seule carte, une intégrité commune, **chacun ses crédits** ; nanites, compétences, plans et capacités partagés, protocoles à tour de rôle. Ennemis plus résistants selon le nombre de joueurs. Toutes les machines calculent la même partie en *lockstep* (l'hôte fixe l'ordre des actions de chacun ; une tourelle demandée s'affiche aussitôt en fantôme en attendant) et se resynchronisent toutes seules en cas d'écart ; un joueur qui part laisse ses tourelles. |
+| **Versus** | même carte et mêmes vagues, chacun chez soi. Envoyez des paquets d'ennemis chez l'adversaire **ciblé** (cliquez sur un nom dans le panneau de gauche) : ils coûtent des crédits mais augmentent votre **revenu par vague**. Chaque ennemi envoyé rapporte une **prime de survie** (jusqu'à 60 % de son prix s'il tient 20 s, +50 % s'il atteint le noyau adverse). **Sabotages** une fois par vague : *pluie de météores* (sonne ses meilleures tourelles, deux perdent un niveau) et *météore géant* (pulvérise sa tourelle la plus chère, sauf s'il la vend dans les 4 s). Après un sabotage, **30 s de protection** contre les suivants (un sabotage bloqué est remboursé). Le dernier debout gagne ; classement affiché en fin de partie. Plus dur qu'en solo : ennemis +30 % de PV, plus d'élites, intégrité -30 %, crédits de départ -15 %, 10 s de préparation, et **escalade** de +5 % de PV par vague dès la vague 13. |
+| **Coopération** | une seule carte, une intégrité commune, **chacun ses crédits, son plasma et son abyssite** (chaque boss en donne à tous) ; chacun apporte **sa doctrine** (choisie dans le salon : celles de l'équipe s'additionnent, une doctrine en double ne compte qu'une fois) et **son Héritage** (ses crédits de départ ; pour l'équipe, le meilleur rang de chacun, nanites et plans additionnés) ; nanites, compétences, plans et capacités partagés, protocoles à tour de rôle. Ennemis plus résistants selon le nombre de joueurs. Toutes les machines calculent la même partie en *lockstep* (l'hôte fixe l'ordre des actions de chacun ; une tourelle demandée s'affiche aussitôt en fantôme en attendant) et se resynchronisent toutes seules en cas d'écart ; un joueur qui part laisse ses tourelles. |
 
 Tous les joueurs doivent avoir la même version du fichier. Le multijoueur ne fonctionne pas dans un
 aperçu intégré (ex. claude.ai) : ouvrez le fichier directement dans Chrome, Edge ou Firefox, ou servez-le
@@ -79,14 +80,15 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | `U` / `X` | Améliorer / vendre la tourelle sélectionnée |
 | `T` / `O` | Changer le ciblage / surcadence |
 | `D` | Débrouiller contre crédits la tourelle sélectionnée, ou toutes les tourelles brouillées |
+| `Maj` + `T` / `U` | Même ciblage / un niveau de plus pour toutes vos tourelles du même type |
 | `Tab` | Classement des joueurs (multijoueur) |
-
-Toutes ces touches se changent dans **Options → Raccourcis clavier**, où l'on peut aussi donner une touche à chaque tourelle ou piège.
 | `R` | Recycler le débris sélectionné |
 | `F` / `P` | Vitesse (1×, 2×, 3×) / pause |
 | `K` / `L` / `G` / `C` / `H` | Arbre / Labo de fusion / Analyse de combat / Casino / Manuel |
 | `Échap`, clic droit | Annuler |
 | `F3` | Compteur de performances |
+
+Toutes ces touches se changent dans **Options → Raccourcis clavier**, où l'on peut aussi donner une touche à chaque tourelle ou piège.
 
 Au tactile : toucher une carte puis une case pour construire, toucher une tourelle pour l'ouvrir.
 
@@ -128,6 +130,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.17** : coopération : doctrine (choisie dans le salon) et Héritage de chaque joueur, plasma et abyssite par joueur ; versus : 30 s de protection après un sabotage ; `Maj` + `T` / `U` pour toutes les tourelles du même type ; transfert de progression par code ; tableau des commandes du README réparé.
 - **v9.16** : Léviathan rééquilibré (PV 19 000, bouclier 2 500, ralentissements à 70 %) ; coopération : pause pour tous même en pleine vague, retour d'un joueur déconnecté avec le code du salon (à la fin de la vague), tourelles d'un joueur parti revendables par les autres ; classement des joueurs (touche `Tab`, panneau multijoueur, fin de partie) ; fenêtre des nouveautés au premier lancement d'une nouvelle version.
 - **v9.15** : Léviathan plus coriace : PV 15 000 → 24 000, bouclier de 4 000 rechargé en phase 2, blindage renforcé, ralentissements et gel à moitié efficaces, escortes et drains plus fréquents, régénération plus forte et 4ᵉ phase « Raz-de-marée » (prime 2 000, une abyssite de plus).
 - **v9.14** : raccourcis clavier modifiables (Options → Raccourcis clavier) : toutes les commandes, les emplacements de la barre, et une touche au choix pour chaque tourelle ou piège ; la barre, les boutons et le manuel affichent vos touches.
