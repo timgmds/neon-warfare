@@ -134,8 +134,11 @@ le jeu, puis dans la console :
 
 ```js
 const s = document.createElement('script'); s.src = 'dev/bot.js'; document.head.appendChild(s);
-Bot.batch(['standard', 'hardcore'], 5)
+Bot.start(['standard', 'hardcore'], 4, 60)   // séries en tâche de fond
+Bot.report()                                  // vagues atteintes, combat contre le Léviathan, T3/T4, niveaux Oméga
 ```
+
+Le bot connaît le plasma, l'abyssite, les plans et poses T3/T4, la raffinerie et les niveaux Oméga.
 
 La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(5000, 50)`.
 
