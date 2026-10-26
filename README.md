@@ -66,6 +66,8 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Défier un ami** | chaque partie a un **code de carte** (ex. `1A2B3C-L-S`), affiché en fin de partie avec **Copier** et **Rejouer cette carte** : saisi dans Nouvelle partie, il redonne la même carte et les mêmes vagues ; historique des 30 dernières parties dans le Palmarès, rejouables d'un clic (▶) |
 | **Missions & protocoles** | 3 objectifs courts toujours actifs ; toutes les 2 vagues, 1 carte à choisir parmi 3. 48 protocoles en 4 familles (économie, attaque, défense, tactique), 9 pactes et 6 **légendaires** dès la vague 12 |
 | **Progression** | Héritage (bonus permanents), niveau de Commandant et 7 doctrines, 27 succès, Codex de 57 fiches |
+| **Replays** | chaque partie solo s'enregistre (graine, réglages et actions horodatées : quelques Ko) ; les 6 dernières se revoient depuis **Palmarès → Historique** (🎬) ou l'écran de fin, de ×1 à ×8, et se partagent par un code (**Importer un replay**). Une partie reprise depuis une sauvegarde se revoit à partir de la reprise |
+| **Astuces** | un conseil la première fois qu'un élément du jeu apparaît (amélioration, Labo, fusion, arbre, soutien, boss, casino, IEM, plasma, spécialisation), désactivables dans les Options |
 | **Analyse de combat** | graphiques de la partie : dégâts, éliminations, tirs et rentabilité par tourelle, dégâts par vague |
 | **Musique** | générée en direct : **Arena 80s** (synth-rock, solo saturé sur les boss), Ambiance ou Synthwave |
 | **Divers** | annonces de combo et de multi-éliminations, 5 thèmes visuels, démo IA en fond de menu |
@@ -130,6 +132,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.18** : replays des parties solo (lecture ×1 à ×8, code de partage, vérification « fidèle ») ; astuces contextuelles ; l'abandon passe par une action (rejoué à l'identique).
 - **v9.17** : coopération : doctrine (choisie dans le salon) et Héritage de chaque joueur, plasma et abyssite par joueur ; versus : 30 s de protection après un sabotage ; `Maj` + `T` / `U` pour toutes les tourelles du même type ; transfert de progression par code ; tableau des commandes du README réparé.
 - **v9.16** : Léviathan rééquilibré (PV 19 000, bouclier 2 500, ralentissements à 70 %) ; coopération : pause pour tous même en pleine vague, retour d'un joueur déconnecté avec le code du salon (à la fin de la vague), tourelles d'un joueur parti revendables par les autres ; classement des joueurs (touche `Tab`, panneau multijoueur, fin de partie) ; fenêtre des nouveautés au premier lancement d'une nouvelle version.
 - **v9.15** : Léviathan plus coriace : PV 15 000 → 24 000, bouclier de 4 000 rechargé en phase 2, blindage renforcé, ralentissements et gel à moitié efficaces, escortes et drains plus fréquents, régénération plus forte et 4ᵉ phase « Raz-de-marée » (prime 2 000, une abyssite de plus).

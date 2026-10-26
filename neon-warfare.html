@@ -512,6 +512,11 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 #mp-em.on{display:flex}
 #mp-em button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:5px;color:#cfe3ff;font:11px var(--font);padding:3px 6px;cursor:pointer}
 #mp-em button:hover{border-color:var(--accent)}
+#rp-bar{position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:45;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;padding:8px 12px;border-radius:10px;background:rgba(3,6,12,.92);border:1px solid #b48cff;box-shadow:0 0 26px -8px #b48cff;max-width:calc(100vw - 32px);font-size:11px;color:var(--dim)}
+#rp-bar b{color:#b48cff;letter-spacing:.2em;margin-right:4px}
+#rp-bar span{margin-right:6px;font-variant-numeric:tabular-nums}
+#rp-bar .btn{padding:4px 8px;font-size:10px}
+#rp-bar .btn.on{border-color:#b48cff;color:#fff;background:rgba(180,140,255,.2)}
 #mp-pause{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);z-index:45;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:10px;background:rgba(3,6,12,.92);border:1px solid var(--accent);box-shadow:0 0 30px -8px var(--accent);font-size:12px;color:var(--dim);max-width:calc(100vw - 32px);flex-wrap:wrap;justify-content:center}
 #mp-pause b{color:#fff;letter-spacing:.2em}
 #score{position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:44;min-width:min(560px,calc(100vw - 32px));max-width:calc(100vw - 32px);overflow-x:auto;padding:12px 14px;border-radius:10px;background:rgba(3,6,12,.94);border:1px solid rgba(255,210,63,.45);box-shadow:0 0 30px -10px var(--gold)}
@@ -803,6 +808,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <div id="mp-wait">EN ATTENTE DE VOTRE PARTENAIRE…</div>
 <div id="mp-pause" hidden><b>⏸ PARTIE EN PAUSE</b><span id="mp-pby"></span><button class="btn prim" id="mp-resume">REPRENDRE</button></div>
 <div id="score" hidden></div>
+<div id="rp-bar" hidden></div>
 <div id="tpanel" class="panel"></div>
 <div id="banner"></div>
 <div id="callout"></div>
@@ -839,6 +845,8 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 <div class="ov" id="ov-xfer"><div class="modal" style="width:560px"><button class="mclose" data-close>✕</button><h2 id="xf-t">PROGRESSION</h2><div class="sub" id="xf-sub"></div>
   <textarea id="xf-txt" class="mp-ta" spellcheck="false" autocomplete="off" style="width:100%;height:150px;font:11px var(--mono);word-break:break-all"></textarea>
   <div class="row" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" data-close>FERMER</button><button class="btn prim" id="xf-go">OK</button></div></div></div>
+<div class="ov" id="ov-rpend"><div class="modal" style="width:480px"><h2 style="color:#b48cff">FIN DU REPLAY</h2><div class="sub" id="rpe-sub"></div>
+  <div class="row" style="justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap"><button class="btn" id="rpe-menu">MENU</button><button class="btn" id="rpe-code">CODE DU REPLAY</button><button class="btn prim" id="rpe-again">REVOIR</button></div></div></div>
 <div class="ov" id="ov-keys"><div class="modal" style="width:640px"><button class="mclose" data-close>✕</button><h2>RACCOURCIS CLAVIER</h2>
   <div class="sub">Cliquez sur une touche puis appuyez sur la nouvelle (Échap pour annuler, ✕ pour n'en mettre aucune). Une touche déjà utilisée est retirée de l'autre commande.</div>
   <div id="keys-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="keys-reset">TOUCHES PAR DÉFAUT</button></div></div></div>
@@ -898,7 +906,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.17';
+const VERSION = '9.18';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -3892,7 +3900,7 @@ const Recycle = {
     if (sr() < .3) { G.nanites += m; FX.float(x, y, `+${m} ◈`, '#00ffaa', 14); }
     else { const v = Math.round((25 + sr() * 35 + G.waveNum * 2) * m); gain(v, r.by); FX.float(x, y, '+' + v, '#ffd23f', 14); }
     FX.ring(x, y, '#ffffff', 26, 18, 2); FX.spark(x, y, '#cfd8e8', 14, 3); Sfx.play('coin');
-    Store.data.stats.recycled++;
+    if (!G.replay) Store.data.stats.recycled++;
     if (Store.data.stats.recycled >= 10) Ach.unlock('recycler');
     Missions.on('recycle');
   }
@@ -4173,7 +4181,7 @@ const Missions = {
   complete(i) {
     const s = G.missions.splice(i, 1)[0], m = MDEF[s.id];
     gain(s.cash, null); G.nanites += s.nano; G.stats.missions++;
-    Store.data.meta.frags += 1;
+    if (!G.replay) Store.data.meta.frags += 1;
     const xp = Math.round(s.xp * Cmd.mult());
     UI.toast('Mission accomplie', `${m.d(s.n)}<br><b style="color:${s.nano ? 'var(--nano)' : 'var(--gold)'}">${s.nano ? '+' + s.nano + ' ◈' : '+' + s.cash + '¢'}</b> · <b style="color:var(--gold)">+${xp} XP</b> · <span class="frags">+1 ✦</span>`, '#39ff88', 3.5);
     Sfx.play('mission');
@@ -4192,7 +4200,7 @@ const Cmd = {
   nextDoctrine(l) { return Object.values(DOCTRINES).filter(d => d.lvl > l).sort((a, b) => a.lvl - b.lvl)[0] || null; },
   gain(x) {
     x = Math.round(x);
-    if (!x || (G && (G.demo || G.gm === 'sandbox' || G.gm === 'custom'))) return;
+    if (!x || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom'))) return;
     const c = Store.data.cmd;
     c.xp += x;
     if (G) G.xpRun += x;
@@ -5828,14 +5836,17 @@ const Act = {
     bet: (k, pi) => Casino.bet(k, pi),
     speed: v => Game.setSpeed(v),
     auto: on => { G.autoWave = !!on; if (G.phase === 'prep') G.autoT = 480; UI.refreshAuto(); },
-    leave: p => { (G.gone || (G.gone = {}))[p] = 1; },   // départ d'un joueur, appliqué au même tick chez tous
+    leave: p => { (G.gone || (G.gone = {}))[p] = 1; },
+    giveup: () => { if (!G.net) Game.gameOver(); },   // abandon (enregistré dans le replay)   // départ d'un joueur, appliqué au même tick chez tous
     // coopération : pause pour tous, demandée par n'importe quel joueur (G.paused = numéro du joueur + 1)
     mpause: on => { G.paused = on ? (G.actor != null ? G.actor : 0) + 1 : 0; UI.refreshMpPause(); }
   },
   do(type, ...a) {
     if (!G || G.over) return false;
+    if (G.replay) { if (performance.now() - (UI.rpT || 0) > 2500) { UI.rpT = performance.now(); UI.toast('Replay', 'Lecture seule : vous regardez une partie enregistrée.', '#9fb0cc', 2); } return false; }
     if (G.paused && type !== 'mpause') { UI.toast('Partie en pause', 'Reprenez la partie pour agir.', '#9fb0cc', 2); return false; }
     if (Net.coop) return Lock.push(type, a);
+    Replay.note(type, a);
     return this.run(null, type, a);
   },
   run(p, type, a) {
@@ -5874,7 +5885,7 @@ const Hist = {
 
 const Ach = {
   unlock(id) {
-    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.gm === 'sandbox' || G.gm === 'custom'))) return;
+    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom'))) return;
     Store.data.ach[id] = Date.now(); Store.data.meta.frags += 3; Store.save();
     UI.toast('Succès : ' + ACH[id].n, ACH[id].d + ' <span class="frags">+3 ✦</span>', '#ffd23f', 4.5);
     Sfx.play('ach');
@@ -5884,14 +5895,14 @@ const Ach = {
 /* ============================== SAUVEGARDE ============================== */
 const SaveSys = {
   save() {
-    if (!G || G.over || G.demo || G.net) return;
+    if (!G || G.over || G.demo || G.net || G.replay) return;
     Store.data.save = this.pack();
     Store.save();
   },
   pack() {
     const M = G.map;
     return {
-      v: 8, gm: G.gm, cus: G.cus, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
+      v: 8, gm: G.gm, cus: G.cus, rec: G.rec ? 1 : 0, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
       doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, cx: G.cx,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       rs: G.rs, nanites: G.nanites, res: G.res, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
@@ -5928,7 +5939,7 @@ const Game = {
     Demo.stop();
     let pk = opts.perks || Store.data.meta.perks;
     const diff = DIFFS[diffKey];
-    const daily = opts.daily ? dailyInfo() : null;
+    const daily = opts.daily ? dailyInfo(opts.dailyDate || undefined) : null;
     const seed = daily ? daily.seed : opts.seed != null ? opts.seed : (Math.random() * 2147483647) | 0;
     const portrait = opts.portrait != null ? opts.portrait : View.w < View.h * .9;
     this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
@@ -5981,7 +5992,8 @@ const Game = {
     Skills.apply();
     G.preview = Waves.plan(1);
     Missions.fill();
-    Store.data.stats.games++;
+    if (opts.replay) { G.replay = opts.replay; G.rec = null; }
+    else { Store.data.stats.games++; Replay.record(); }
     this.start(true);
   },
   load() {
@@ -5990,6 +6002,7 @@ const Game = {
     try {
       Demo.stop();
       this.unpack(s);
+      Replay.resumed(s);
       this.start(false);
       if (G.cardQ > 0) { if (!G.offer) G.offer = Cards.roll(); UI.openCards(); }
       return true;
@@ -6037,7 +6050,7 @@ const Game = {
     Music.intensity = 0;
     Perf.slow = 0;
     UI.enterGame();
-    if (fresh) SaveSys.save();
+    if (fresh && !G.replay) SaveSys.save();
     if (G.daily) {
       UI.banner(fresh ? 'DÉFI DU JOUR' : 'SYSTÈMES RESTAURÉS', G.mutKeys.map(k => MUTATORS[k].n.toUpperCase()).join(' + '), '#ffd23f');
       if (fresh) UI.toast('Défi du jour · ' + G.daily, G.mutKeys.map(k => `<b>${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>'), '#ffd23f', 8);
@@ -6059,6 +6072,7 @@ const Game = {
     if (!G || G.over) return;
     G.over = true; G.lives = 0;
     if (G.demo) { Demo.pending = true; return; }
+    if (G.replay) { Music.intensity = 0; setTimeout(() => { if (G && G.replay) Replay.finish(); }, 1200); return; }
     if (G.net) {
       Music.intensity = 0; UI.setPlacing(null); UI.setTargeting(null); UI.deselect();
       const [ex, ey] = G.map.exit;
@@ -6079,7 +6093,9 @@ const Game = {
       if (best) Store.data.records[rk] = G.waveNum;
     }
     Store.data.stats.kills += G.stats.kills;
-    Hist.add({ best });
+    const rid = Date.now();
+    Hist.add({ best, rid: G.rec ? rid : 0 });
+    Replay.keep(rid);
     Store.data.save = null;
     Store.save();
     Music.intensity = 0;
@@ -7147,6 +7163,115 @@ const Input = {
   }
 };
 
+/* ============================== REPLAYS ==============================
+   La simulation solo est déterministe et toute action passe par Act : un replay n'est que la graine, les réglages
+   de départ (ou l'état restauré si la partie a été reprise depuis une sauvegarde) et la liste des actions avec leur tick. */
+const B64 = {
+  enc(str) { const b = new TextEncoder().encode(str); let t = ''; for (let i = 0; i < b.length; i += 8192) t += String.fromCharCode.apply(null, b.subarray(i, i + 8192)); return btoa(t); },
+  dec(b64) { const bin = atob(String(b64).replace(/\s+/g, '')); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); }
+};
+const Replay = {
+  MAX: 6,   // replays gardés (les plus récents)
+  // début d'enregistrement : nouvelle partie solo
+  record() {
+    if (!G || G.net || G.demo || G.replay) return;
+    G.rec = { v: VERSION, o: { diff: G.diffKey, seed: G.seed, portrait: G.portrait, gm: G.gm, cus: G.cus, perks: Object.assign({}, G.perks), doctrine: G.doctrine,
+      events: G.events, autoWave: G.autoWave, daily: G.daily || null }, a: [] };
+  },
+  // partie reprise depuis une sauvegarde : le replay repart de cet état
+  resumed(s) {
+    if (!G || G.net || G.demo) return;
+    const base = Object.assign({}, s); delete base.rec;
+    G.rec = { v: VERSION, o: { diff: G.diffKey, gm: G.gm, daily: G.daily || null }, base: JSON.parse(JSON.stringify(base)), from: G.waveNum + 1, a: [] };
+  },
+  note(type, a) { if (G.rec) G.rec.a.push([G.tick, type, ...a]); },
+  // fin de partie solo : le replay rejoint la liste, lié à l'entrée d'historique
+  keep(rid) {
+    const r = G.rec; if (!r) return;
+    r.end = { w: G.waveNum, k: G.stats.kills, t: G.tick }; r.id = rid; r.d = Date.now();
+    const L = (Store.data.reps || []).filter(x => x.id !== rid); L.unshift(r);
+    while (L.length > this.MAX || (L.length > 1 && JSON.stringify(L).length > 1.5e6)) L.pop();
+    Store.data.reps = L; Store.save();
+  },
+  get(rid) { return (Store.data.reps || []).find(x => x.id === rid) || null; },
+  code(r) { return 'NWR1:' + B64.enc(JSON.stringify(r)); },
+  read(code) {
+    const m = /^NWR1:([A-Za-z0-9+/=\s]+)$/.exec(String(code || '').trim()); if (!m) return null;
+    try { const r = JSON.parse(B64.dec(m[1])); return r && r.o && Array.isArray(r.a) && (r.base || r.o.seed != null) ? r : null; } catch (e) { return null; }
+  },
+  // lecture
+  play(r) {
+    if (G && !G.over && !G.demo && Game.state === 'play') { UI.toast('Partie en cours', 'Quittez d\'abord la partie en cours pour regarder un replay.', '#ff2a6d', 3); return; }
+    UI.closeAll();
+    const rp = { a: r.a, i: 0, end: r.end || null, v: r.v, mul: 1, paused: false, rec: r };
+    if (r.base) {
+      Demo.stop(); Game.unpack(JSON.parse(JSON.stringify(r.base))); G.replay = rp; G.rec = null; Game.start(false);
+      if (G.cardQ > 0 && !G.offer) G.offer = Cards.roll();   // comme au chargement d'une sauvegarde
+    } else {
+      const o = r.o;
+      Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, gm: o.gm, cus: o.cus, perks: o.perks, doctrine: o.doctrine, events: o.events, autoWave: o.autoWave,
+        daily: !!o.daily, dailyDate: o.daily || undefined, replay: rp });
+    }
+    if (r.v !== VERSION) UI.toast('Replay d\'une autre version', `Enregistré en v${r.v}, vous avez la v${VERSION} : il peut s'écarter de la partie d'origine.`, '#ffd23f', 6);
+    UI.replayBar(true);
+  },
+  // avant chaque tick : les actions enregistrées à ce tick
+  feed() {
+    const R = G.replay, A = R.a;
+    while (R.i < A.length && A[R.i][0] <= G.tick) { const x = A[R.i++]; Act.run(null, x[1], x.slice(2)); }
+  },
+  finish() {
+    const R = G.replay, e = R.end, same = e && e.w === G.waveNum && e.k === G.stats.kills;
+    UI.replayBar(false);
+    $('rpe-sub').innerHTML = e ? (same ? `Partie rejouée à l'identique : vague <b>${G.waveNum}</b>, <b>${fmt(G.stats.kills)}</b> éliminations. <span style="color:#39ff88">✓ fidèle</span>`
+      : `Le replay s'est écarté de l'original (vague ${G.waveNum} au lieu de ${e.w}${R.v !== VERSION ? ', version différente' : ''}).`) : `Fin du replay : vague <b>${G.waveNum}</b>.`;
+    $('rpe-again').onclick = () => { const r = R.rec; Game.quit(false); this.play(r); };
+    $('rpe-code').onclick = () => UI.openXfer('rpexp', R.rec);
+    $('rpe-menu').onclick = () => { UI.close('ov-rpend'); Game.quit(false); };
+    UI.open('ov-rpend');
+  }
+};
+
+/* ============================== ASTUCES (une seule fois chacune) ============================== */
+const TIPS = [
+  { id: 'up', w: () => G.waveNum >= 2 && G.phase === 'prep' && G.towers.length >= 2 && !G.towers.some(t => t.level > 1),
+    t: 'Améliorer', d: () => `Cliquez une tourelle puis ▲ AMÉLIORER (${Keys.lbl('up') || '—'}). <kbd>Maj</kbd> + ${Keys.lbl('up') || '—'} améliore toutes vos tourelles du même type.` },
+  { id: 'lab', w: () => G.nanites >= 6 && ![...G.unlocked].some(k => TOWERS[k] && TOWERS[k].tier >= 2),
+    t: 'Labo de fusion', d: () => `Vos nanites ◈ achètent des <b>plans</b> au Labo (${Keys.lbl('lab') || '—'}) : deux tourelles voisines fusionnent alors en une tourelle bien plus forte.` },
+  { id: 'fuse', w: () => G.fusePairs && G.fusePairs.some(f => f.owned),
+    t: 'Fusion possible', d: () => 'Deux de vos tourelles peuvent fusionner : sélectionnez l\'une d\'elles, puis choisissez la fusion dans le panneau.' },
+  { id: 'tree', w: () => G.waveNum >= 3 && Skills.total() === 0 && Skills.anyBuyable(),
+    t: 'Arbre de compétences', d: () => `Les nanites ◈ paient aussi des compétences qui renforcent toute la partie (${Keys.lbl('tree') || '—'}).` },
+  { id: 'support', w: () => G.waveNum >= 4 && G.towers.filter(t => t.d.kind !== 'support').length >= 5 && !G.towers.some(t => t.d.kind === 'support'),
+    t: 'Tourelles de soutien', d: () => 'Le <b>Ventilo</b> refroidit et l\'<b>Ordi</b> renforce les tourelles qui le touchent : placez-les au milieu d\'un groupe.' },
+  { id: 'boss', w: () => G.phase === 'prep' && (G.waveNum + 1) % Waves.bossEv() === 0 && G.waveNum >= 3,
+    t: 'Boss en approche', d: () => `La prochaine vague a un <b>boss</b> : gardez la Frappe orbitale (${Keys.lbl('orbital') || '—'}) pour lui, et regardez l'aperçu de vague en haut.` },
+  { id: 'casino', w: () => G.waveNum >= 4 && G.phase === 'prep' && !G.net,
+    t: 'Casino', d: () => `Entre deux vagues, tentez la machine à sous ou pariez sur la prochaine vague (${Keys.lbl('casino') || '—'}).` },
+  { id: 'jam', w: () => G.towers.some(t => t.stun > 0 && t.jamP),
+    t: 'Tourelle hors ligne', d: () => `Une IEM a coupé des tourelles : ${Keys.lbl('unjam') || '—'} les débrouille contre des crédits.` },
+  { id: 'plasma', w: () => G.res.p >= 3,
+    t: 'Plasma ✺', d: () => 'Le plasma paie le palier III de l\'arbre et les plans <b>T3</b> au Labo ; chaque pose d\'une T3 en coûte aussi.' },
+  { id: 'spec', w: () => G.towers.some(t => Towers.needsSpec(t) && Act.owns(t)),
+    t: 'Spécialisation', d: () => 'Une tourelle peut choisir sa voie (losange doré) : ouvrez-la, le choix est définitif et nécessaire pour continuer à l\'améliorer.' }
+];
+const Tips = {
+  t: 0,
+  check() {
+    if (!G || G.demo || G.replay || G.over || Store.s.tips === false || UI.blocking()) return;
+    const now = performance.now(); if (now - this.t < 25000) return;
+    const seen = Store.data.tips || (Store.data.tips = {});
+    for (const T of TIPS) {
+      if (seen[T.id]) continue;
+      let ok = false; try { ok = T.w(); } catch (e) { ok = false; }
+      if (!ok) continue;
+      seen[T.id] = 1; Store.save(); this.t = now;
+      UI.toast('💡 ' + T.t, T.d(), '#00f3ff', 8);
+      return;
+    }
+  }
+};
+
 /* ============================== CLASSEMENT DES JOUEURS ============================== */
 const Score = {
   on: false, t: 0,
@@ -7209,6 +7334,8 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '9.18', d: ['Replays : revoyez vos parties solo (🎬 dans Palmarès → Historique ou en fin de partie), en ×1 à ×8, et partagez-les par un code.',
+    'Astuces : un conseil la première fois qu\'un élément du jeu apparaît (Labo, fusion, arbre, boss, plasma…), désactivables dans les Options.'] },
   { v: '9.17', d: ['Coopération : chacun apporte sa doctrine (choisie dans le salon) et son Héritage ; les doctrines de l\'équipe s\'additionnent.',
     'Coopération : chacun son plasma et son abyssite ; chaque boss en donne à tous les joueurs présents.',
     'Versus : après un sabotage, 30 s de protection contre les suivants (fini les acharnements à plusieurs).',
@@ -7465,7 +7592,7 @@ const UI = {
     }
   },
   exitGame() {
-    this.mpHud(false); $('mp-wait').style.display = 'none';
+    this.mpHud(false); $('mp-wait').style.display = 'none'; $('rp-bar').hidden = true;
     $('hud').classList.add('hidden'); $('dock').classList.add('hidden'); $('missions').classList.add('hidden');
     $('tpanel').classList.remove('show'); $('bossbar').style.display = 'none';
     this.sel = null; this.selDebris = null; this.placing = null; this.targeting = null; this.hover.inside = false;
@@ -7485,7 +7612,8 @@ const UI = {
     this.frameN++;
     if (Game.state !== 'play' || !G) { if (Score.on) Score.refresh(); if (this.last.mpp) this.refreshMpPause(); return; }
     const f = this.frameN;
-    if (f % 10 === 0) { Score.refresh(); this.refreshMpPause(); }
+    if (f % 10 === 0) { Score.refresh(); this.refreshMpPause(); if (G.replay) this.refreshReplay(); }
+    if (f % 60 === 0) Tips.check();
     if (f % 6 === 0) { this.refreshHUD(); this.refreshCombo(); this.refreshBoss(); this.refreshEvent(); this.refreshUnjam(); }
     if (f % 4 === 0) this.refreshAbils();
     if (this.sel && f % 12 === 0) this.refreshPanelLive();
@@ -7687,6 +7815,7 @@ const UI = {
   /* ---------- protocoles ---------- */
   openCards() {
     if (!G || !G.offer || !G.offer.length) { if (G) { G.offer = null; G.cardQ = 0; } return; }
+    if (G.replay) return;
     if (G.wallets && Net.coop && Cards.turn() !== Net.me) { this.toast('Protocole', `${MP.esc(MP.name(Cards.turn()))} choisit le protocole de cette vague.`, '#ff2bd6', 3); return; }
     this.setPlacing(null, true); this.setTargeting(null); this.deselect();
     this.renderCards(); this.open('ov-cards'); Sfx.play('card');
@@ -8213,18 +8342,34 @@ const UI = {
         const dk = G.diffKey, daily = !!G.daily, gm = G.gm, cus = G.cus; this.closeAll(); Game.newGame(dk, { daily, gm, cus });
       })],
       [G.phase === 'prep' ? 'SAUVEGARDER & QUITTER' : 'QUITTER<small>reprise au début de la vague en cours</small>', '', () => Game.quit()],
-      ['ABANDONNER', 'danger', () => this.confirm('ABANDONNER ?', 'La partie sera perdue. Les fragments gagnés restent acquis.', () => { this.closeAll(); Game.gameOver(); })]
+      ['ABANDONNER', 'danger', () => this.confirm('ABANDONNER ?', 'La partie sera perdue. Les fragments gagnés restent acquis.', () => { this.closeAll(); Act.do('giveup'); })]
     ]);
     this.open('ov-pause'); Sfx.play('ui');
   },
   // transfert de progression : tout Store.data, encodé en texte copiable
-  xferCode() { const b = new TextEncoder().encode(JSON.stringify(Store.data)); let t = ''; for (let i = 0; i < b.length; i += 8192) t += String.fromCharCode.apply(null, b.subarray(i, i + 8192)); return 'NW1:' + btoa(t); },
+  xferCode() { const d = Object.assign({}, Store.data); delete d.reps; return 'NW1:' + B64.enc(JSON.stringify(d)); },
   xferRead(code) {
     const m = /^NW1:([A-Za-z0-9+/=\s]+)$/.exec(String(code || '').trim()); if (!m) return null;
-    try { const bin = atob(m[1].replace(/\s+/g, '')), b = Uint8Array.from(bin, c => c.charCodeAt(0)), d = JSON.parse(new TextDecoder().decode(b)); return d && typeof d === 'object' && d.meta && d.settings ? d : null; } catch (e) { return null; }
+    try { const d = JSON.parse(B64.dec(m[1])); return d && typeof d === 'object' && d.meta && d.settings ? d : null; } catch (e) { return null; }
   },
-  openXfer(exp) {
+  openXfer(exp, rec) {
     const ta = $('xf-txt'), go = $('xf-go');
+    if (exp === 'rpexp' || exp === 'rpimp') {
+      const out = exp === 'rpexp';
+      $('xf-t').textContent = out ? 'CODE DU REPLAY' : 'IMPORTER UN REPLAY';
+      $('xf-sub').innerHTML = out ? 'Envoyez ce code à un ami : dans <b>Palmarès → Historique → Importer un replay</b>, il verra votre partie (même version du jeu conseillée).' : 'Collez ici le code d\'un replay.';
+      ta.value = out ? Replay.code(rec) : ''; ta.readOnly = out; go.textContent = out ? 'COPIER LE CODE' : 'REGARDER';
+      go.onclick = () => {
+        if (out) { this.copy(ta.value, ta); return; }
+        const r = Replay.read(ta.value);
+        if (!r) { Sfx.play('error'); this.toast('Code invalide', 'Ce texte n\'est pas un code de replay Neon Warfare complet.', '#ff2a6d', 4); return; }
+        Replay.play(r);
+      };
+      this.open('ov-xfer');
+      if (out) setTimeout(() => { ta.focus(); ta.select(); }, 50);
+      return;
+    }
+    exp = exp === true || exp === 'exp';
     $('xf-t').textContent = exp ? 'EXPORTER LA PROGRESSION' : 'IMPORTER UNE PROGRESSION';
     $('xf-sub').innerHTML = exp ? 'Copiez ce code, puis collez-le dans <b>Options → Transférer la progression → Importer</b> sur l\'autre appareil ou navigateur.'
       : 'Collez ici un code exporté depuis un autre appareil. <b style="color:var(--dang)">Votre progression actuelle sur cet appareil sera remplacée.</b>';
@@ -8256,6 +8401,7 @@ const UI = {
       <div class="opt"><span>Chiffres de dégâts</span><button class="btn" id="o-dn">${tg(s.dmgNums)}</button></div>
       <div class="opt"><span>Événements aléatoires<small>Astéroïdes, ravitaillements, tempêtes… (prochaines parties)</small></span><button class="btn" id="o-ev">${tg(s.events !== false)}</button></div>
       <div class="opt"><span>Compteur FPS<small>Touche F3</small></span><button class="btn" id="o-fps">${tg(s.fps)}</button></div>
+      <div class="opt"><span>Astuces<small>Conseils affichés une seule fois, quand un nouvel élément du jeu apparaît</small></span><span class="row" style="gap:6px"><button class="btn" id="o-tips">${tg(s.tips !== false)}</button><button class="btn" id="o-tipr" title="Revoir toutes les astuces">↺</button></span></div>
       <div class="opt"><span>Transférer la progression<small>Héritage, succès, records et partie en cours, vers un autre appareil ou navigateur</small></span><span class="row" style="gap:6px"><button class="btn" id="o-exp">EXPORTER</button><button class="btn" id="o-imp">IMPORTER</button></span></div>
       <div class="opt"><span>Raccourcis clavier<small>Changer les touches, en donner une à chaque canon</small></span><button class="btn" id="o-keys">MODIFIER</button></div>
       <div class="opt"><span>Démo IA du menu<small>Une partie jouée par l'IA en fond du menu principal</small></span><button class="btn" id="o-demo">${tg(s.demo)}</button></div>
@@ -8273,6 +8419,8 @@ const UI = {
     $('o-fps').onclick = () => { this.toggleFps(); this.openOptions(); };
     $('o-keys').onclick = () => Keys.open();
     $('o-exp').onclick = () => this.openXfer(true);
+    $('o-tips').onclick = () => { s.tips = s.tips === false; Store.save(); this.openOptions(); };
+    $('o-tipr').onclick = () => { Store.data.tips = {}; Store.save(); this.toast('Astuces', 'Toutes les astuces seront de nouveau affichées.', '#00f3ff', 2.5); };
     $('o-imp').onclick = () => this.openXfer(false);
     $('keys-reset').onclick = () => { Keys.wait = null; Keys.reset(); Sfx.play('ui'); Keys.render(); };
     $('o-ev').onclick = () => { s.events = s.events === false; Store.save(); this.openOptions(); };
@@ -8447,11 +8595,12 @@ const UI = {
       <div>Protocoles <b>${Object.values(G.cards).reduce((a, b) => a + b, 0)}</b></div><div>Temps de jeu <b>${mins} min</b></div></div>
       ${mvp ? `<div class="mvp" style="--tc:${mvp.d.color}"><canvas id="go-mvp"></canvas><div style="text-align:left"><div class="lbl-s">TOURELLE MVP</div><b style="color:${mvp.d.color};letter-spacing:1px">${mvp.d.name.toUpperCase()} · NIV ${mvp.level}</b><div class="note">${fmt(mvp.dealt)} dégâts · ${fmt(mvp.kills)} éliminations</div></div></div>` : ''}
       <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span> (total ${Store.data.meta.frags})</div>
-      <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="go-menu">MENU</button><button class="btn gold" id="go-meta">HÉRITAGE</button><button class="btn" id="go-stats">STATS</button><button class="btn sec" id="go-dare">DÉFIER UN AMI</button><button class="btn prim big" id="go-again">${daily ? 'RETENTER LE DÉFI' : 'ENCORE UNE !'} <span class="k">ENTRÉE</span></button></div>`;
+      <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="go-menu">MENU</button><button class="btn gold" id="go-meta">HÉRITAGE</button><button class="btn" id="go-stats">STATS</button><button class="btn sec" id="go-dare">DÉFIER UN AMI</button>${G.rec ? '<button class="btn" id="go-rep">🎬 REVOIR</button>' : ''}<button class="btn prim big" id="go-again">${daily ? 'RETENTER LE DÉFI' : 'ENCORE UNE !'} <span class="k">ENTRÉE</span></button></div>`;
     if (mvp) Spr.icon($('go-mvp'), mvp.key, 44);
     requestAnimationFrame(() => requestAnimationFrame(() => { const x = $('go-xp'); if (x) x.style.width = endW.toFixed(1) + '%'; }));
     if (best && G.waveNum > 1) Sfx.play('levelup');
     $('go-menu').onclick = () => Game.quit(false);
+    if ($('go-rep')) { const r = G.rec; $('go-rep').onclick = () => { Game.quit(false); Replay.play(r); }; }
     $('go-meta').onclick = () => { Game.quit(false); this.openMeta(); };
     $('go-stats').onclick = () => this.openStats();
     $('go-dare').onclick = () => {
@@ -8648,6 +8797,28 @@ const UI = {
     L.scrollTop = L.scrollHeight;
   },
   /* ---------- multijoueur : en partie ---------- */
+  // lecteur de replay
+  replayBar(on) {
+    const b = $('rp-bar'); b.hidden = !on; if (!on) return;
+    const R = G.replay;
+    const draw = () => {
+      b.innerHTML = `<b>🎬 REPLAY</b><span id="rp-w"></span><button class="btn" data-a="p">${R.paused ? '▶' : '⏸'}</button>${[1, 2, 4, 8].map(m => `<button class="btn${R.mul === m ? ' on' : ''}" data-m="${m}">×${m}</button>`).join('')}<button class="btn" data-a="c" title="Copier le code du replay">CODE</button><button class="btn danger" data-a="q">QUITTER</button>`;
+      b.querySelectorAll('button').forEach(x => x.onclick = () => {
+        if (x.dataset.m) R.mul = +x.dataset.m;
+        else if (x.dataset.a === 'p') R.paused = !R.paused;
+        else if (x.dataset.a === 'c') { R.paused = true; this.openXfer('rpexp', R.rec); }
+        else if (x.dataset.a === 'q') { this.replayBar(false); Game.quit(false); return; }
+        Sfx.play('ui'); draw(); this.refreshReplay(true);
+      });
+    };
+    draw(); this.refreshReplay(true);
+  },
+  refreshReplay(force) {
+    if (!G || !G.replay) return;
+    const R = G.replay, k = G.waveNum + ':' + R.i;
+    if (!force && k === this.last.rp) return; this.last.rp = k;
+    const w = $('rp-w'); if (w) w.textContent = `Vague ${G.waveNum} · action ${Math.min(R.i, R.a.length)} / ${R.a.length}`;
+  },
   // bandeau de pause en coopération
   refreshMpPause() {
     const on = !!(G && G.paused && G.net === 'coop' && Game.state === 'play'), by = on ? G.paused - 1 : -1, k = on ? 'p' + by : '';
@@ -8952,15 +9123,18 @@ const UI = {
     $('ach-tabs').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.k === tab); b.onclick = () => { Sfx.play('ui'); this.openAch(b.dataset.k); }; });
     if (tab === 'hist') {
       const H = Store.data.hist || [];
-      $('ach-sub').innerHTML = H.length ? `Vos <b>${H.length}</b> dernières parties. Cliquez un code de carte pour le copier et défier un ami.` : 'Aucune partie terminée pour l\'instant.';
+      $('ach-sub').innerHTML = (H.length ? `Vos <b>${H.length}</b> dernières parties. Cliquez un code de carte pour le copier et défier un ami ; 🎬 revoit la partie (les ${Replay.MAX} dernières en solo).` : 'Aucune partie terminée pour l\'instant.')
+        + ' <button class="btn" id="rp-imp" style="margin-left:8px;padding:3px 8px;font-size:10px">IMPORTER UN REPLAY</button>';
+      $('rp-imp').onclick = () => this.openXfer('rpimp');
       const L = $('ach-list'); L.className = 'hist';
       L.innerHTML = H.map((h, i) => {
         const dt = new Date(h.d), mode = h.net ? (h.net === 'versus' ? `Versus contre ${String(h.vs || '?').replace(/</g, '&lt;')} · ${h.win ? '<b style="color:var(--gold)">VICTOIRE</b>' : 'défaite'}` : 'Coopération') : (h.daily ? 'Défi du jour' : (GMODES[h.gm] || GMODES.classic).n);
         return `<div class="hrow"><b>${h.w}</b><span class="t">${DIFFS[h.diff] ? DIFFS[h.diff].name : '?'} · ${mode}${h.best ? ' · <span style="color:var(--gold)">record</span>' : ''}</span>
-          <span class="c" data-i="${i}" title="Copier le code de carte">${h.code || ''}</span>${h.code && !h.daily ? `<button class="btn hp" data-i="${i}" title="Rejouer cette carte">▶</button>` : ''}
+          <span class="c" data-i="${i}" title="Copier le code de carte">${h.code || ''}</span>${h.code && !h.daily ? `<button class="btn hp" data-i="${i}" title="Rejouer cette carte">▶</button>` : ''}${h.rid && Replay.get(h.rid) ? `<button class="btn hr" data-i="${i}" title="Revoir la partie">🎬</button>` : ''}
           <span class="m">${dt.toLocaleDateString('fr-FR')} ${dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · ${fmt(h.k)} éliminations${h.mvp && TOWERS[h.mvp] ? ' · MVP ' + TOWERS[h.mvp].name : ''}</span></div>`;
       }).join('');
       L.querySelectorAll('.c').forEach(el => el.onclick = () => { const h = H[+el.dataset.i]; if (h && h.code) this.copy(h.code); });
+      L.querySelectorAll('.hr').forEach(el => el.onclick = () => { const h = H[+el.dataset.i], r = h && Replay.get(h.rid); if (r) Replay.play(r); });
       L.querySelectorAll('.hp').forEach(el => el.onclick = () => {
         const h = H[+el.dataset.i], c = h && Hist.parse(h.code); if (!c) return;
         if (G && !G.over && !G.demo && Game.state === 'play') { this.toast('Partie en cours', 'Quittez d\'abord la partie en cours pour rejouer une carte.', '#ff2a6d', 3); return; }
@@ -9068,19 +9242,20 @@ const Perf = {
 let lastT = 0;
 // avance la simulation de dt millisecondes (appelée par l'affichage, ou par la minuterie de secours en arrière-plan)
 function simStep(dt) {
-  if (G.over || (UI.blocking() && !Net.on)) { Render.alpha = 1; if (G.over) FX.update(); return; }
+  if (G.over || (UI.blocking() && !Net.on) || (G.replay && G.replay.paused)) { Render.alpha = 1; if (G.over) FX.update(); return; }
   let sm = 1;
   if (Game.slowT > 0) { Game.slowT -= dt; sm = .28; }
-  Game.acc += dt * Game.speed * sm * (Net.coop && Net.role === 'guest' ? Lock.pace(dt) : 1);
+  Game.acc += dt * Game.speed * sm * (Net.coop && Net.role === 'guest' ? Lock.pace(dt) : 1) * (G.replay ? G.replay.mul : 1);
   const t0 = performance.now();
   let steps = 0;
-  const maxSteps = Net.coop && Net.role === 'guest' ? 48 : 12;
+  const maxSteps = (Net.coop && Net.role === 'guest') || G.replay ? 48 : 12;
   while (Game.acc >= TICK_MS && steps < maxSteps) {
     if (Net.coop) {
       if (!Lock.ready(G.tick)) { Lock.stall += TICK_MS; Game.acc = Math.min(Game.acc, TICK_MS * 4); break; }
       Lock.stall = 0; Lock.exec(G.tick);
       if (!G || G.over) break;
     }
+    if (G.replay) { Replay.feed(); if (G.over) break; }
     Game.update();
     if (Net.coop) Lock.check(G.tick);
     Game.acc -= TICK_MS; steps++;
