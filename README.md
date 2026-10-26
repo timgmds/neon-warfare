@@ -31,7 +31,12 @@ d'entreprise), la partie passe par les serveurs MQTT, en parallèle. Si la liais
 le relais prend la suite sans perte : chaque message est numéroté et renvoyé tant qu'il n'est pas confirmé. La
 liaison directe est ensuite retentée automatiquement. En coopération, l'hôte cadence la partie sans jamais
 attendre personne : les invités n'envoient que leurs actions, et chacun rejoue les trames de l'hôte avec un petit tampon
-qui s'adapte à sa connexion (jeu fluide même à 500 ms de ping, un joueur lent ne fige plus les autres). Un joueur qui ne donne plus aucune nouvelle pendant 20 s est considéré comme parti. Sans internet (réseau local), la **connexion
+qui s'adapte à sa connexion (jeu fluide même à 500 ms de ping, un joueur lent ne fige plus les autres). Un joueur qui ne donne plus aucune nouvelle pendant 20 s est considéré comme parti.
+En coopération, un joueur parti **revient tout de suite** avec le code du salon : chaque machine garde une photo de la
+partie au début de chaque préparation et le journal des actions jouées depuis ; le revenant part de cette photo et
+rejoue le journal en accéléré jusqu'au présent, puis retrouve sa place, ses tourelles et ses crédits. **Si l'hôte part**,
+le joueur restant de plus petit numéro devient l'hôte sur un nouveau salon (`<code>M1`, `M2`…) et les autres s'y
+reconnectent d'eux-mêmes : la partie continue pour tout le monde. Sans internet (réseau local), la **connexion
 manuelle** échange deux codes par copier-coller, sans aucun serveur (une invitation par joueur).
 
 | Mode | Principe |
@@ -132,6 +137,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.19** : coopération : retour immédiat d'un joueur en pleine vague (photo de partie + journal rejoué en accéléré), relais de l'hôte quand il quitte la partie ; gros messages découpés.
 - **v9.18** : replays des parties solo (lecture ×1 à ×8, code de partage, vérification « fidèle ») ; astuces contextuelles ; l'abandon passe par une action (rejoué à l'identique).
 - **v9.17** : coopération : doctrine (choisie dans le salon) et Héritage de chaque joueur, plasma et abyssite par joueur ; versus : 30 s de protection après un sabotage ; `Maj` + `T` / `U` pour toutes les tourelles du même type ; transfert de progression par code ; tableau des commandes du README réparé.
 - **v9.16** : Léviathan rééquilibré (PV 19 000, bouclier 2 500, ralentissements à 70 %) ; coopération : pause pour tous même en pleine vague, retour d'un joueur déconnecté avec le code du salon (à la fin de la vague), tourelles d'un joueur parti revendables par les autres ; classement des joueurs (touche `Tab`, panneau multijoueur, fin de partie) ; fenêtre des nouveautés au premier lancement d'une nouvelle version.
