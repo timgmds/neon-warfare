@@ -906,7 +906,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.19';
+const VERSION = '9.20';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -7275,6 +7275,29 @@ const Input = {
   }
 };
 
+/* ============================== VERSION INSTALLABLE ==============================
+   Hébergé en HTTPS (GitHub Pages…), le jeu s'installe comme une application et tourne hors ligne (manifest.webmanifest + sw.js
+   à côté du fichier). En fichier local ou dans un aperçu intégré, rien ne change. */
+const App = {
+  prompt: null,
+  hosted() { return 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') && window.top === window && !/claude/i.test(location.hostname); },
+  standalone() { try { return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true; } catch (e) { return false; } },
+  ios() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); },
+  init() {
+    if (!this.hosted()) return;
+    const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.webmanifest'; document.head.appendChild(l);
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.prompt = e; if (Game.state === 'menu' && !G) UI.showMenu(); });
+    window.addEventListener('appinstalled', () => { this.prompt = null; UI.toast('Neon Warfare installé', 'Retrouvez le jeu sur votre écran d\'accueil, même hors ligne.', '#39ff88', 5); });
+  },
+  // proposer l'installation : invite du navigateur, ou mode d'emploi sur iPhone / iPad
+  canOffer() { return this.hosted() && !this.standalone() && (!!this.prompt || this.ios()); },
+  install() {
+    if (this.prompt) { const e = this.prompt; this.prompt = null; e.prompt(); e.userChoice.finally(() => { if (Game.state === 'menu') UI.showMenu(); }); return; }
+    UI.toast('Installer sur iPhone / iPad', 'Dans Safari, touchez <b>Partager</b> ⎋ puis <b>Sur l\'écran d\'accueil</b>.', '#00f3ff', 8);
+  }
+};
+
 /* ============================== REPLAYS ==============================
    La simulation solo est déterministe et toute action passe par Act : un replay n'est que la graine, les réglages
    de départ (ou l'état restauré si la partie a été reprise depuis une sauvegarde) et la liste des actions avec leur tick. */
@@ -7446,6 +7469,7 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '9.20', d: ['Version en ligne installable comme une application (menu → Installer le jeu), jouable hors ligne.'] },
   { v: '9.19', d: ['Coopération : un joueur déconnecté revient tout de suite (plus besoin d\'attendre la fin de la vague) : il rattrape la partie en accéléré.',
     'Coopération : si l\'hôte quitte la partie, un autre joueur prend le relais et tout le monde continue ensemble.'] },
   { v: '9.18', d: ['Replays : revoyez vos parties solo (🎬 dans Palmarès → Historique ou en fin de partie), en ×1 à ×8, et partagez-les par un code.',
@@ -8380,6 +8404,7 @@ const UI = {
     list.push([`CODEX<small>${cx[0]} / ${cx[1]} fiches</small>`, '', () => this.openCodex()]);
     list.push(['OPTIONS', '', () => this.openOptions()]);
     list.push(['MANUEL', '', () => this.openHelp()]);
+    if (App.canOffer()) list.push(['INSTALLER LE JEU<small>sur cet appareil, jouable hors ligne</small>', 'sec', () => App.install()]);
     this.btns($('menu-btns'), list);
     this.cmdBadge($('menu-cmd'));
     const rec = Object.keys(DIFFS).filter(k => Store.data.records[k]).map(k => `${DIFFS[k].name} <b>${Store.data.records[k]}</b>`).join(' · ');
@@ -9418,6 +9443,7 @@ function boot() {
   window.addEventListener('beforeunload', () => { if (G && !G.over && G.phase === 'prep') SaveSys.save(); });
   // fermeture de l'onglet : on prévient les autres joueurs tout de suite (sinon ils attendraient 20 s)
   window.addEventListener('pagehide', () => { if (Net.on) { try { Net.send({ t: 'bye' }); Net.flushAll(); } catch (e) { /* ignore */ } } });
+  App.init();
   UI.showMenu();
   News.check();
   requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });

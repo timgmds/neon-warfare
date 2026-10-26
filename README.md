@@ -12,6 +12,10 @@ récent (PC, tablette ou téléphone). Se joue **seul ou de 2 à 4 joueurs** (ve
 3. Choisir une tourelle dans la barre du bas (touches `1`…`0`), cliquer sur une case libre,
    puis lancer la vague avec `Espace`.
 
+**Version installable** : servi en HTTPS (par ex. GitHub Pages), le jeu s'installe comme une application
+(menu → **Installer le jeu**, ou sur iPhone : Partager → Sur l'écran d'accueil) et se lance hors ligne. Il utilise pour cela
+`manifest.webmanifest`, `sw.js` et les icônes `icon-*.png` posés à côté du fichier ; en fichier local, ils sont simplement ignorés.
+
 La partie est sauvegardée automatiquement entre deux vagues (dans le `localStorage` du navigateur).
 Pour changer d'appareil ou de navigateur : **Options → Transférer la progression** (un code à copier puis à importer).
 
@@ -137,6 +141,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.20** : version en ligne installable (manifeste, service worker hors ligne, icônes, bouton Installer).
 - **v9.19** : coopération : retour immédiat d'un joueur en pleine vague (photo de partie + journal rejoué en accéléré), relais de l'hôte quand il quitte la partie ; gros messages découpés.
 - **v9.18** : replays des parties solo (lecture ×1 à ×8, code de partage, vérification « fidèle ») ; astuces contextuelles ; l'abandon passe par une action (rejoué à l'identique).
 - **v9.17** : coopération : doctrine (choisie dans le salon) et Héritage de chaque joueur, plasma et abyssite par joueur ; versus : 30 s de protection après un sabotage ; `Maj` + `T` / `U` pour toutes les tourelles du même type ; transfert de progression par code ; tableau des commandes du README réparé.
