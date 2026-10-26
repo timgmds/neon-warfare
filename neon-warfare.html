@@ -906,7 +906,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.18';
+const VERSION = '9.19';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -4500,7 +4500,7 @@ const Net = {
   },
   /* ----- liens ----- */
   newLink(o) {
-    const L = Object.assign({ pc: null, dc: null, cid: 'dc_' + Math.random().toString(36).slice(2, 13), src: null, p: 0, hasRemote: false, open: false, ping: 0,
+    const L = Object.assign({ pc: null, dc: null, cid: 'dc_' + Math.random().toString(36).slice(2, 13), src: null, p: 0, adm: false, t0: performance.now(), hasRemote: false, open: false, ping: 0,
       dcUp: false, stale: false, tx: 1, rx: 1, q: [], buf: new Map(), lastRx: performance.now(), ackDue: false, ackT: 0, up: null }, o);
     this.links.push(L); return L;
   },
@@ -4585,7 +4585,7 @@ const Net = {
     this.dropLink(L);
     if (!was) return;
     if (this.role === 'guest') this.lost();
-    else if (L.p) MP.onLeave(L.p, 'lost');
+    else if (L.adm) MP.onLeave(L.p, 'lost');
   },
   // l'autre joueur a une ancienne version du jeu (messages sans numéro)
   legacy(L) {
@@ -4593,7 +4593,7 @@ const Net = {
     const txt = `Versions différentes : tous les joueurs doivent avoir la version ${VERSION} du jeu.`;
     if (this.role === 'host') {
       try { L.dc.send(JSON.stringify({ t: 'chat', p: 0, s: '⚠ ' + txt })); L.dc.send(JSON.stringify({ t: 'busy', p: 0 })); } catch (e) { /* ignore */ }
-      setTimeout(() => { const p = L.p; L.open = false; this.dropLink(L); if (p) MP.onLeave(p, 'bye'); }, 1200);
+      setTimeout(() => { const p = L.p, a = L.adm; L.open = false; this.dropLink(L); if (a) MP.onLeave(p, 'bye'); }, 1200);
     } else {
       this.reset(); UI.mpState = 'home'; UI.closeAll(); UI.openMP();
       this.setStatus('L\'hôte utilise une autre version du jeu. ' + txt, true);
@@ -4642,7 +4642,14 @@ const Net = {
   flush(L, now) {
     if (!this.relayUp()) return;
     const b = [], rto = clamp((L.rttMin || 400) * 1.5 + 100, 200, 1000);
-    for (const e of L.q) { if (e.at && now - e.at < rto) continue; e.at = now; b.push([e.s, e.m]); if (b.length >= 150) break; }
+    let tot = 0;
+    for (const e of L.q) {
+      if (e.at && now - e.at < rto) continue;
+      const sz = e.sz || (e.sz = JSON.stringify(e.m).length);
+      if (b.length && tot + sz > 200000) break;
+      e.at = now; b.push([e.s, e.m]); tot += sz;
+      if (b.length >= 150) break;
+    }
     if (!b.length && !L.ackDue) return;
     L.ackDue = false; L.ackT = now;
     this.sigSend(this.role === 'host' ? L.src : 'h', { type: 'D', c: L.cid, a: L.rx - 1, b });
@@ -4724,7 +4731,7 @@ const Net = {
     if (this.on) return;
     this.on = true;
     this.keepAlive();
-    MP.hosted(lobby);
+    if (!this.mig) MP.hosted(lobby);
   },
   // pings, relais et surveillance continuent même onglet masqué (minuterie de secours dans un Worker)
   keepAlive() { BG.start(); this.later(() => this.pump(), 250, true); },
@@ -4851,37 +4858,42 @@ const Net = {
     if (this.role === 'guest') {
       this.on = true; this.status = ''; this.err = false;
       this.keepAlive();
-      this.raw(L, { t: 'hello', name: MP.myName(), v: VERSION, doc: MP.myDoc(), perks: MP.myPerks() });
+      this.raw(L, { t: 'hello', name: MP.myName(), v: VERSION, doc: MP.myDoc(), perks: MP.myPerks(), prev: MP.prevMe });
       if (!L.dcUp) this.planUpgrade(L);
-      MP.connected();
+      if (!this.mig) MP.connected();   // relais de l'hôte : on reste en partie, l'hôte renvoie la partie aussitôt
       return;
     }
     // hôte : une place libre ; pendant une partie, seulement pour reprendre la place d'un joueur parti (coopération)
     if (MP.live) {
-      const rp = Net.coop ? MP.rejoinSlot() : null;
+      const rp = Net.coop ? MP.rejoinSlot(true) : null;
       if (rp == null) { this.raw(L, { t: 'busy' }); setTimeout(() => this.dropLink(L), 600); return; }
-      L.p = rp;
-      this.raw(L, { t: 'welcome', you: rp, code: this.code });
-      MP.rejoinAdmit(rp);
+      L.p = rp; L.rj = true;   // la place exacte est choisie à la présentation (ancien numéro, sinon même nom)
       return;
     }
-    const used = new Set(this.links.filter(l => l.open && l.p).map(l => l.p));
+    const used = new Set(this.links.filter(l => l.open && l.adm).map(l => l.p));
     let p = 0; for (let i = 1; i < NET_MAX; i++) if (!used.has(i)) { p = i; break; }
     if (!p) {
       this.raw(L, { t: 'full' });
       setTimeout(() => this.dropLink(L), 600);
       return;
     }
-    L.p = p;
+    L.p = p; L.adm = true;
     this.raw(L, { t: 'welcome', you: p, code: this.code });
     MP.admit(p);
   },
   // invité : vers l'hôte ; hôte : vers tous les invités
   send(m) {
-    if (this.role === 'host') { m.p = 0; for (const L of this.links) if (L.p) this.raw(L, m); }
+    if (this.role === 'host') { m.p = this.me; for (const L of this.links) if (L.adm) this.raw(L, m); }
     else this.raw(this.links[0], m);
   },
-  sendTo(p, m) { if (this.role !== 'host') return; m.p = 0; this.raw(this.links.find(l => l.p === p), m); },
+  sendTo(p, m) { if (this.role !== 'host') return; m.p = this.me; this.raw(this.links.find(l => l.adm && l.p === p), m); },
+  // gros message (état complet d'une partie) : découpé en morceaux de 48 Ko, recollés à l'arrivée
+  sendBig(p, m) {
+    const str = JSON.stringify(m), N = 48000;
+    if (str.length <= N) { this.sendTo(p, m); return; }
+    const id = Math.random().toString(36).slice(2, 10), n = Math.ceil(str.length / N);
+    for (let i = 0; i < n; i++) this.sendTo(p, { t: 'part', id, i, n, d: str.slice(i * N, (i + 1) * N) });
+  },
   pingAll() { const ts = performance.now(); for (const L of this.links) if (L.open) this.raw(L, { t: 'ping', ts }); },
   onMsg(L, m) {
     if (m.t === 'ping') { this.raw(L, { t: 'pong', ts: m.ts }); return; }
@@ -4892,10 +4904,11 @@ const Net = {
       return;
     }
     if (this.role === 'host') {
-      if (!L.p) return;   // pas encore admis
+      if (L.rj) { if (m.t === 'hello') MP.rejoinHello(L, m); return; }   // retour en partie : place attribuée à la présentation
+      if (!L.adm) return;   // pas encore admis
       m.p = L.p;   // l'expéditeur est celui du lien, quoi qu'il prétende
       if (m.t === 'f') { Lock.onFrame(m); return; }
-      if (NET_RELAY.has(m.t)) for (const o of this.links) if (o !== L && o.p) this.raw(o, m);
+      if (NET_RELAY.has(m.t)) for (const o of this.links) if (o !== L && o.adm) this.raw(o, m);
     } else {
       if (m.p == null) m.p = 0;
       if (m.t === 'F') { Lock.onComb(m); return; }
@@ -4916,7 +4929,10 @@ const Net = {
     this.on = false; this.coop = this.versus = false; this.ping = 0;
     BG.stop();
   },
-  reset() { this.close(); this.role = null; this.code = ''; this.custom = false; this.status = ''; this.err = false; this.me = 0; this.gid = ''; this.gotAnswer = false; MP.clear(); }
+  // relais de l'hôte : nouveau salon (hôte) ou connexion au nouvel hôte (invité), sans toucher à la partie en cours
+  rehost(code) { this.close(); this.role = 'host'; this.mig = true; this.code = code; this.custom = true; this.sess = Math.random().toString(36).slice(2, 12); this.coop = true; this.sigOpen(); },
+  rejoinRoom(code) { this.close(); this.role = 'guest'; this.mig = true; this.code = code; this.gotAnswer = false; this.coop = true; this.sigOpen(); },
+  reset() { this.mig = false; this.close(); this.role = null; this.code = ''; this.custom = false; this.status = ''; this.err = false; this.me = 0; this.gid = ''; this.gotAnswer = false; MP.clear(); }
 };
 
 /* ---------- minuterie de secours : un onglet en arrière-plan ne doit pas geler la partie des autres joueurs ---------- */
@@ -4948,11 +4964,12 @@ const BG = {
      voit une partie fluide (simplement décalée de sa latence). */
 const Lock = {
   D: 2, sent: -1, combMax: -1, comb: new Map(), out: [], rq: [], sys: [], hashes: new Map(), pend: new Map(),
-  stall: 0, hold: false, desync: false, snapWait: null,
+  stall: 0, hold: false, desync: false, snapWait: null, log: null,
   buf: 4, bufMin: 3, winMin: 1e9, winT: 0, missT: 0, ghosts: [],
   reset(t = 0) {
     this.sent = t + this.D - 1; this.combMax = t + this.D - 1;
     this.comb.clear(); this.out = []; this.rq = []; this.sys = []; this.hashes.clear(); this.pend.clear(); this.ghosts = [];
+    this.log = null; MP.base = null;   // la photo de référence sera reprise au prochain moment calme
     this.stall = 0; this.hold = false; this.desync = false; this.snapWait = null;
     this.buf = Math.max(this.bufMin, 4); this.winMin = 1e9; this.winT = 0;
   },
@@ -4989,7 +5006,7 @@ const Lock = {
   // invité : trame d'un tick telle que fixée par l'hôte (sans « c » : simple top d'horloge, ticks vides jusqu'à k)
   onComb(m) {
     if (m.k <= this.combMax && !m.c) return;
-    if (m.c) this.comb.set(m.k, m.c);
+    if (m.c) { this.comb.set(m.k, m.c); if (this.log && MP.base && m.k > MP.base.t) this.log.set(m.k, m.c); }
     if (m.k > this.combMax) this.combMax = m.k;
   },
   // avant le tick t : l'hôte publie les trames jusqu'à t+D ; l'invité envoie ses actions et vérifie qu'il connaît le tick t
@@ -4998,10 +5015,10 @@ const Lock = {
     if (Net.role === 'host') {
       while (this.sent < t + this.D) {
         const k = ++this.sent, c = [];
-        if (this.out.length) c.push([0, this.out.splice(0)]);
+        if (this.out.length) c.push([Net.me, this.out.splice(0)]);
         for (const [p, x] of this.rq.splice(0)) if (!MP.out[p]) c.push([p, x]);
         if (this.sys.length) c.push([0, this.sys.splice(0)]);   // événements du salon (départ d'un joueur)
-        if (c.length) this.comb.set(k, c);
+        if (c.length) { this.comb.set(k, c); if (this.log) this.log.set(k, c); }
         this.combMax = k;
         if (c.length) Net.send({ t: 'F', k, c }); else if (k % 2 === 0) Net.send({ t: 'F', k });
       }
@@ -5090,13 +5107,13 @@ const MP = {
   others() { return this.slots.filter(p => p !== Net.me); },
   count() { return Object.keys(this.pl).length; },
   // hôte : invités qui participent encore au lockstep
-  peersIn() { return this.slots.filter(p => p !== 0 && !this.out[p]); },
-  clear() { this.pl = {}; this.slots = []; this.opps = {}; this.curs = {}; this.out = {}; this.chat = []; this.ready = false; this.live = false; this.target = null; this.survAcc = {}; },
+  peersIn() { return this.slots.filter(p => p !== Net.me && !this.out[p]); },
+  clear() { this.hostP = 0; this.room = ''; this.mig = 0; this.base = null; this.prevMe = null; this.names = {}; this.migT = 0; clearInterval(this.migI); this.pl = {}; this.slots = []; this.opps = {}; this.curs = {}; this.out = {}; this.chat = []; this.ready = false; this.live = false; this.target = null; this.survAcc = {}; },
 
   /* ----- salon ----- */
   hosted(lobby) {
     this.clear(); this.banned = new Set();
-    this.pl = { 0: { name: this.myName(), ready: true, v: VERSION, ping: 0, doc: this.myDoc(), perks: this.myPerks() } };
+    this.pl = { [Net.me]: { name: this.myName(), ready: true, v: VERSION, ping: 0, doc: this.myDoc(), perks: this.myPerks() } };
     if (lobby) { UI.mpState = 'lobby'; UI.openMP(); }
   },
   connected() {   // invité : canal ouvert vers l'hôte
@@ -5113,7 +5130,7 @@ const MP = {
   },
   syncRoster() {
     if (Net.role !== 'host') return;
-    this.pl[0].name = this.myName();
+    if (this.pl[Net.me]) this.pl[Net.me].name = this.myName();
     Net.send({ t: 'roster', pl: this.pl, code: Net.code });
     if (UI.top() === 'ov-mp') UI.renderMP();
   },
@@ -5121,7 +5138,7 @@ const MP = {
   myPerks() { return cleanPerks(Store.data.meta.perks); },
   // doctrine changée dans le salon
   sendMe() {
-    if (Net.role === 'host') { this.pl[0].doc = this.myDoc(); this.pl[0].perks = this.myPerks(); this.syncRoster(); }
+    if (Net.role === 'host') { this.pl[Net.me].doc = this.myDoc(); this.pl[Net.me].perks = this.myPerks(); this.syncRoster(); }
     else Net.send({ t: 'me', doc: this.myDoc(), perks: this.myPerks() });
   },
   setPing(p, v, rl) { if (this.pl[p]) { this.pl[p].ping = v; this.pl[p].rl = !!rl; } },
@@ -5130,14 +5147,14 @@ const MP = {
   setMode(m) { if (Net.role !== 'host') return; this.mode = m; this.unready(); this.sendCfg(); this.syncRoster(); },
   setDiff(d) { if (Net.role !== 'host') return; this.diff = d; this.unready(); this.sendCfg(); this.syncRoster(); },
   toggleReady() { this.ready = !this.ready; Net.send({ t: 'ready', v: this.ready }); UI.renderMP(); },
-  allReady() { const G2 = Object.keys(this.pl).filter(p => +p); return G2.length > 0 && G2.every(p => this.pl[p].ready); },
+  allReady() { const G2 = Object.keys(this.pl).filter(p => +p !== Net.me); return G2.length > 0 && G2.every(p => this.pl[p].ready); },
   // hôte : exclure un joueur (il ne pourra pas revenir sous le même nom tant que le salon existe)
   kick(p) {
     if (Net.role !== 'host' || !p || !this.pl[p]) return;
     const n = this.pl[p].name;
     this.banned.add(n.toLowerCase());
     Net.sendTo(p, { t: 'kick' });
-    const L = Net.links.find(l => l.p === p);
+    const L = Net.links.find(l => l.adm && l.p === p);
     setTimeout(() => { if (L) { L.open = false; Net.dropLink(L); } this.onLeave(p, 'kick'); }, 250);
     UI.toast('Joueur exclu', `${this.esc(n)} a été exclu du salon.`, '#ff2a6d', 3);
   },
@@ -5170,6 +5187,8 @@ const MP = {
   begin(o) {
     UI.closeAll();
     this.ended = false; this.last = o; this.live = true; this.endArgs = null;
+    this.hostP = o.host != null ? o.host : 0; this.room = o.room || Net.code; this.base = null;
+    this.names = Object.fromEntries((o.slots || []).map(p => [p, this.name(p)]));
     this.slots = o.slots || [0, 1]; this.opps = {}; this.curs = {}; this.out = {}; this.survAcc = {};
     Net.versus = o.mode === 'versus'; Net.coop = o.mode === 'coop';
     const others = this.others();
@@ -5192,6 +5211,8 @@ const MP = {
     }
     if (Net.coop && Lock.desync) this.resync();
     if (Net.coop && Net.role === 'host') this.tryRejoin();
+    if (Net.coop) this.takeBase();
+    if (this.rejoining && this.rejoining.k && G.tick >= this.rejoining.k) { this.rejoining = null; UI.toast('De retour !', 'Vous avez rattrapé la partie.', '#39ff88', 4); }
     if (Net.coop && now - (this.curT || 0) > (Net.relayed() ? 250 : 90)) {
       const h = UI.hover;
       if (h.inside && (h.wx !== this.cwx || h.wy !== this.cwy || UI.placing !== this.cpl)) {
@@ -5333,28 +5354,53 @@ const MP = {
     UI.closeAll(); UI.showMenu();
   },
   // hôte : place d'un joueur parti, ou dont on n'a plus de nouvelles depuis 5 s (il se reconnecte avant la fin du délai)
-  rejoinSlot() {
-    const now = performance.now();
+  // places reprenables : joueur parti, ou lien muet depuis 5 s (il se reconnecte avant le délai de départ)
+  rejoinCands(free) {
+    const now = performance.now(), out = [];
     for (const p of this.slots) {
-      if (!p || (this.rejoinQ && this.rejoinQ.has(p))) continue;
-      const L = Net.links.find(l => l.p === p && l.open);
-      if (this.out[p] && !L) return p;
-      if (L && now - (L.lastRx || 0) > 5000) { L.open = false; Net.dropLink(L); this.onLeave(p, 'lost'); return p; }
+      if (p === Net.me || (this.rejoinQ && this.rejoinQ.has(p))) continue;
+      const L = Net.links.find(l => l.adm && l.p === p && l.open);
+      if (this.out[p] && !L) out.push(p);
+      else if (L && now - (L.lastRx || 0) > 5000) { if (free) { L.open = false; Net.dropLink(L); this.onLeave(p, 'lost'); } out.push(p); }
     }
-    return null;
+    return out;
   },
-  // hôte : le joueur revenu reçoit la partie de départ, puis l'état complet dès que la vague en cours est finie
+  rejoinSlot(free) { const c = this.rejoinCands(free); return c.length ? c[0] : null; },
+  // hôte : présentation d'un joueur qui revient : son ancien numéro, sinon le même nom, sinon la première place libre
+  rejoinHello(L, m) {
+    const C = this.rejoinCands(true), name = String(m.name || '').slice(0, 24);
+    const slot = C.includes(m.prev) ? m.prev : C.find(p => (this.names[p] || '').toLowerCase() === name.toLowerCase()) ?? (C.includes(L.p) ? L.p : C[0]);
+    if (slot == null) { Net.raw(L, { t: 'busy' }); setTimeout(() => Net.dropLink(L), 600); return; }
+    L.p = slot; L.rj = false; L.adm = true;
+    Net.raw(L, { t: 'welcome', you: slot, code: Net.code });
+    this.pl[slot] = { name: name || 'Joueur ' + (slot + 1), ready: true, v: m.v || '?', ping: 0, doc: DOCTRINES[m.doc] ? m.doc : 'standard', perks: cleanPerks(m.perks) };
+    this.rejoinAdmit(slot);
+  },
+  // hôte : le joueur revenu reçoit la partie de départ, la photo du dernier moment calme et les trames jouées depuis ;
+  // son retour (« back ») est appliqué au même tick chez tout le monde
   rejoinAdmit(p) {
-    (this.rejoinQ || (this.rejoinQ = new Set())).add(p);
-    this.pl[p] = { name: (this.names && this.names[p]) || 'Joueur ' + (p + 1), ready: true, v: '?', ping: 0 };
-    Net.sendTo(p, { t: 'start', o: this.last, pl: this.pl, rejoin: true });
+    const B = this.base, name = (this.pl[p] && this.pl[p].name) || this.names[p] || 'Joueur ' + (p + 1);
+    if (!this.pl[p]) this.pl[p] = { name, ready: true, v: '?', ping: 0 };
+    const o = Object.assign({}, this.last, { host: Net.me, room: this.room });
+    if (!B || !Lock.log) {   // pas encore de photo : retour à la fin de la vague (ancienne méthode)
+      (this.rejoinQ || (this.rejoinQ = new Set())).add(p);
+      Net.sendTo(p, { t: 'start', o, pl: this.pl, rejoin: true });
+      this.syncRoster();
+      UI.toast('Multijoueur', `${this.esc(name)} revient : il reprendra sa place à la fin de la vague en cours.`, MP_COL[p], 5);
+      return;
+    }
+    delete this.out[p];
+    Lock.sys.push(['back', p]);
+    Net.sendTo(p, { t: 'start', o, pl: this.pl, rejoin: true });
+    Net.sendBig(p, { t: 'catch', s: B.s, t0: B.t, f: [...Lock.log].filter(([k]) => k > B.t), k: Lock.sent });
+    Net.send({ t: 'back', who: p });
     this.syncRoster();
-    UI.toast('Multijoueur', `${this.esc(this.pl[p].name)} revient : il reprendra sa place à la fin de la vague en cours.`, MP_COL[p], 5);
+    UI.toast('Multijoueur', `${this.esc(name)} est de retour : il rattrape la partie.`, MP_COL[p], 4);
   },
   tryRejoin() {
     if (!this.rejoinQ || !this.rejoinQ.size || Lock.hold || !G || G.over || !this.quiet()) return;
     for (const p of this.rejoinQ) {
-      if (!Net.links.some(l => l.p === p && l.open)) continue;
+      if (!Net.links.some(l => l.adm && l.p === p && l.open)) continue;
       delete this.out[p]; if (G.gone) delete G.gone[p];
       Net.send({ t: 'back', who: p });
       UI.toast('Multijoueur', `${this.esc(this.name(p))} est de retour dans la partie !`, MP_COL[p], 4);
@@ -5376,8 +5422,42 @@ const MP = {
     this.syncRoster();
     if (Lock.snapWait) { Lock.snapWait.delete(p); this.snapDone(); }
   },
+  // l'hôte a disparu en pleine coopération : le joueur restant de plus petit numéro devient l'hôte (salon <code>M<n>),
+  // les autres s'y reconnectent et repartent de sa photo de partie
+  migrate() {
+    const old = this.hostP || 0, rem = this.slots.filter(p => p !== old && !this.out[p]);
+    if (!rem.length || !this.room || !this.base || !Lock.log) return false;
+    const nh = Math.min(...rem), gen = (this.mig || 0) + 1, code = this.room.slice(0, 9) + 'M' + gen;
+    for (const p of this.slots) if (!this.names[p]) this.names[p] = this.name(p);
+    this.mig = gen; this.out[old] = 1; this.hostP = nh; this.prevMe = Net.me; delete this.curs[old];
+    const oldName = this.esc(this.name(old));
+    if (nh === Net.me) {
+      Net.rehost(code);
+      Lock.sent = Math.max(Lock.combMax, G.tick + Lock.D - 1); Lock.rq = []; Lock.hold = false;
+      Lock.sys.push(['leave', old]);
+      for (const p of rem) if (p !== Net.me) this.out[p] = 1;   // ils reviennent un par un
+      UI.toast('Vous êtes le nouvel hôte', `${oldName} a quitté la partie : elle continue chez vous, les autres joueurs se reconnectent.`, MP_COL[Net.me], 7);
+      return true;
+    }
+    Net.rejoinRoom(code); Lock.hold = true;
+    this.migT = performance.now() + 60000; clearInterval(this.migI);
+    this.migI = setInterval(() => this.migTick(), 3000);
+    UI.toast('Changement d\'hôte', `${oldName} a quitté la partie : reconnexion chez ${this.esc(this.name(nh))}, le nouvel hôte…`, MP_COL[nh], 7);
+    return true;
+  },
+  migTick() {
+    if (!this.migT || !G) { clearInterval(this.migI); this.migT = 0; return; }
+    if (Net.connected) return;
+    if (performance.now() > this.migT) {   // nouvel hôte introuvable : on continue seul
+      clearInterval(this.migI); this.migT = 0; Net.close(); Lock.hold = false; Net.coop = false; this.live = false; UI.mpHud(false);
+      UI.toast('Multijoueur', 'Le nouvel hôte est introuvable : vous continuez seul, les tourelles de chacun restent en place.', '#ffd23f', 7);
+      return;
+    }
+    if (Net.sigUp() && !Net.links.some(l => !l.open && performance.now() - l.t0 < 9000)) Net.attempt(1);
+  },
   // invité : la connexion avec l'hôte est perdue
   onLost() {
+    if (Game.state === 'play' && G && !G.over && G.net === 'coop' && this.live && this.migrate()) return;
     UI.mpHud(false);
     this.live = false;
     if (Game.state === 'play' && G && !G.over && G.net) {
@@ -5424,6 +5504,13 @@ const MP = {
   },
   quiet() {
     return G.phase === 'prep' && !G.enemies.length && !G.spawnQ.length && !G.strikes.length && !G.vortices.length && !G.meteors.length && !G.bolts.length && !G.comet && !G.rift && !Shots.pool.n;
+  },
+  // chaque machine garde une photo de la partie au début de chaque préparation, puis les trames jouées depuis :
+  // un joueur qui revient (ou qui rejoint un nouvel hôte) repart de cette photo et rejoue les trames en accéléré
+  takeBase() {
+    if (!Net.coop || !G || G.over || Lock.hold || this.rejoining || (this.base && this.base.w === G.waveNum) || !this.quiet()) return;
+    this.base = { w: G.waveNum, t: G.tick, s: this.snap() };
+    Lock.log = new Map(); for (const [k, c] of Lock.comb) if (k > G.tick) Lock.log.set(k, c);
   },
   // l'hôte renvoie l'état complet dès que la partie est calme ; les invités l'appliquent au même tick
   resync() {
@@ -5476,11 +5563,35 @@ const MP = {
     emote(m) { if (EMOTES[m.i]) { UI.toast(MP.esc(MP.name(m.p)), EMOTES[m.i], MP_COL[m.p], 3); Sfx.play('mission'); } },
     start(m) {
       if (m.pl) MP.pl = m.pl;
+      const mig = MP.mig, room = MP.room;
+      MP.migT = 0; clearInterval(MP.migI);
       MP.begin(m.o);
-      // retour dans une partie en cours : on attend l'état complet de l'hôte (fin de la vague en cours)
-      if (m.rejoin) { MP.rejoining = true; Lock.hold = true; UI.toast('Retour en jeu', 'Vous reprendrez votre place, vos tourelles et vos crédits à la fin de la vague en cours.', MP_COL[Net.me], 6); }
+      if (mig) MP.mig = mig;
+      if (m.o && m.o.room) MP.room = m.o.room; else if (room) MP.room = room;
+      // retour dans une partie en cours : on attend l'état de l'hôte (photo + trames, ou état complet en fin de vague)
+      if (m.rejoin) { MP.rejoining = { k: 0 }; Lock.hold = true; UI.toast('Retour en jeu', 'Récupération de la partie en cours…', MP_COL[Net.me], 4); }
     },
-    back(m) { delete MP.out[m.who]; },
+    // morceaux d'un gros message
+    part(m) {
+      const P = MP.parts || (MP.parts = {}), e = P[m.id] || (P[m.id] = { n: m.n, d: [], got: 0 });
+      if (e.d[m.i] == null) { e.d[m.i] = m.d; e.got++; }
+      if (e.got < e.n) return;
+      delete P[m.id];
+      let x; try { x = JSON.parse(e.d.join('')); } catch (err) { return; }
+      x.p = m.p; const h = MP.on[x.t]; if (h && x.t !== 'part') h.call(MP, x);
+    },
+    // photo de la partie + trames depuis : on la restaure puis on rejoue en accéléré jusqu'au présent
+    catch(m) {
+      if (!G || !Net.coop) return;
+      MP.restore(m.s); Lock.reset(G.tick);
+      for (const [k, c] of m.f || []) Lock.comb.set(k, c);
+      Lock.combMax = Math.max(Lock.combMax, m.k);
+      MP.base = { w: G.waveNum, t: G.tick, s: m.s }; Lock.log = new Map(m.f || []);
+      for (const p in G.gone || {}) MP.out[p] = 1;
+      MP.rejoining = { k: m.k };
+      Lock.hold = false;
+    },
+    back(m) { delete MP.out[m.who]; if (MP.names) delete MP.names[m.who]; },
     lobby() { MP.toLobby(false); UI.toast('Multijoueur', 'L\'hôte a ramené tout le monde au salon.', '#9fb0cc', 3); },
     st(m) { MP.opps[m.p] = Object.assign(MP.opps[m.p] || {}, m, { shT: performance.now() }); },
     sabref(m) {   // notre sabotage a été bloqué par la protection de la cible : remboursement complet
@@ -5513,7 +5624,7 @@ const MP = {
       if (p !== Net.me) UI.toast('Multijoueur', txt + (ing && G && G.net === 'coop' ? ' Ses tourelles restent en place.' : ''), '#9fb0cc', 4);
     },
     bye(m) {
-      if (Net.role === 'host') { const L = Net.links.find(l => l.p === m.p); if (L) { L.open = false; Net.dropLink(L); } MP.onLeave(m.p, 'bye'); }
+      if (Net.role === 'host') { const L = Net.links.find(l => l.adm && l.p === m.p); if (L) { L.open = false; Net.dropLink(L); } MP.onLeave(m.p, 'bye'); }
       else Net.lost();
     },
     cur(m) { const u = MP.curs[m.p]; MP.curs[m.p] = { x: m.x, y: m.y, k: m.k, t: performance.now(), sx: u ? u.sx : m.x, sy: u ? u.sy : m.y }; },
@@ -5837,6 +5948,7 @@ const Act = {
     speed: v => Game.setSpeed(v),
     auto: on => { G.autoWave = !!on; if (G.phase === 'prep') G.autoT = 480; UI.refreshAuto(); },
     leave: p => { (G.gone || (G.gone = {}))[p] = 1; },
+    back: p => { if (G.gone) delete G.gone[p]; },   // retour d'un joueur, appliqué au même tick chez tous
     giveup: () => { if (!G.net) Game.gameOver(); },   // abandon (enregistré dans le replay)   // départ d'un joueur, appliqué au même tick chez tous
     // coopération : pause pour tous, demandée par n'importe quel joueur (G.paused = numéro du joueur + 1)
     mpause: on => { G.paused = on ? (G.actor != null ? G.actor : 0) + 1 : 0; UI.refreshMpPause(); }
@@ -7334,6 +7446,8 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '9.19', d: ['Coopération : un joueur déconnecté revient tout de suite (plus besoin d\'attendre la fin de la vague) : il rattrape la partie en accéléré.',
+    'Coopération : si l\'hôte quitte la partie, un autre joueur prend le relais et tout le monde continue ensemble.'] },
   { v: '9.18', d: ['Replays : revoyez vos parties solo (🎬 dans Palmarès → Historique ou en fin de partie), en ×1 à ×8, et partagez-les par un code.',
     'Astuces : un conseil la première fois qu\'un élément du jeu apparaît (Labo, fusion, arbre, boss, plasma…), désactivables dans les Options.'] },
   { v: '9.17', d: ['Coopération : chacun apporte sa doctrine (choisie dans le salon) et son Héritage ; les doctrines de l\'équipe s\'additionnent.',
@@ -7623,7 +7737,7 @@ const UI = {
     const h = this.hover;
     if (h.inside && !h.touch && G.drops.length && !G.over) Drops.near(h.wx, h.wy, 40);
     if (f % 20 === 0 && G.net) this.refreshMP();
-    if (f % 10 === 0) { const w = Net.coop && Lock.stall > 600; if (w !== this.last.wait) { this.last.wait = w; $('mp-wait').style.display = w ? 'block' : 'none'; if (w) $('mp-wait').textContent = MP.rejoining ? 'RETOUR EN JEU À LA FIN DE LA VAGUE EN COURS…' : MP.slots.length > 2 ? 'EN ATTENTE DES AUTRES JOUEURS…' : `EN ATTENTE DE ${MP.name(MP.others()[0] || 0).toUpperCase()}…`; } }
+    if (f % 10 === 0) { const w = Net.coop && Lock.stall > 600; if (w !== this.last.wait) { this.last.wait = w; $('mp-wait').style.display = w ? 'block' : 'none'; if (w) $('mp-wait').textContent = MP.migT ? 'RECONNEXION AU NOUVEL HÔTE…' : MP.rejoining ? 'RETOUR EN JEU…' : MP.slots.length > 2 ? 'EN ATTENTE DES AUTRES JOUEURS…' : `EN ATTENTE DE ${MP.name(MP.others()[0] || 0).toUpperCase()}…`; } }
   },
   refreshHUD() {
     const L = this.last, lives = Math.max(0, Math.ceil(G.lives)), money = Math.floor(this.holdMoney != null ? this.holdMoney : G.money);
@@ -8679,7 +8793,7 @@ const UI = {
       const host = Net.role === 'host', ids = Object.keys(MP.pl).map(Number).sort((a, b) => a - b), n = ids.length;
       const row = p => {
         const P = MP.pl[p], me = p === Net.me, ping = host ? P.ping : me ? Net.ping : 0, rl = host ? P.rl : me ? Net.relayed() : false;
-        return `<div class="mp-pl" style="--pc:${MP_COL[p]}"><i></i><b>${esc(P.name)}</b><span>${p ? 'INVITÉ' : 'HÔTE'}${me ? ' · VOUS' : ''}${P.doc && DOCTRINES[P.doc] ? ` · ${TXT(DOCTRINES[P.doc].i)} ${DOCTRINES[P.doc].n}` : ''}${p && ping ? ` · ${ping} ms` : ''}${p && rl ? ' · <em class="rl">RELAIS</em>' : ''}</span>${p && P.ready ? '<em>PRÊT</em>' : ''}${host && p ? `<button class="mp-kick" data-p="${p}" title="Exclure ${esc(P.name)}">✕</button>` : ''}</div>`;
+        return `<div class="mp-pl" style="--pc:${MP_COL[p]}"><i></i><b>${esc(P.name)}</b><span>${p !== (MP.hostP || 0) ? 'INVITÉ' : 'HÔTE'}${me ? ' · VOUS' : ''}${P.doc && DOCTRINES[P.doc] ? ` · ${TXT(DOCTRINES[P.doc].i)} ${DOCTRINES[P.doc].n}` : ''}${p && ping ? ` · ${ping} ms` : ''}${p && rl ? ' · <em class="rl">RELAIS</em>' : ''}</span>${p && P.ready ? '<em>PRÊT</em>' : ''}${host && p ? `<button class="mp-kick" data-p="${p}" title="Exclure ${esc(P.name)}">✕</button>` : ''}</div>`;
       };
       const free = Array.from({ length: Math.max(0, NET_MAX - n) }, () => '<div class="mp-pl free"><i></i><b>Place libre</b><span>EN ATTENTE…</span></div>').join('');
       const ready = host ? MP.allReady() : MP.ready;
