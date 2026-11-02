@@ -51,6 +51,11 @@ const TOWERS = {
     desc: 'Boules de feu rebondissantes (2 rebonds) qui enflamment. Anti-air x2.' },
   nexus:    { name: 'Nexus', tier: 2, cost: 520, range: 0, dmg: 0, rate: 0, color: '#7dffb0', kind: 'support', head: 'nexus', support: { cool: .8, dmg: .3, range: .1 }, diag: true,
     desc: 'Supercalculateur : buffe ses voisines, diagonales comprises (+30% dégâts, +80% refroidissement, +10% portée).' },
+  // ----- SOUTIENS DE HAUT NIVEAU -----
+  oracle:   { name: 'Oracle', tier: 3, cost: 1500, range: 0, dmg: 0, rate: 0, color: '#c58cff', kind: 'support', head: 'nexus', support: { crit: .12, pierce: .25 }, diag: true,
+    desc: 'Calculateur de trajectoires : ses voisines, diagonales comprises, gagnent +12% de coups critiques et ignorent 25% du blindage.' },
+  abyss:    { name: 'Cœur abyssal', tier: 4, cost: 2600, range: 0, dmg: 0, rate: 0, color: '#ff4df0', kind: 'support', head: 'nexus', support: { dmg: .35, rate: .2, range: .1 }, reach: 2,
+    desc: 'Fragment du Léviathan : ses 12 voisines (jusqu\'à 2 cases en ligne droite) gagnent +35% de dégâts, +20% de cadence et +10% de portée.' },
   // ----- FUSIONS T3 -----
   nova:     { name: 'Nova', tier: 3, cost: 950, range: 180, dmg: 240, rate: 120, color: '#4dfff3', kind: 'proj', head: 'nova', spd: 6, psz: 7, splash: 95, heat: 60, cool: .5,
     desc: 'Sphère d\'énergie dévastatrice avec une énorme zone d\'explosion.' },
@@ -76,9 +81,11 @@ const RECIPES = [
   { a: 'inferno', b: 'aero', r: 'phoenix', n: 8 },
   { a: 'fan', b: 'computer', r: 'nexus', n: 10 },
   { a: 'plasma', b: 'tesla', r: 'nova', n: 18 },
+  { a: 'nexus', b: 'stasis', r: 'oracle', n: 20 },
   { a: 'laser', b: 'stasis', r: 'singularity', n: 22 },
   { a: 'blizzard', b: 'tesla', r: 'storm', n: 18 },
-  { a: 'nova', b: 'railgun', r: 'apocalypse', n: 35 }
+  { a: 'nova', b: 'railgun', r: 'apocalypse', n: 35 },
+  { a: 'oracle', b: 'nexus', r: 'abyss', n: 30 }
 ];
 const TIER_NAMES = ['STANDARD', 'SOUTIEN', 'FUSION T2', 'FUSION T3', 'FUSION T4'];
 const COMBO_STEPS = [25, 50, 75, 100, 150, 200, 300, 500];

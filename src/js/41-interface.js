@@ -653,6 +653,9 @@ const UI = {
       if (s.dmg) parts.push(`+${Math.round(s.dmg * m * 100)}% dégâts`);
       if (s.cool) parts.push(`+${Math.round(s.cool * m * 100)}% refroid.`);
       if (s.range) parts.push(`+${Math.round(s.range * m * 100)}% portée`);
+      if (s.crit) parts.push(`+${Math.round(s.crit * m * 100)}% critiques`);
+      if (s.pierce) parts.push(`${Math.round(Math.min(1, s.pierce * m) * 100)}% blindage ignoré`);
+      if (s.rate) parts.push(`+${Math.round(s.rate * m * 100)}% cadence`);
       body = `<div class="note" style="margin-bottom:6px">${d.desc}</div><div class="sgrid"><div style="grid-column:1/3">EFFET <b style="color:var(--ok)">${parts.join(' · ')}</b></div></div>` +
         (t.level < maxL ? `<div class="note">Chaque niveau : +20% d'efficacité.</div>` : '');
     } else if (d.kind === 'radar') {
@@ -667,7 +670,7 @@ const UI = {
         <div>CADENCE <b id="tp-rate">-</b></div><div>DPS <b id="tp-dps">-</b></div>
         <div>ÉLIM. <b id="tp-kills">-</b></div><div>TOTAL <b id="tp-dealt">-</b></div></div>`;
     }
-    const tags = `<div class="tags">${this.tagsHtml(d, t)}${t.bDmg > 0 && !sup ? `<span class="tag g">Soutien +${Math.round(t.bDmg * 100)}% dég.</span>` : ''}${t.bCool > 0 && !sup ? `<span class="tag b">Refroid. +${Math.round(t.bCool * 100)}%</span>` : ''}</div>`;
+    const tags = `<div class="tags">${this.tagsHtml(d, t)}${t.bDmg > 0 && !sup ? `<span class="tag g">Soutien +${Math.round(t.bDmg * 100)}% dég.</span>` : ''}${t.bCool > 0 && !sup ? `<span class="tag b">Refroid. +${Math.round(t.bCool * 100)}%</span>` : ''}${t.bCrit > 0 && !sup ? `<span class="tag p">Critiques +${Math.round(t.bCrit * 100)}%</span>` : ''}${t.bPierce > 0 && !sup ? `<span class="tag y">Perforation ${Math.round(Math.min(1, t.bPierce) * 100)}%</span>` : ''}${t.bRate > 0 && !sup ? `<span class="tag g">Cadence +${Math.round(t.bRate * 100)}%</span>` : ''}</div>`;
     let ctrl = '';
     if (!sup && d.kind !== 'radar') {
       if (d.kind !== 'pulse') ctrl += `<div class="lbl-s" style="margin-top:4px">CIBLAGE <span style="opacity:.6">[T]</span></div><div class="seg" id="tp-strat">${STRATS.map((s, i) => `<button data-s="${i}" class="${t.strat === i ? 'on' : ''}">${s}</button>`).join('')}</div>`;
@@ -1725,6 +1728,7 @@ const UI = {
         <li>Les fusions se combinent entre elles : T2 → T3 → l'ultime <b>Apocalypse</b> (T4). 14 recettes à découvrir.</li></ul>
       <h3>CHALEUR & SOUTIEN</h3><ul>
         <li>La <b>surcadence</b> double la cadence mais fait chauffer la tourelle. À 100% elle s'arrête jusqu'à refroidissement complet.</li>
+        <li><b>Bonus de soutien</b> : une tourelle ne garde que le <b>meilleur bonus de chaque type</b> de soutien (deux Nexus autour d'elle ne comptent qu'une fois, mais un Nexus et un Ordi s'additionnent). Soutiens de haut niveau : l'<b>Oracle</b> T3 (Nexus + Stase : critiques et perforation du blindage) et le <b>Cœur abyssal</b> T4 (Oracle + Nexus : dégâts, cadence et portée sur 12 voisines).</li>
         <li><b>Ventilo</b> : refroidit les 4 voisines (avec 2 ventilos, beaucoup de tourelles tiennent la surcadence en permanence). <b>Ordi</b> : +25% de dégâts aux voisines. <b>Nexus</b> : les deux, sur 8 voisines.</li></ul>
       <h3>MISSIONS & PROTOCOLES</h3><ul>
         <li><b>Missions</b> : 3 objectifs courts sont toujours actifs (panneau en haut à droite). Chacune rapporte crédits ou nanites, de l'XP et un fragment, puis est aussitôt remplacée.</li>

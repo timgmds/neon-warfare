@@ -113,7 +113,7 @@ const Combat = {
       if (dmg <= 0) { if (!dot) e.hitT = 3; return s; }
     }
     if (!dot && e.armor > 0) {
-      const a = e.armor * (1 - clamp(pierce + G.mod.pierce, 0, 1));
+      const a = e.armor * (1 - clamp(pierce + G.mod.pierce + ((src && src.bPierce) || 0), 0, 1));
       dmg = Math.max(dmg * .2, dmg - a);
     }
     e.hp -= dmg;

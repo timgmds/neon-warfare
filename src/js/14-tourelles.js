@@ -85,7 +85,7 @@ const Towers = {
   specLvl(t) { return t.d.kind === 'support' ? SPEC_LVL_SUPPORT : SPEC_LVL; },
   needsSpec(t) { return !!this.specs(t) && t.spec == null && t.level >= this.specLvl(t); },
   // crans de zone d'un soutien (0 = 4 voisins … 3 = 20) : diagonales d'origine, voie Rayonnement, compétence Maillage
-  reachOf(k, sm) { const d = TOWERS[k]; return Math.min(3, (d.diag ? 1 : 0) + (sm && sm.diag ? 1 : 0) + (d.support && G.mod.supDiag ? 1 : 0)); },
+  reachOf(k, sm) { const d = TOWERS[k]; return Math.min(3, (d.reach || (d.diag ? 1 : 0)) + (sm && sm.diag ? 1 : 0) + (d.support && G.mod.supDiag ? 1 : 0)); },
   reach(t) { return this.reachOf(t.key, t.sm); },
   setSpec(t, i) {
     const S = this.specs(t); if (!S || !S[i] || t.spec != null) return;
@@ -112,9 +112,11 @@ const Towers = {
     return true;
   },
   // bonus d'adjacence des tourelles de soutien : recalculé uniquement quand la grille change
+  // une tourelle ne garde que le meilleur bonus de chaque type de soutien : empiler deux Nexus sur elle ne sert à rien,
+  // mais un Nexus, un Ordi et un Ventilo se complètent
   recalc() {
-    const C = G.map.C, R = G.map.R;
-    for (const t of G.towers) { t.bDmg = 0; t.bCool = 0; t.bRange = 0; }
+    const C = G.map.C, R = G.map.R, F = ['dmg', 'cool', 'range', 'crit', 'pierce', 'rate'], best = new Map();
+    for (const t of G.towers) { t.bDmg = 0; t.bCool = 0; t.bRange = 0; t.bCrit = 0; t.bPierce = 0; t.bRate = 0; }
     for (const s of G.towers) {
       const sp = s.d.support; if (!sp || s.stun > 0) continue;   // soutien brouillé : bonus suspendu
       const m = G.mod.support * (1 + .2 * (s.level - 1)) * (s.sm.eff || 1);
@@ -122,8 +124,14 @@ const Towers = {
         const x = s.tx + dx, y = s.ty + dy;
         if (x < 0 || y < 0 || x >= C || y >= R) continue;
         const t = G.tgrid[y * C + x]; if (!t || t.d.support) continue;
-        t.bDmg += (sp.dmg || 0) * m; t.bCool += (sp.cool || 0) * m; t.bRange += (sp.range || 0) * m;
+        let B = best.get(t); if (!B) best.set(t, B = {});
+        const cur = B[s.key] || (B[s.key] = {});
+        for (const f of F) if (sp[f]) cur[f] = Math.max(cur[f] || 0, sp[f] * m);
       }
+    }
+    for (const [t, B] of best) for (const k in B) {
+      const b = B[k];
+      t.bDmg += b.dmg || 0; t.bCool += b.cool || 0; t.bRange += b.range || 0; t.bCrit += b.crit || 0; t.bPierce += b.pierce || 0; t.bRate += b.rate || 0;
     }
     for (const t of G.towers) this.refresh(t);
     Fusion.scan();
@@ -132,7 +140,7 @@ const Towers = {
     const d = t.d, L = t.level - 1, s = t.sm;
     t.dmg = d.dmg * this.lvlMul(L) * (s.dmg || 1);
     t.range = d.range * (1 + .04 * L) * G.mod.range * (1 + t.bRange) * (s.range || 1);
-    t.rate = d.rate ? Math.max(2, d.rate * Math.pow(.94, L) / G.mod.rate / (s.rate || 1)) : 0;
+    t.rate = d.rate ? Math.max(2, d.rate * Math.pow(.94, L) / G.mod.rate / (s.rate || 1) / (1 + (t.bRate || 0))) : 0;
     t.pierce = (d.pierce || 0) + (s.pierce || 0);
   },
   effDmg(t) { return t.dmg * (1 + t.bDmg) * G.mod.dmg * (G.mod.kdmg[t.key] || 1); },
@@ -140,7 +148,7 @@ const Towers = {
   dps(t) {
     const d = t.d;
     if (!d.rate || d.kind === 'radar' || d.kind === 'support') return 0;
-    const dmg = this.effDmg(t) * (1 + (G.mod.critDmg - 1) * G.mod.crit), sps = 60 / t.rate * (t.oc ? 2 : 1);
+    const dmg = this.effDmg(t) * (1 + (G.mod.critDmg - 1) * Math.min(1, G.mod.crit + (t.bCrit || 0))), sps = 60 / t.rate * (t.oc ? 2 : 1);
     switch (d.kind) {
       case 'beam': return this.effDmg(t) * (1 + t.ramp) * (t.oc ? 2 : 1) * G.mod.rate;
       case 'missiles': return dmg * sps * d.count;
@@ -232,7 +240,7 @@ const Towers = {
   fire(t, e, od) {
     const d = t.d;
     if (t.oc && !od) { t.heat += d.heat * 1.5 * G.mod.heat; if (t.heat >= 100) this.overheat(t); }
-    const crit = sr() < G.mod.crit + (t.sm.crit || 0);
+    const crit = sr() < G.mod.crit + (t.sm.crit || 0) + (t.bCrit || 0);
     const dmg = this.effDmg(t) * (crit ? G.mod.critDmg * (t.sm.critMul || 1) : 1);
     t.shots++; t.ts.shots++;
     if (crit) Sfx.play('crit', .5);

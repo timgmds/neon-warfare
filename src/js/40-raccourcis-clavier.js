@@ -24,6 +24,9 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '9.22', d: ['Soutiens : une tourelle ne garde que le meilleur bonus de chaque type de soutien (empiler les Nexus ne sert plus à rien).',
+    'Nouveau soutien T3 : l\'Oracle (Nexus + Stase, en plasma) donne critiques et perforation du blindage.',
+    'Nouveau soutien T4 : le Cœur abyssal (Oracle + Nexus, en abyssite) donne dégâts, cadence et portée à 12 voisines.'] },
   { v: '9.21', d: ['Léviathan : la régénération de sa 3ᵉ phase passe de 0,7 % à 0,4 % de ses PV par seconde (mesure : elle rendait presque autant de PV que vos tourelles en enlevaient).'] },
   { v: '9.20', d: ['Version en ligne installable comme une application (menu → Installer le jeu), jouable hors ligne.'] },
   { v: '9.19', d: ['Coopération : un joueur déconnecté revient tout de suite (plus besoin d\'attendre la fin de la vague) : il rattrape la partie en accéléré.',

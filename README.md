@@ -58,7 +58,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 
 | | |
 |---|---|
-| **24 tourelles** | 8 de base, 2 de soutien (Ventilo, Ordi) et **14 fusions** sur 3 paliers (T2 → T3 → Apocalypse T4) |
+| **26 tourelles** | 8 de base, 2 de soutien (Ventilo, Ordi) et **16 fusions** sur 3 paliers (T2 → T3 → T4), dont les soutiens **Nexus** (T2), **Oracle** (T3 : critiques et perforation) et **Cœur abyssal** (T4 : dégâts, cadence et portée sur 12 voisines). Une tourelle ne garde que le meilleur bonus de chaque type de soutien |
 | **Spécialisations** | au niveau 5 (niveau 3 pour le soutien), chaque tourelle choisit **1 voie sur 2** qui change son comportement |
 | **Fin de partie** | après le Léviathan (vague 50) : **niveaux Oméga** 11 à 15 (+35 % de dégâts par niveau, crédits + 1 abyssite par niveau) et **Recherche Oméga** (+8 % de dégâts pour toutes les tourelles par rang, sans limite, en plasma) ; badge ⚔ qui estime le temps de tir nécessaire contre la vague suivante. Au-delà de la vague 50, les PV progressent de 13 % par vague, de quoi viser la vague 100 |
 | **Fusion des canons** | plans achetés au Labo avec des nanites, puis **fusion sur le terrain** de deux tourelles adjacentes |
@@ -160,6 +160,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.22** : bonus de soutien non cumulables par type (fin de l'empilement de Nexus) ; nouveaux soutiens Oracle (T3) et Cœur abyssal (T4).
 - **v9.21** : régénération de la phase 3 du Léviathan 0,7 % → 0,4 % de ses PV par seconde, d'après la mesure des dégâts par seconde nécessaires autour de la vague 50.
 - **Outils** : code source découpé dans `src/` (45 modules) et assemblé par `tools/build.mjs` en un seul fichier identique ; bot d'équilibrage à jour.
 - **v9.20** : version en ligne installable (manifeste, service worker hors ligne, icônes, bouton Installer).
