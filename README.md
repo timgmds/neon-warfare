@@ -116,7 +116,18 @@ Le jeu vise 60 FPS constants, même sur machine modeste :
 
 ## Architecture du fichier
 
-Tout est dans `neon-warfare.html`, organisé en modules :
+Le jeu se distribue en **un seul fichier**, `neon-warfare.html`, mais il est **assemblé** à partir du dossier `src/` :
+`src/index.html` (la page, avec les repères `/*@CSS*/` et `/*@JS*/`), `src/style.css` et `src/js/NN-module.js`
+(45 modules, concaténés dans l'ordre des numéros). Pour modifier le jeu, éditez `src/`, puis :
+
+```bash
+node tools/build.mjs
+```
+
+`node tools/build.mjs --check` vérifie que `neon-warfare.html` correspond bien à `src/` (aucune dépendance, Node 18+).
+Ne modifiez pas `neon-warfare.html` à la main : il serait écrasé au prochain assemblage.
+
+Les modules :
 
 `Store` · `Sfx` / `Music` (Web Audio) · données (`TOWERS`, `RECIPES`, `ENEMIES`, `EVENTS`, `SLOT_SYM`, `SENDS`…) ·
 `Spr` · `MapGen` / `Path` · `FX` · `Combat` · `Enemies` · `Towers` · `Shots` · `Traps` · `Waves` · `Abil` · `Skills` ·
@@ -138,12 +149,16 @@ Bot.start(['standard', 'hardcore'], 4, 60)   // séries en tâche de fond
 Bot.report()                                  // vagues atteintes, combat contre le Léviathan, T3/T4, niveaux Oméga
 ```
 
-Le bot connaît le plasma, l'abyssite, les plans et poses T3/T4, la raffinerie et les niveaux Oméga.
+Le bot connaît le plasma, l'abyssite, les plans et poses T3/T4, la raffinerie et les niveaux Oméga. Il pose aussi des tourelles de soutien
+(Ordi, Nexus) contre ses meilleures tourelles. C'est un joueur moyen : il tient environ jusqu'à la vague 20 en Standard,
+bien moins loin qu'un joueur entraîné. Pour la fin de partie, mieux vaut comparer les PV des vagues au temps qu'elles
+mettent à traverser la carte (dégâts par seconde nécessaires), ce qui ne dépend pas du niveau du joueur.
 
 La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(5000, 50)`.
 
 ## Historique
 
+- **Outils** : code source découpé dans `src/` (45 modules) et assemblé par `tools/build.mjs` en un seul fichier identique ; bot d'équilibrage à jour.
 - **v9.20** : version en ligne installable (manifeste, service worker hors ligne, icônes, bouton Installer).
 - **v9.19** : coopération : retour immédiat d'un joueur en pleine vague (photo de partie + journal rejoué en accéléré), relais de l'hôte quand il quitte la partie ; gros messages découpés.
 - **v9.18** : replays des parties solo (lecture ×1 à ×8, code de partage, vérification « fidèle ») ; astuces contextuelles ; l'abandon passe par une action (rejoué à l'identique).

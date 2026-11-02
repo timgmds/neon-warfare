@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#05060c">
+<title>Neon Warfare 9</title>
+<!-- Fichier assemblé par tools/build.mjs à partir du dossier src/ : modifiez src/, puis lancez « node tools/build.mjs ». -->
+<style>
+/*@CSS*/
+</style>
+</head>
+<body class="theme-cyber">
+<canvas id="cv-bg"></canvas>
+<canvas id="cv-fx"></canvas>
+<canvas id="cv-map"></canvas>
+<canvas id="cv-game"></canvas>
+<div id="vignette"></div>
+<div id="crt"></div>
+
+<header id="hud" class="hidden">
+  <div class="hud-stats">
+    <div class="hstat" data-tip="Intégrité du noyau : chaque ennemi qui passe la réduit. À 0, c'est la fin."><span class="lbl">INTÉGRITÉ</span><b id="h-lives" style="color:var(--dang)">100</b></div>
+    <div class="hstat" data-tip="Crédits : construction et amélioration des tourelles."><span class="lbl">CRÉDITS</span><b id="h-money" style="color:var(--gold)">0</b></div>
+    <div class="hstat" data-tip="Nanites : compétences (Arbre) et plans de fusion (Labo)."><span class="lbl">NANITES</span><b id="h-nano" style="color:var(--nano)">0</b></div>
+    <div class="hstat el" id="hs-el" hidden data-tip="Éléments rares. Plasma ✺ : boss, parfois élites, raffinerie ; palier III de l'arbre et Recherche Oméga. Abyssite ⬟ : méga-boss, puis boss après la vague 50 ; palier IV et niveaux Oméga."><span class="lbl">ÉLÉMENTS</span><b><span id="h-plasma" style="color:#ff8a3d">✺0</span><span id="h-abyss" style="color:#b48cff" hidden>⬟0</span></b></div>
+    <div class="hstat" data-tip="Vague actuelle."><span class="lbl">VAGUE</span><b id="h-wave" style="color:var(--accent)">0</b></div>
+  </div>
+  <div id="h-center">
+    <div id="wave-prev"><span class="lbl-s">SUIVANTE</span><span id="wp-name"></span><span id="wp-pow" class="chip"></span><span id="wp-chips"></span><span id="wp-bet"></span></div>
+    <div id="combo"><span>COMBO</span><b id="combo-v">x1.0</b><i id="combo-n"></i></div>
+  </div>
+  <div class="hud-btns">
+    <button class="btn nano" id="b-tree" data-tip="Arbre de compétences [K]">⟁<span class="t"> ARBRE</span><i class="badge" id="bd-tree"></i></button>
+    <button class="btn" id="b-lab" style="border-color:var(--sec);color:var(--sec)" data-tip="Labo de fusion [L]">✧<span class="t"> FUSION</span><i class="badge" id="bd-lab"></i></button>
+    <button class="btn gold" id="b-casino" data-tip="Casino néon : machine à sous et paris, entre les vagues [C]">$<span class="t"> CASINO</span><i class="badge" id="bd-casino"></i></button>
+    <button class="btn" id="b-stats" data-tip="Analyse de combat : quelle tourelle fait le plus de dégâts, tire le plus… [G]">▥<span class="t"> STATS</span></button>
+    <button class="btn" id="b-speed" data-tip="Vitesse de jeu [F]">▶ 1x</button>
+    <button class="btn" id="b-pause" data-tip="Pause et menu [Échap]">❚❚</button>
+  </div>
+</header>
+
+<div id="evchip"><i id="ev-i"></i><span id="ev-n"></span><s><b id="ev-p"></b></s></div>
+<div id="bossbar"><div class="nm" id="bb-name"></div><div class="tr"><div id="bb-fill"></div><div id="bb-sh"></div><div id="bb-ticks"></div></div></div>
+
+<footer id="dock" class="hidden">
+  <div id="abils"></div>
+  <div id="bar"></div>
+  <button class="btn" id="b-unjam" hidden></button>
+  <div id="wavebox">
+    <button class="btn" id="b-wave">LANCER</button>
+    <button class="btn" id="b-auto" data-tip="Lance automatiquement la vague suivante après 8 secondes.">AUTO : OFF</button>
+  </div>
+</footer>
+
+<div id="missions" class="hidden"><div class="mh" id="mh"><span>MISSIONS</span><b id="m-cmd"></b><em id="m-tog">−</em></div>
+  <div class="mxp"><s id="m-xp"></s></div><div id="mlist"></div></div>
+<div id="mp" class="hidden"><div id="mp-info"></div><div class="mp-emr"><button id="mp-emt">MESSAGES ▾</button><div id="mp-em"></div></div></div>
+<div id="mp-wait">EN ATTENTE DE VOTRE PARTENAIRE…</div>
+<div id="mp-pause" hidden><b>⏸ PARTIE EN PAUSE</b><span id="mp-pby"></span><button class="btn prim" id="mp-resume">REPRENDRE</button></div>
+<div id="score" hidden></div>
+<div id="rp-bar" hidden></div>
+<div id="tpanel" class="panel"></div>
+<div id="banner"></div>
+<div id="callout"></div>
+<div id="bossintro"><canvas id="bi-cv"></canvas><div><span>⚠ ALERTE BOSS</span><b id="bi-n"></b><p id="bi-d"></p></div></div>
+<div id="toasts"></div>
+<div id="tip"></div>
+<div id="fps"></div>
+
+<div class="ov" id="ov-menu">
+  <div class="menu">
+    <div class="title">NEON WARFARE<span>FUSION PROTOCOL · 9</span></div>
+    <div class="cmdb" id="menu-cmd"></div>
+    <div class="mbtns" id="menu-btns"></div>
+    <div class="mfoot" id="menu-foot"></div>
+  </div>
+</div>
+<div class="ov" id="ov-new"><div class="modal" style="width:880px"><button class="mclose" data-close>✕</button>
+  <h2>NOUVELLE PARTIE</h2><div class="sub">Choisissez votre doctrine et votre mode, puis le niveau de menace. Une carte unique est générée à chaque partie.</div>
+  <div class="lbl-s">DOCTRINE</div><div class="docs" id="doc-row"></div><div class="doc-desc" id="doc-desc"></div>
+  <div class="lbl-s" style="margin-bottom:6px">MODE</div><div class="seg gm-seg" id="gm-row"></div><div class="doc-desc" id="gm-desc"></div>
+  <div id="cus-box" hidden></div>
+  <div class="lbl-s" style="margin-bottom:8px">MENACE</div>
+  <div class="dgrid" id="diff-grid"></div>
+  <div class="seedrow"><span class="lbl-s">GRAINE / CODE DE CARTE <span style="opacity:.6">(facultatif : un nombre, un mot, ou le code d'un ami)</span></span><input id="seed-in" class="mp-in" maxlength="32" placeholder="ex. 42, neon, 1A2B3C-L-S" autocomplete="off"><span id="seed-ok" class="note"></span></div></div></div>
+<div class="ov" id="ov-cards"><div class="modal cmodal" style="width:900px">
+  <h2 id="cards-t">PROTOCOLE</h2><div class="sub" id="cards-sub"></div>
+  <div class="cgrid" id="cards"></div>
+  <div class="row" style="justify-content:center;margin-top:16px"><button class="btn gold" id="cards-reroll"></button></div></div></div>
+<div class="ov" id="ov-pause"><div class="modal" style="width:390px;text-align:center">
+  <h2>PAUSE</h2><div class="sub" id="pause-info"></div><div class="mbtns" style="margin:12px auto 0" id="pause-btns"></div></div></div>
+<div class="ov" id="ov-opts"><div class="modal" style="width:500px"><button class="mclose" data-close>✕</button><h2>OPTIONS</h2><div id="opts"></div></div></div>
+<div class="ov" id="ov-news"><div class="modal" style="width:560px"><button class="mclose" data-close>✕</button><h2>MISE À JOUR</h2><div class="sub" id="news-sub"></div>
+  <div id="news-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn prim" data-close>C'EST PARTI !</button></div></div></div>
+<div class="ov" id="ov-xfer"><div class="modal" style="width:560px"><button class="mclose" data-close>✕</button><h2 id="xf-t">PROGRESSION</h2><div class="sub" id="xf-sub"></div>
+  <textarea id="xf-txt" class="mp-ta" spellcheck="false" autocomplete="off" style="width:100%;height:150px;font:11px var(--mono);word-break:break-all"></textarea>
+  <div class="row" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" data-close>FERMER</button><button class="btn prim" id="xf-go">OK</button></div></div></div>
+<div class="ov" id="ov-rpend"><div class="modal" style="width:480px"><h2 style="color:#b48cff">FIN DU REPLAY</h2><div class="sub" id="rpe-sub"></div>
+  <div class="row" style="justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap"><button class="btn" id="rpe-menu">MENU</button><button class="btn" id="rpe-code">CODE DU REPLAY</button><button class="btn prim" id="rpe-again">REVOIR</button></div></div></div>
+<div class="ov" id="ov-keys"><div class="modal" style="width:640px"><button class="mclose" data-close>✕</button><h2>RACCOURCIS CLAVIER</h2>
+  <div class="sub">Cliquez sur une touche puis appuyez sur la nouvelle (Échap pour annuler, ✕ pour n'en mettre aucune). Une touche déjà utilisée est retirée de l'autre commande.</div>
+  <div id="keys-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="keys-reset">TOUCHES PAR DÉFAUT</button></div></div></div>
+<div class="ov" id="ov-tree"><div class="modal" style="width:1020px"><button class="mclose" data-close>✕</button>
+  <h2>ARBRE DE COMPÉTENCES</h2><div class="sub" id="tree-sub"></div><div class="tree" id="tree"></div><div id="ars"></div></div></div>
+<div class="ov" id="ov-lab"><div class="modal" style="width:1020px"><button class="mclose" data-close>✕</button>
+  <h2>LABO DE FUSION</h2><div class="sub" id="lab-sub"></div><div id="lab"></div></div></div>
+<div class="ov" id="ov-over"><div class="modal" style="width:460px;text-align:center;border-color:var(--dang)"><div id="over-body"></div></div></div>
+<div class="ov" id="ov-meta"><div class="modal" style="width:880px"><button class="mclose" data-close>✕</button>
+  <h2>HÉRITAGE</h2><div class="sub" id="meta-sub"></div><div class="plist" id="meta-list"></div></div></div>
+<div class="ov" id="ov-ach"><div class="modal" style="width:800px"><button class="mclose" data-close>✕</button>
+  <h2>PALMARÈS</h2><div class="seg" id="ach-tabs" style="max-width:360px;margin-bottom:12px"><button data-k="ach" class="on">SUCCÈS</button><button data-k="hist">HISTORIQUE</button></div>
+  <div class="sub" id="ach-sub"></div><div class="plist" id="ach-list"></div></div></div>
+<div class="ov" id="ov-codex"><div class="modal" style="width:960px"><button class="mclose" data-close>✕</button>
+  <h2>CODEX</h2><div class="sub" id="codex-sub"></div>
+  <div class="seg" id="codex-tabs" style="max-width:340px;margin-bottom:14px"><button data-k="e" class="on">ENNEMIS</button><button data-k="t">TOURELLES</button></div>
+  <div class="cxgrid" id="codex"></div></div></div>
+<div class="ov" id="ov-mp"><div class="modal" style="width:720px"><button class="mclose" data-close>✕</button>
+  <h2>MULTIJOUEUR</h2><div class="sub">De 2 à 4 joueurs, en réseau local ou par internet : <b>versus</b> (chacun sa carte, envoyez des ennemis chez vos adversaires) ou <b>coopération</b> (une carte partagée, chacun ses crédits).</div>
+  <div id="mp-body"></div></div></div>
+<div class="ov" id="ov-mpend"><div class="modal" style="width:480px;text-align:center"><div id="mpend-body"></div></div></div>
+<div class="ov" id="ov-casino"><div class="modal casino" style="width:640px"><button class="mclose" data-close>✕</button>
+  <h2>CASINO NÉON</h2><div class="sub" id="cs-sub"></div>
+  <div class="seg" id="cs-tabs" style="margin-bottom:14px"><button data-k="slot">MACHINE À SOUS</button><button data-k="bet">PARIS SUR LA VAGUE</button></div>
+  <div id="cs-slot">
+    <div class="jpot">JACKPOT PROGRESSIF <b id="cs-jp">0¢</b></div>
+    <div class="slot" id="slot"><div class="bulbs"></div>
+      <div class="reels"><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div></div>
+      <div class="payline"></div><div class="coins" id="cs-coins"></div>
+    </div>
+    <div class="cs-res" id="cs-res"></div>
+    <div class="cs-ctl"><div class="seg" id="cs-lvl"></div><div class="cs-tok" id="cs-tok"></div></div>
+    <button class="btn gold big" id="cs-spin" style="width:100%;margin-top:10px">TIRER LE LEVIER</button>
+    <div class="paytab" id="cs-pay"></div>
+  </div>
+  <div id="cs-bet" hidden></div></div></div>
+<div class="ov" id="ov-stats"><div class="modal" style="width:900px"><button class="mclose" data-close>✕</button>
+  <h2>ANALYSE DE COMBAT</h2><div class="sub" id="st-sub"></div>
+  <div class="st-tiles" id="st-tiles"></div>
+  <div class="st-ctl">
+    <div class="seg" id="st-metric"><button data-k="dealt">DÉGÂTS</button><button data-k="kills">ÉLIMINATIONS</button><button data-k="shots">TIRS</button><button data-k="eff" data-tip="Rentabilité : dégâts infligés par crédit investi (construction, améliorations, fusion).">RENTABILITÉ</button></div>
+    <div class="seg sm" id="st-group"><button data-k="type">PAR TYPE</button><button data-k="tower">PAR TOURELLE</button></div>
+    <div class="seg sm" id="st-view"><button data-k="chart">GRAPHIQUE</button><button data-k="table">TABLEAU</button></div>
+  </div>
+  <div id="st-main"></div>
+  <div class="lbl-s" style="margin:18px 0 8px">DÉGÂTS PAR VAGUE</div>
+  <div id="st-waves"></div></div></div>
+<div class="ov" id="ov-help"><div class="modal" style="width:840px"><button class="mclose" data-close>✕</button><h2>MANUEL DE COMBAT</h2><div id="help" class="help"></div></div></div>
+<div class="ov" id="ov-confirm"><div class="modal" style="width:390px;text-align:center"><h2 id="cf-t"></h2><div class="sub" id="cf-x"></div>
+  <div class="row" style="justify-content:center;gap:10px;margin-top:14px"><button class="btn" id="cf-no">ANNULER</button><button class="btn danger" id="cf-yes">CONFIRMER</button></div></div></div>
+
+<script>
+/*@JS*/
+</script>
+</body>
+</html>

@@ -23,14 +23,19 @@ window.Bot = {
   bestTile(G, key) {
     const r = TOWERS[key].range, f = r >= 250 ? 'c300' : r >= 160 ? 'c200' : 'c120';
     let best = null;
-    for (const c of this.cand) { if (!Towers.canPlace(c.x, c.y)) continue; if (!best || c[f] > best[f]) best = c; }
+    for (const c of this.cand) {
+      if (!Towers.canPlace(c.x, c.y)) continue;
+      let near = 0; for (const [dx, dy] of NB8) { const o = Towers.at(c.x + dx, c.y + dy); if (o && o.d.kind === 'support') near++; }
+      c.score = c[f] * (1 + .25 * near);
+      if (!best || c.score > best.score) best = c;
+    }
     return best;
   },
   // dépenses entre deux vagues
   play(G, skill = 1) {
     const P = G.preview;
     // plans : T2 en nanites, T3 en plasma, T4 en abyssite
-    const want = ['plasma', 'laser', 'tesla', 'blizzard', 'stasis', 'railgun', 'magma', 'swarm', 'nova', 'storm', 'singularity', 'apocalypse'];
+    const want = ['plasma', 'nexus', 'laser', 'tesla', 'railgun', 'blizzard', 'stasis', 'magma', 'swarm', 'nova', 'storm', 'singularity', 'apocalypse'];
     for (const k of want) { const r = RECIPES.find(x => x.r === k); if (Fusion.canResearch(r) && Res.get(Fusion.cur(r)) >= Fusion.cost(r)) Fusion.research(r); }
     // compétences : on garde de quoi acheter les plans T3/T4
     const sk = ['a1', 'c1', 'e1', 'a1', 'a2', 'a3', 'c1', 'a1', 'c2', 'a2', 'a5', 'a4', 'e2', 'e3', 'c3', 'c4', 'a6', 'e5', 'e4', 'e6', 'c5', 'c6',
@@ -64,9 +69,26 @@ window.Bot = {
         if (c < bc) { bc = c; bt = t; }
       }
       if (bt && Towers.needsSpec(bt)) { Towers.setSpec(bt, Math.random() < .5 ? 0 : 1); continue; }
+      // soutien : une tourelle de soutien collée aux tourelles qui font le plus de dégâts (comme un joueur)
+      if (G.towers.length >= 6 && this.support(G)) continue;
       if (bt && G.money >= Towers.upCost(bt)) { Towers.upgrade(bt); continue; }
       break;
     }
+  },
+  support(G) {
+    const sups = G.towers.filter(t => t.d.kind === 'support').length, atk = G.towers.filter(t => t.d.kind !== 'support' && t.d.kind !== 'radar');
+    if (sups >= atk.length * this.supRatio) return false;
+    const key = G.unlocked.has('nexus') && G.money >= Towers.costOf('nexus') ? 'nexus' : G.money >= Towers.costOf('computer') ? 'computer' : null;
+    if (!key) return false;
+    // case libre qui touche le plus de dégâts (8 voisins pour le Nexus, 4 sinon)
+    const NB = TOWERS[key].diag ? NB8 : NB4, M = G.map; let best = null, bv = 0;
+    for (const t of atk) for (const [dx, dy] of NB8) {
+      const x = t.tx + dx, y = t.ty + dy; if (!Towers.canPlace(x, y)) continue;
+      let v = 0; for (const [ex, ey] of NB) { const o = Towers.at(x + ex, y + ey); if (o && o.d.kind !== 'support') v += Towers.dps(o) + 1; }
+      if (v > bv) { bv = v; best = { x, y }; }
+    }
+    if (!best) return false;
+    return !!Towers.build(key, best.x, best.y);
   },
   // une vague complète (avec capacités) ; renvoie le suivi du méga-boss s'il y en a un
   wave(G) {
@@ -84,6 +106,7 @@ window.Bot = {
     while (G.cardQ > 0 && G.offer) Cards.pick(0);
     return { lost: l0 - G.lives, mega: mega.t0 ? { type: mega.type, s: (((mega.t1 || G.tick) - mega.t0) / 60).toFixed(0), killed: !!mega.killed && !G.over, phase: mega.ph, hpLeft: G.over ? Math.round((mega.left || 0) * 100) + '%' : '0%' } : null };
   },
+  supRatio: .35,
   newGame(diff, seed) { UI.closeAll(); Game.newGame(diff, { seed }); UI.closeAll(); const G = window.NW.G; this.init(G); return G; },
   summary(G, diff, seed, t0, log, megas) {
     return { diff, seed, wave: G.waveNum, over: G.over, ms: (performance.now() - t0) | 0, towers: G.towers.length, t3: G.towers.filter(t => t.d.tier >= 3).length,
