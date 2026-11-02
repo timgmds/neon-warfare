@@ -6,6 +6,8 @@ récent (PC, tablette ou téléphone). Se joue **seul ou de 2 à 4 joueurs** (ve
 
 ## Jouer
 
+**En ligne : https://timgmds.github.io/neon-warfare/** (installable comme une application, jouable hors ligne ensuite).
+
 1. Ouvrir `neon-warfare.html` dans un navigateur.
 2. **Nouvelle partie** → choisir la doctrine, le mode (Classique, Boss Rush, Chaos, Bac à sable, Partie perso)
    et la menace (Recrue, Standard, Hardcore, Cauchemar), ou relever le **Défi du jour**.
