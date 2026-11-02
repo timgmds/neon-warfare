@@ -193,7 +193,7 @@ BOSSES.leviathan = { name: 'LÉVIATHAN', hp: 19000, shield: 2500, armor: 5, spd:
   phases: [
     { n: 'Carapace abyssale', armor: 5, jam: { every: 360, r: 210, t: 120 } },
     { at: .7, n: 'Frénésie des profondeurs', armor: 1.5, spd: 1.3, shieldBack: .4, summon: { types: ['ram', 'hive', 'tank'], every: 420, n: 3 }, jam: { every: 420, r: 210, t: 120 } },
-    { at: .4, n: 'Abysse', armor: 2, spd: 1.15, regen: .007, drain: { every: 420, n: 3, t: 240, r: 260 }, summon: { types: ['juggernaut', 'ram'], every: 540, n: 2 } },
+    { at: .4, n: 'Abysse', armor: 2, spd: 1.15, regen: .004, drain: { every: 420, n: 3, t: 240, r: 260 }, summon: { types: ['juggernaut', 'ram'], every: 540, n: 2 } },
     { at: .1, n: 'Raz-de-marée', armor: 1, spd: 1.4, jam: { every: 360, r: 230, t: 120 }, summon: { types: ['ram', 'juggernaut', 'hive'], every: 360, n: 2 } }
   ] };
 BOSSES.omega = { name: 'OMÉGA', hp: 32000, shield: 9000, armor: 4, spd: .32, bounty: 4000, leak: 9999, r: 34, color: '#ff2bd6', shape: 'mega2', boss: true, mega: true, heavy: true,

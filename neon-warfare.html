@@ -907,7 +907,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '9.20';
+const VERSION = '9.21';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -1551,7 +1551,7 @@ BOSSES.leviathan = { name: 'LÉVIATHAN', hp: 19000, shield: 2500, armor: 5, spd:
   phases: [
     { n: 'Carapace abyssale', armor: 5, jam: { every: 360, r: 210, t: 120 } },
     { at: .7, n: 'Frénésie des profondeurs', armor: 1.5, spd: 1.3, shieldBack: .4, summon: { types: ['ram', 'hive', 'tank'], every: 420, n: 3 }, jam: { every: 420, r: 210, t: 120 } },
-    { at: .4, n: 'Abysse', armor: 2, spd: 1.15, regen: .007, drain: { every: 420, n: 3, t: 240, r: 260 }, summon: { types: ['juggernaut', 'ram'], every: 540, n: 2 } },
+    { at: .4, n: 'Abysse', armor: 2, spd: 1.15, regen: .004, drain: { every: 420, n: 3, t: 240, r: 260 }, summon: { types: ['juggernaut', 'ram'], every: 540, n: 2 } },
     { at: .1, n: 'Raz-de-marée', armor: 1, spd: 1.4, jam: { every: 360, r: 230, t: 120 }, summon: { types: ['ram', 'juggernaut', 'hive'], every: 360, n: 2 } }
   ] };
 BOSSES.omega = { name: 'OMÉGA', hp: 32000, shield: 9000, armor: 4, spd: .32, bounty: 4000, leak: 9999, r: 34, color: '#ff2bd6', shape: 'mega2', boss: true, mega: true, heavy: true,
@@ -7470,6 +7470,7 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '9.21', d: ['Léviathan : la régénération de sa 3ᵉ phase passe de 0,7 % à 0,4 % de ses PV par seconde (mesure : elle rendait presque autant de PV que vos tourelles en enlevaient).'] },
   { v: '9.20', d: ['Version en ligne installable comme une application (menu → Installer le jeu), jouable hors ligne.'] },
   { v: '9.19', d: ['Coopération : un joueur déconnecté revient tout de suite (plus besoin d\'attendre la fin de la vague) : il rattrape la partie en accéléré.',
     'Coopération : si l\'hôte quitte la partie, un autre joueur prend le relais et tout le monde continue ensemble.'] },

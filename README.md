@@ -64,7 +64,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Éléments rares** | **plasma ✺** (1 par boss dès la vague 10, 2 dès la 25, 3 dès la 40 ; parfois élites ; raffinerie) et **abyssite ⬟** (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50). Les fusions **T3** demandent du plasma et l'Apocalypse **T4** de l'abyssite, pour le plan au Labo **et** pour chaque pose. Le plan dépend de la difficulté (T3 : 3 / 5 / 7 / 9 ✺, T4 : 2 / 3 / 4 / 5 ⬟) et chaque pose coûte un peu plus que la précédente (Standard : T3 0, 1, 2… ✺ ; T4 0, 2, 4… ⬟) ; revendre fait redescendre le prix |
 | **Capacités** | Frappe Orbitale (ciblée), Cryo-Bombe, Surcharge |
 | **Ennemis** | 22 types (dont régénérateurs, ruches, déphaseurs, nécromants, mastodontes, voileurs…), élites et **6 boss** à mécanique (Colosse, Hydre, Overlord, Scission, Sentinelle, Sauteur), présentés à leur arrivée |
-| **Méga-boss** | vague 50 : **Léviathan** (bouclier, en partie insensible aux ralentissements et au gel ; 4 phases : carapace et IEM géante, frénésie et escorte blindée, Abysse qui régénère et neutralise vos meilleures tourelles, Raz-de-marée où il fonce vers le noyau) ; vague 100 : **Oméga** (4 phases : failles d'élites, distorsions, boucliers miroirs, effondrement, puis 3 Échos). Ensuite toutes les 50 vagues. S'il atteint le noyau, la partie est perdue. |
+| **Méga-boss** | vague 50 : **Léviathan** (bouclier, en partie insensible aux ralentissements et au gel ; 4 phases : carapace et IEM géante, frénésie et escorte blindée, Abysse qui régénère (0,4 % de ses PV par seconde) et neutralise vos meilleures tourelles, Raz-de-marée où il fonce vers le noyau) ; vague 100 : **Oméga** (4 phases : failles d'élites, distorsions, boucliers miroirs, effondrement, puis 3 Échos). Ensuite toutes les 50 vagues. S'il atteint le noyau, la partie est perdue. |
 | **Cartes** | procédurales (portrait/paysage), dont la moitié avec **deux chemins** qui se rejoignent |
 | **Pièges** | **mines** et **barricades** à poser sur le chemin |
 | **Événements aléatoires** | pluie d'astéroïdes, capsule de ravitaillement, ruée vers l'or, surtension, tempête solaire, lune de sang, comète, faille dimensionnelle, orage IEM. L'IEM des astéroïdes et de la foudre met les tourelles **hors ligne jusqu'au débrouillage payant** |
@@ -158,6 +158,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.21** : régénération de la phase 3 du Léviathan 0,7 % → 0,4 % de ses PV par seconde, d'après la mesure des dégâts par seconde nécessaires autour de la vague 50.
 - **Outils** : code source découpé dans `src/` (45 modules) et assemblé par `tools/build.mjs` en un seul fichier identique ; bot d'équilibrage à jour.
 - **v9.20** : version en ligne installable (manifeste, service worker hors ligne, icônes, bouton Installer).
 - **v9.19** : coopération : retour immédiat d'un joueur en pleine vague (photo de partie + journal rejoué en accéléré), relais de l'hôte quand il quitte la partie ; gros messages découpés.
