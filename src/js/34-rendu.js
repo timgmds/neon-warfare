@@ -1,13 +1,15 @@
 /* ============================== RENDU ==============================
    4 calques : décor du thème (statique) · ambiance animée · carte (statique) · jeu (dynamique).
-   Les calques statiques ne sont redessinés que lorsqu'ils changent. */
+   Les calques statiques ne sont redessinés que lorsqu'ils changent. En style Néon 10, le décor et l'ambiance
+   sont remplacés par un shader WebGL et un halo lumineux s'ajoute par-dessus le jeu (voir GLFX). */
 const View = { w: 0, h: 0, dpr: 1, scale: 1, ox: 0, oy: 0, top: 0, bottom: 0 };
 
 const Render = {
   cv: {}, cx: {}, hq: true, time: 0, alpha: 1, shakeA: 0, flashA: 0, flashC: '#fff',
-  dirtyBg: true, dirtyMap: true, themeKey: 'theme-cyber', theme: THEMES['theme-cyber'], amb: [], rain: null,
+  dirtyBg: true, dirtyMap: true, themeKey: 'theme-cyber', theme: THEMES['theme-cyber'], amb: [], rain: null, neo: true,
   init() {
     for (const k of ['bg', 'fx', 'map', 'game']) { this.cv[k] = $('cv-' + k); this.cx[k] = this.cv[k].getContext('2d'); }
+    GLFX.init();
     window.addEventListener('resize', () => { clearTimeout(this._rt); this._rt = setTimeout(() => this.resize(), 90); });
     this.applyQuality();
   },
@@ -17,6 +19,7 @@ const Render = {
     FX.setCaps(this.hq);
     this.cv.fx.style.display = this.hq ? 'block' : 'none';
     this.resize();
+    GLFX.sync();
   },
   resize() {
     View.w = window.innerWidth; View.h = window.innerHeight;
@@ -29,6 +32,7 @@ const Render = {
     this.fit();
     this.dirtyBg = this.dirtyMap = true;
     this.initAmbient();
+    GLFX.resize();
     UI.onResize();
   },
   fit() {
@@ -50,9 +54,12 @@ const Render = {
   setTheme(key) {
     if (!THEMES[key]) key = 'theme-cyber';
     this.themeKey = key; this.theme = THEMES[key];
-    document.body.className = key + (Store.s.crt ? '' : ' no-crt');
+    const neo = Store.s.gfx !== 'classic';
+    if (neo !== this.neo) { this.neo = neo; Spr.cache.clear(); }
+    document.body.className = key + (Store.s.crt ? '' : ' no-crt') + (neo ? ' gfx-neo' : ' gfx-classic');
     this.dirtyBg = this.dirtyMap = true;
     this.initAmbient();
+    GLFX.sync();
   },
   shake(a) { if (Store.s.shake && !(G && G.demo)) this.shakeA = Math.max(this.shakeA, a); },
   flash(a, col) {
@@ -64,8 +71,10 @@ const Render = {
     this.time = now;
     if (this.dirtyBg) this.drawBg();
     if (this.dirtyMap) this.drawMap();
-    if (this.hq) this.drawAmbient(now);
+    if (GLFX.active()) GLFX.frame(now);
+    else if (this.hq) this.drawAmbient(now);
     this.drawGame(now);
+    GLFX.glow();
   },
 
   /* ---------- décor de fond ---------- */
@@ -228,7 +237,7 @@ const Render = {
     if (!G) return;
     const M = G.map, s = View.scale * View.dpr, A = this.theme.accent, W = M.C * TILE, H = M.R * TILE;
     c.setTransform(s, 0, 0, s, View.ox * View.dpr, View.oy * View.dpr);
-    c.shadowColor = A; c.shadowBlur = 26 * View.dpr; c.fillStyle = 'rgba(3,6,13,.8)'; c.fillRect(0, 0, W, H); c.shadowBlur = 0;
+    c.shadowColor = A; c.shadowBlur = 26 * View.dpr; c.fillStyle = GLFX.active() ? 'rgba(3,6,13,.66)' : 'rgba(3,6,13,.8)'; c.fillRect(0, 0, W, H); c.shadowBlur = 0;
     c.fillStyle = 'rgba(255,255,255,.022)';
     for (let y = 0; y < M.R; y++) for (let x = (y & 1); x < M.C; x += 2) c.fillRect(x * TILE, y * TILE, TILE, TILE);
     c.strokeStyle = rgba(A, .07); c.lineWidth = 1 / View.scale; c.beginPath();
@@ -384,7 +393,7 @@ const Render = {
     }
   },
   drawTowers(c, t) {
-    const od = G.overdriveT > 0;
+    const od = G.overdriveT > 0, neo = this.neo && this.hq;
     for (const tw of G.towers) {
       const x = tw.cx, y = tw.cy, d = tw.d, off = tw.stun > 0 || tw.over;
       if (d.kind === 'radar' && !off) {
@@ -398,6 +407,17 @@ const Render = {
       const age = t - tw.born, pop = age >= 0 && age < 340;
       if (pop) { const k = age / 340 - 1, s = 1 + 2.70158 * k * k * k + 1.70158 * k * k; c.save(); c.translate(x, y); c.scale(s, s); c.translate(-x, -y); }
       c.drawImage(Spr.base(tw.key), x - 32, y - 32, 64, 64);
+      if (neo && !off) {
+        // style Néon 10 : le noyau respire (plus fort juste après un tir) et un anneau tourne autour des paliers 2+
+        const k = .5 + .5 * Math.sin(t * .004 + tw.id * 1.7), f = Math.min(1, tw.flash / 5), s = 13 + k * 4 + f * 8;
+        c.globalCompositeOperation = 'lighter';
+        c.globalAlpha = .28 + k * .14 + f * .4; c.drawImage(Spr.glow(d.color, false), x - s, y - s, s * 2, s * 2);
+        if (d.tier >= 2) {
+          c.globalAlpha = .55; c.save(); c.translate(x, y); c.rotate(t * (d.tier >= 4 ? .0016 : .0009) * (tw.id & 1 ? 1 : -1));
+          c.drawImage(Spr.ring(d.color), -32, -32, 64, 64); c.restore();
+        }
+        c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+      }
       const rot = d.spinHead ? tw.spin : (d.kind === 'support' ? 0 : tw.ang + Math.PI / 2);
       c.save(); c.translate(x, y);
       if (rot) c.rotate(rot);
@@ -485,12 +505,28 @@ const Render = {
     }
   },
   drawEnemies(c, air) {
-    const al = this.alpha;
+    const al = this.alpha, neo = this.neo && this.hq, now = this.time;
     for (const e of G.enemies) {
       if (!e.alive || e.air !== air) continue;
       const x = e.px + (e.x - e.px) * al, y = e.py + (e.y - e.py) * al;
-      const spr = Spr.enemy(e.type, e.elite), sz = spr.width / Spr.k, hs = sz / 2;
+      const spr = Spr.enemy(e.type, e.elite);
+      let sz = spr.width / Spr.k;
       const hidden = hid(e), ga = e.phased ? .12 : hidden ? .22 : 1;
+      if (neo && !hidden) {
+        // style Néon 10 : traînée lumineuse derrière l'ennemi et légère respiration du corps
+        const vx = e.x - e.px, vy = e.y - e.py, v = Math.abs(vx) + Math.abs(vy);
+        if (v > .05 && e.freezeT <= 0) {
+          const m = 1 / Math.hypot(vx, vy), r = e.r;
+          c.globalCompositeOperation = 'lighter';
+          for (let i = 1; i <= 2; i++) {
+            const s = r * (1.05 - i * .2), bx = x - vx * m * r * (.55 + i * .55), by = y - vy * m * r * (.55 + i * .55);
+            c.globalAlpha = (.42 - i * .14) * ga; c.drawImage(Spr.glow(e.d.color, false), bx - s, by - s, s * 2, s * 2);
+          }
+          c.globalCompositeOperation = 'source-over';
+        }
+        sz *= 1 + .045 * Math.sin(now * .007 + e.id * 2.3);
+      }
+      const hs = sz / 2;
       c.globalAlpha = ga;
       if (e.d.rot) { c.save(); c.translate(x, y); c.rotate(e.ang); c.drawImage(spr, -hs, -hs, sz, sz); c.restore(); }
       else c.drawImage(spr, x - hs, y - hs, sz, sz);

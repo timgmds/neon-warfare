@@ -106,13 +106,18 @@ const UI = {
   },
 
   /* ---------- bannière & notifications ---------- */
+  // lettrage 3D (style Néon 10) : la tranche est un double du texte, lu dans data-t ; sans effet en style classique
+  x3d(t, cls = '') {
+    const a = String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    return `<span class="x3d${cls ? ' ' + cls : ''}" data-t="${a}">${a}</span>`;
+  },
   banner(t, s, col) {
     if (Demo.busy) return;
     const B = $('banner'); B.innerHTML = '';
     const d = document.createElement('div'); d.className = 'bn';
     if (col) d.style.setProperty('--bc', col);
     if (String(t).length > 12) d.classList.add('long');
-    d.innerHTML = `<div class="t">${t}</div>${s ? `<div class="s">${s}</div>` : ''}`;
+    d.innerHTML = `<div class="t">${this.x3d(t)}</div>${s ? `<div class="s">${s}</div>` : ''}`;
     B.appendChild(d);
     clearTimeout(this._bt); this._bt = setTimeout(() => d.remove(), 2700);
   },
@@ -290,13 +295,14 @@ const UI = {
     if (Demo.busy) return;
     const C = $('callout'); C.innerHTML = '';
     const b = document.createElement('b'); b.textContent = txt; b.style.setProperty('--cc', col || '#ffd23f');
+    b.className = 'x3d'; b.dataset.t = txt;
     C.appendChild(b); clearTimeout(this.coT); this.coT = setTimeout(() => { C.innerHTML = ''; }, 1500);
   },
   bossIntro(d, type, mega) {
     const el = $('bossintro');
     el.style.setProperty('--bc', d.color);
     el.querySelector('span').textContent = mega ? '☠ ALERTE ROUGE · MÉGA-BOSS' : '⚠ ALERTE BOSS';
-    $('bi-n').textContent = d.name; $('bi-d').textContent = LORE[type] || '';
+    $('bi-n').textContent = d.name; $('bi-n').className = 'x3d'; $('bi-n').dataset.t = d.name; $('bi-d').textContent = LORE[type] || '';
     Spr.enemyIcon($('bi-cv'), type, 64);
     el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     clearTimeout(this.biT); this.biT = setTimeout(() => el.classList.remove('show'), mega ? 5000 : 3500);
@@ -955,6 +961,7 @@ const UI = {
       <div class="opt"><span>Musique<small>Générée en direct, s'intensifie en combat</small></span><input type="range" min="0" max="100" id="o-mus" value="${Math.round(s.music * 100)}"></div>
       <div class="opt"><span>Style musical<small>Arena 80s : synth-rock énergique · Ambiance : nappes douces · Synthwave : rythmée</small></span><button class="btn" id="o-mst">${MUSIC_STYLES[s.musicStyle] || 'Arena 80s'}</button></div>
       <div class="opt"><span>Qualité graphique<small>AUTO réduit les effets si le jeu ralentit</small></span><button class="btn" id="o-q">${q[s.quality]}${s.quality === 'auto' && Perf.degraded ? ' (BASSE)' : ''}</button></div>
+      <div class="opt"><span>Style graphique<small>Néon 10 : décors animés, halo lumineux, lettrage 3D · Classique : le rendu de la version 9</small></span><button class="btn" id="o-gfx">${s.gfx === 'classic' ? 'CLASSIQUE' : 'NÉON 10'}</button></div>
       <div class="opt"><span>Thème visuel</span><button class="btn" id="o-th">${THEMES[s.theme] ? THEMES[s.theme].name : '?'}</button></div>
       <div class="opt"><span>Effet CRT<small>Lignes de balayage rétro</small></span><button class="btn" id="o-crt">${tg(s.crt)}</button></div>
       <div class="opt"><span>Secousses & flashs</span><button class="btn" id="o-sh">${tg(s.shake)}</button></div>
@@ -973,6 +980,7 @@ const UI = {
     $('o-mst').onclick = () => { const ks = Object.keys(MUSIC_STYLES); s.musicStyle = ks[(ks.indexOf(s.musicStyle) + 1) % ks.length]; Music.step = 0; Store.save(); this.openOptions(); };
     $('o-q').onclick = () => { s.quality = s.quality === 'auto' ? 'high' : s.quality === 'high' ? 'low' : 'auto'; Perf.degraded = false; Store.save(); Render.applyQuality(); this.openOptions(); };
     $('o-th').onclick = () => { const ks = Object.keys(THEMES); s.theme = ks[(ks.indexOf(s.theme) + 1) % ks.length]; Store.save(); Render.setTheme(s.theme); this.openOptions(); };
+    $('o-gfx').onclick = () => { s.gfx = s.gfx === 'classic' ? 'neo' : 'classic'; Store.save(); Render.setTheme(s.theme); if (G && !G.demo) this.buildBar(); this.openOptions(); };
     $('o-crt').onclick = () => { s.crt = !s.crt; Store.save(); Render.setTheme(s.theme); this.openOptions(); };
     $('o-sh').onclick = () => { s.shake = !s.shake; Store.save(); this.openOptions(); };
     $('o-dn').onclick = () => { s.dmgNums = !s.dmgNums; this.dmgNums = s.dmgNums; Store.save(); this.openOptions(); };
@@ -1141,7 +1149,7 @@ const UI = {
     let toGo = 0;
     if (nd) { toGo = -c1.xp; for (let l = c1.lvl; l < nd.lvl; l++) toGo += Cmd.need(l); }
     const startW = ups > 0 ? 0 : c0.xp / Cmd.need(c0.lvl) * 100, endW = c1.xp / Cmd.need(c1.lvl) * 100;
-    $('over-body').innerHTML = `<h2 style="color:var(--dang)">ÉCHEC SYSTÈME</h2>
+    $('over-body').innerHTML = `<h2 style="color:var(--dang)">${this.x3d('ÉCHEC SYSTÈME', 'over')}</h2>
       <div class="sub" style="margin-bottom:6px">${daily ? 'Défi du jour ' + G.daily : G.diff.name}${G.doctrine !== 'standard' ? ' · doctrine ' + DOCTRINES[G.doctrine].n : ''} · le noyau a cédé à la vague <b>${G.waveNum}</b></div>
       ${recLine}
       <div class="gocode"><span>CODE DE CARTE</span><input id="go-code" readonly value="${Hist.code()}" aria-label="Code de carte"><button class="btn" id="go-cc">COPIER</button>${daily ? '' : '<button class="btn sec" id="go-replay">REJOUER CETTE CARTE</button>'}</div>
@@ -1451,7 +1459,7 @@ const UI = {
       rank = `<div class="mp-rank">${L.map(r => `<div style="--oc:${MP_COL[r.p]}"><em>${r.pl ? ord(r.pl) : '–'}</em><i></i><b>${esc(MP.name(r.p))}${r.p === Net.me ? ' (vous)' : ''}</b><span>${r.txt}</span></div>`).join('')}</div>`;
     }
     Score.toggle(false);
-    $('mpend-body').innerHTML = `<h2 style="color:${col};text-shadow:0 0 18px ${col}">${title}</h2><div class="sub">${sub}</div>${rank}
+    $('mpend-body').innerHTML = `<h2 style="color:${col};text-shadow:0 0 18px ${col}">${this.x3d(title, 'over')}</h2><div class="sub">${sub}</div>${rank}
       <div class="mpe-score">${Score.html(true)}</div>
       <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
       ${G.net === 'versus' ? `<div>Ennemis envoyés <b>${G.sentTotal || 0}</b></div><div>Ennemis reçus <b>${G.recvTotal || 0}</b></div><div>Primes de survie <b>${fmt(G.survGain || 0)}¢</b></div><div>Revenu final <b>+${G.income || 0}¢</b></div>` : `<div>Tourelles <b>${G.towers.length}</b></div><div>Boss vaincus <b>${s.bosses}</b></div>`}</div>

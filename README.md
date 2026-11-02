@@ -1,4 +1,4 @@
-# NEON WARFARE 9 · Fusion Protocol
+# NEON WARFARE 10 · Fusion Protocol
 
 Tower defense néon **tenant dans un seul fichier HTML** : aucune dépendance, aucun asset externe,
 fonctionne hors-ligne. Double-cliquez sur `neon-warfare.html` et jouez dans n'importe quel navigateur
@@ -81,7 +81,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Astuces** | un conseil la première fois qu'un élément du jeu apparaît (amélioration, Labo, fusion, arbre, soutien, boss, casino, IEM, plasma, spécialisation), désactivables dans les Options |
 | **Analyse de combat** | graphiques de la partie : dégâts, éliminations, tirs et rentabilité par tourelle, dégâts par vague |
 | **Musique** | générée en direct : **Arena 80s** (synth-rock, solo saturé sur les boss), Ambiance ou Synthwave |
-| **Divers** | annonces de combo et de multi-éliminations, 5 thèmes visuels, démo IA en fond de menu |
+| **Divers** | annonces de combo et de multi-éliminations, 5 thèmes visuels animés, style Néon 10 ou Classique, démo IA en fond de menu |
 
 ## Commandes
 
@@ -112,6 +112,9 @@ Le jeu vise 60 FPS constants, même sur machine modeste :
 - simulation à **pas fixe** (60 ticks/s) découplée de l'affichage, avec rendu interpolé ;
 - simulation **déterministe** (hasard à graine) : base du lockstep de la coopération ;
 - **4 calques canvas** : décor et carte ne sont redessinés que lorsqu'ils changent ;
+- style **Néon 10** : le décor animé est un shader WebGL calculé en basse résolution (250 000 pixels au plus, 30 images/s)
+  qui *remplace* le décor 2D et les particules d'ambiance ; le halo lumineux floute sur le GPU une copie du calque de jeu
+  réduite au tiers. Sans WebGL, en qualité basse ou en style **Classique**, le jeu garde le rendu Canvas 2D de la v9 ;
 - tourelles, ennemis et halos lumineux **pré-rendus** en sprites ;
 - **pools d'objets** pour projectiles et particules ;
 - qualité **AUTO** qui allège les effets si une machine peine vraiment.
@@ -120,7 +123,8 @@ Le jeu vise 60 FPS constants, même sur machine modeste :
 
 Le jeu se distribue en **un seul fichier**, `neon-warfare.html`, mais il est **assemblé** à partir du dossier `src/` :
 `src/index.html` (la page, avec les repères `/*@CSS*/` et `/*@JS*/`), `src/style.css` et `src/js/NN-module.js`
-(45 modules, concaténés dans l'ordre des numéros). Pour modifier le jeu, éditez `src/`, puis :
+(46 modules, concaténés dans l'ordre des numéros) et `src/fonts/` (la police d'affichage Anton, intégrée en base64 à
+l'assemblage ; licence SIL OFL 1.1 dans `src/fonts/OFL-Anton.txt`). Pour modifier le jeu, éditez `src/`, puis :
 
 ```bash
 node tools/build.mjs
@@ -132,7 +136,7 @@ Ne modifiez pas `neon-warfare.html` à la main : il serait écrasé au prochain 
 Les modules :
 
 `Store` · `Sfx` / `Music` (Web Audio) · données (`TOWERS`, `RECIPES`, `ENEMIES`, `EVENTS`, `SLOT_SYM`, `SENDS`…) ·
-`Spr` · `MapGen` / `Path` · `FX` · `Combat` · `Enemies` · `Towers` · `Shots` · `Traps` · `Waves` · `Abil` · `Skills` ·
+`Spr` · `MapGen` / `Path` · `FX` · `GLFX` (décors et halo WebGL) · `Combat` · `Enemies` · `Towers` · `Shots` · `Traps` · `Waves` · `Abil` · `Skills` ·
 `Fusion` · `Missions` · `Cmd` · `Cards` · `Codex` · `Events` · `Casino` · `Net` / `Lock` / `MP` (réseau) · `Act` (actions
 du joueur) · `Stats` · `Game` · `Demo` · `Render` · `Input` · `UI` · boucle principale.
 
@@ -160,6 +164,9 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v10.0** : refonte graphique « Néon 10 », toujours en 2D : décors animés en WebGL pour chaque thème, halo lumineux,
+  tourelles redessinées et animées, traînées lumineuses des ennemis, titre et grandes annonces en lettrage 3D rétro,
+  nouvelle interface. L'ancien rendu reste disponible (Options → Style graphique → Classique).
 - **v9.23** : après Oméga : quintessence ❂, palier V de l'arbre et rangs infinis, trois reliques T5 (Lance-Néant, Annihilateur, Soleil noir).
 - **v9.22** : bonus de soutien non cumulables par type (fin de l'empilement de Nexus) ; nouveaux soutiens Oracle (T3) et Cœur abyssal (T4).
 - **v9.21** : régénération de la phase 3 du Léviathan 0,7 % → 0,4 % de ses PV par seconde, d'après la mesure des dégâts par seconde nécessaires autour de la vague 50.

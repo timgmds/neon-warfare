@@ -43,6 +43,61 @@ function drawTowerBase(x, d) {
   x.restore();
 }
 
+// style Néon 10 : socle en relief (tranche sombre décalée, face métallique biseautée, rainures lumineuses)
+function drawTowerBaseNeo(x, d) {
+  const c = d.color, T = d.tier, sup = d.kind === 'support';
+  x.save();
+  // ombre portée douce
+  x.fillStyle = 'rgba(0,0,0,.5)'; x.shadowColor = 'rgba(0,0,0,.8)'; x.shadowBlur = 6;
+  x.beginPath(); x.ellipse(2.5, 5, 21, 17, 0, 0, TAU); x.fill();
+  x.shadowBlur = 0;
+  const R = sup ? 16 : [16.5, 0, 18, 19, 19.5, 20.5][T];
+  const shape = (r, dy = 0) => {
+    x.save(); x.translate(0, dy);
+    if (sup) roundRect(x, -r, -r, r * 2, r * 2, 5);
+    else polyPath(x, T >= 4 ? 12 : T >= 2 ? 8 : 6, r, T >= 2 ? Math.PI / (T >= 4 ? 12 : 8) : Math.PI / 6);
+    x.restore();
+  };
+  // tranche (épaisseur du socle)
+  shape(R, 3.5); x.fillStyle = metal(x, 0, -R, 0, R + 4, '#151c2b', '#04060b'); x.fill();
+  x.strokeStyle = rgba(c, .35); x.lineWidth = 1; x.stroke();
+  // face supérieure
+  x.shadowColor = c; x.shadowBlur = T >= 2 ? 12 : 7;
+  shape(R); x.fillStyle = metal(x, -R, -R, R * .6, R, '#3a4762', '#0b0f19'); x.fill();
+  x.shadowBlur = 0;
+  x.lineWidth = 1.4; x.strokeStyle = 'rgba(190,215,255,.35)'; x.stroke();
+  // biseau : reflet en haut à gauche, ombre en bas à droite
+  shape(R - 2.5); x.lineWidth = 2; x.strokeStyle = 'rgba(0,0,0,.45)'; x.stroke();
+  x.save(); shape(R - 1.2); x.clip();
+  const hl = x.createLinearGradient(-R, -R, R * .2, R * .2); hl.addColorStop(0, 'rgba(255,255,255,.22)'); hl.addColorStop(.5, 'rgba(255,255,255,0)');
+  x.fillStyle = hl; x.fillRect(-R, -R, R * 2, R * 2);
+  x.restore();
+  // cuvette centrale et rainures lumineuses
+  circ(x, 0, 0, sup ? 9.5 : R - 6); x.fillStyle = '#05080f'; x.fill();
+  x.strokeStyle = rgba(c, .75); x.lineWidth = 1.3; x.shadowColor = c; x.shadowBlur = 6; x.stroke(); x.shadowBlur = 0;
+  x.strokeStyle = c; x.lineWidth = 2; x.lineCap = 'round';
+  const n = sup ? 4 : T >= 3 ? 6 : 4, rr = R - 3.2;
+  for (let i = 0; i < n; i++) { const a = i * TAU / n + (sup ? Math.PI / 4 : Math.PI / n); x.beginPath(); x.arc(0, 0, rr, a - .16, a + .16); x.stroke(); }
+  // rivets
+  x.fillStyle = '#6b7a99';
+  for (let i = 0; i < n; i++) { const a = i * TAU / n + (sup ? 0 : 0); circ(x, Math.cos(a) * (R - 3.4), Math.sin(a) * (R - 3.4), 1); x.fill(); }
+  // marques de palier (mêmes repères que le style classique)
+  if (T >= 3) { x.setLineDash([3, 4]); circ(x, 0, 0, R + 3); x.strokeStyle = rgba(c, .65); x.lineWidth = 1.2; x.stroke(); x.setLineDash([]); }
+  if (T >= 4) { circ(x, 0, 0, R + 6.5); x.strokeStyle = 'rgba(255,210,63,.6)'; x.lineWidth = 1; x.stroke(); }
+  if (T === 5) { circ(x, 0, 0, R + 9); x.strokeStyle = 'rgba(255,240,138,.75)'; x.lineWidth = 1.4; x.setLineDash([2, 3]); x.stroke(); x.setLineDash([]); }
+  x.restore();
+}
+
+// anneau d'énergie qui tourne autour des tourelles de palier 2 et plus (style Néon 10)
+function drawEnergyRing(x, col) {
+  x.save(); x.lineCap = 'round';
+  x.shadowColor = col; x.shadowBlur = 8; x.strokeStyle = col; x.lineWidth = 1.6;
+  for (let i = 0; i < 3; i++) { const a = i * TAU / 3; x.beginPath(); x.arc(0, 0, 25, a, a + .7); x.stroke(); }
+  x.shadowBlur = 0; x.fillStyle = '#ffffff';
+  for (let i = 0; i < 3; i++) { const a = i * TAU / 3 + .7; circ(x, Math.cos(a) * 25, Math.sin(a) * 25, 1.4); x.fill(); }
+  x.restore();
+}
+
 function drawTowerHead(x, d) {
   const c = d.color;
   x.save();
@@ -429,7 +484,8 @@ const Spr = {
       x.fillStyle = g; x.fillRect(0, 0, 32, 32);
     });
   },
-  base(key) { return this.get('b' + key, 64, 64, x => { x.translate(32, 32); drawTowerBase(x, TOWERS[key]); }); },
+  base(key) { return this.get('b' + key, 64, 64, x => { x.translate(32, 32); (Render.neo ? drawTowerBaseNeo : drawTowerBase)(x, TOWERS[key]); }); },
+  ring(col) { return this.get('r' + col, 64, 64, x => { x.translate(32, 32); drawEnergyRing(x, col); }); },
   head(key) { return this.get('h' + key, 64, 64, x => { x.translate(32, 32); drawTowerHead(x, TOWERS[key]); }); },
   enemy(type, elite) {
     const d = EDEF(type), s = Math.ceil(d.r * 2 * (elite ? 1.25 : 1) + 30);
@@ -442,7 +498,7 @@ const Spr = {
     cv.width = Math.round(css * dpr); cv.height = Math.round(css * dpr);
     const x = cv.getContext('2d'), s = css * dpr / 64;
     x.setTransform(s, 0, 0, s, 32 * s, 32 * s);
-    drawTowerBase(x, TOWERS[key]); x.rotate(rot); drawTowerHead(x, TOWERS[key]); drawHeadExtras(x, TOWERS[key], 520, false, false);
+    (Render.neo ? drawTowerBaseNeo : drawTowerBase)(x, TOWERS[key]); x.rotate(rot); drawTowerHead(x, TOWERS[key]); drawHeadExtras(x, TOWERS[key], 520, false, false);
   },
   enemyIcon(cv, type, css) {
     const dpr = Math.min(2, window.devicePixelRatio || 1), d = EDEF(type);

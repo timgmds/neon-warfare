@@ -15,7 +15,8 @@ const Perf = {
   auto() {
     if (Store.s.quality !== 'auto' || this.degraded || Game.state !== 'play' || !G || document.hidden || UI.blocking()) { this.slow = 0; return; }
     // on ne dégrade que si NOTRE travail par image est lourd (et pas si le navigateur bride simplement l'onglet)
-    if (this.fps < 40 && this.workMs > 9) this.slow++; else this.slow = Math.max(0, this.slow - 1);
+    // avec les effets WebGL, c'est souvent le GPU qui peine : il ne se voit que dans les FPS, pas dans le temps JS
+    if (this.fps < 40 && (this.workMs > 9 || GLFX.active())) this.slow++; else this.slow = Math.max(0, this.slow - 1);
     if (this.slow >= 4) {
       this.degraded = true; Render.applyQuality();
       UI.toast('Performances', 'Qualité graphique réduite automatiquement pour garder le jeu fluide (modifiable dans les options).', '#ffae00', 5);

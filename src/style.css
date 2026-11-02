@@ -17,7 +17,9 @@ body.theme-solar{--bg:#0c0700;--accent:#ffae00;--accent-rgb:255,174,0;--sec:#ff5
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:var(--font);
   user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;-webkit-font-smoothing:antialiased}
 canvas{display:block}
-#cv-bg,#cv-fx,#cv-map,#cv-game{position:absolute;left:0;top:0}
+#cv-bg,#cv-glbg,#cv-fx,#cv-map,#cv-game,#cv-bloom{position:absolute;left:0;top:0}
+#cv-glbg,#cv-bloom{display:none;pointer-events:none}
+#cv-bloom{mix-blend-mode:screen}
 #cv-game{cursor:default}
 #cv-game.placing{cursor:copy}
 #cv-game.targeting{cursor:crosshair}
@@ -395,6 +397,9 @@ svg.links line.on{stroke:var(--bc);stroke-width:2.5;opacity:.85}
 .kclr:disabled{opacity:.25;cursor:default}
 .bcard .hk:empty{display:none}
 .opt{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.opt{flex-wrap:wrap}
+.opt>span:first-child{flex:1 1 170px;min-width:0}
+.opt>:last-child{margin-left:auto}
 .opt span small{display:block;color:var(--dim);font-size:10px;margin-top:2px}
 .opt input[type=range]{width:170px;accent-color:var(--accent)}
 .plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
@@ -750,3 +755,70 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   .bcard canvas{width:32px;height:32px}
   #b-wave{padding:8px 14px;min-width:0}
 }
+
+/* ================= STYLE NÉON 10 =================
+   Tout ce bloc ne s'applique qu'en style Néon 10 (body.gfx-neo) : le style « classique » garde le rendu de la v9.
+   Règle d'or : on change les couleurs, les fonds, les ombres et les polices des titres, jamais les dimensions des blocs. */
+/* Police d'affichage : Anton, de Vernon Adams, SIL Open Font License 1.1 (https://openfontlicense.org) */
+@font-face{font-family:'NW Display';src:url(data:font/woff2;base64,/*@FONT:anton*/) format('woff2');font-display:block}
+:root{--disp:'NW Display',Impact,'Haettenschweiler','Arial Narrow',sans-serif}
+
+/* Lettrage 3D rétro : face cyan dégradée, liseré rose, tranche violette.
+   L'élément dessine la tranche (ombres empilées) ; la face est un double du texte (::after, via data-t) posé dessus,
+   car un fond découpé au texte se peint toujours sous les calques enfants. */
+body.gfx-neo .x3d{position:relative;display:inline-block;font-family:var(--disp);font-weight:400;font-style:normal;
+  padding:0 .1em .06em;line-height:1.08;color:#4a138f;-webkit-text-fill-color:#4a138f;-webkit-text-stroke:.035em #ff4fd8;
+  text-shadow:.012em .02em 0 #45118a,.024em .04em 0 #3e0f80,.036em .06em 0 #370d75,.048em .08em 0 #300a69,.06em .1em 0 #29085d,
+    .072em .12em 0 #220651,.084em .14em 0 #1b0546,.1em .162em 0 #ff4fd8,.12em .2em .16em rgba(0,0,0,.65),0 0 .4em rgba(255,43,214,.55)}
+body.gfx-neo .x3d::after{content:attr(data-t);position:absolute;left:0;right:0;top:0;padding:inherit;text-shadow:none;
+  color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:.035em #ff4fd8;
+  background:linear-gradient(100deg,transparent 42%,rgba(255,255,255,.9) 50%,transparent 58%) 160% 0/250% 100% no-repeat,
+    linear-gradient(180deg,#f4ffff 0%,#a2f9ff 36%,#22d6ff 56%,#0796d6 58%,#5ff0ff 76%,#dcfdff 100%);
+  -webkit-background-clip:text;background-clip:text;animation:x3dshine 6s ease-in-out infinite}
+@keyframes x3dshine{0%,62%{background-position:160% 0,0 0}86%,100%{background-position:-60% 0,0 0}}
+
+/* titre du menu */
+body.gfx-neo .title{font-family:var(--disp);font-weight:400;letter-spacing:.035em;line-height:1;font-size:clamp(50px,11vw,132px);
+  color:#fff;text-shadow:none;animation:none}
+body.gfx-neo .title .x3d{transform:perspective(700px) rotateX(14deg) skewX(-8deg);animation:x3dfloat 5s ease-in-out infinite}
+body.gfx-neo .title span{font-family:var(--font);font-size:max(13px,.17em);letter-spacing:.62em;margin-top:6px;font-weight:700}
+@keyframes x3dfloat{0%,100%{translate:0 0}50%{translate:0 -4px}}
+
+/* grandes annonces */
+body.gfx-neo #banner .t{font-size:clamp(34px,6.6vw,74px);letter-spacing:.06em;line-height:1;text-shadow:none}
+body.gfx-neo #banner .long .t{font-size:clamp(26px,4.8vw,54px);letter-spacing:.04em}
+body.gfx-neo #banner .s{margin-top:2px;text-shadow:0 0 10px var(--bc,var(--accent)),0 1px 2px #000}
+body.gfx-neo #callout{top:43%}
+body.gfx-neo #callout b{font-size:clamp(26px,4.6vw,46px);letter-spacing:.05em;font-style:normal}
+body.gfx-neo #callout b.x3d{transform-origin:center}
+body.gfx-neo #bossintro b{font-family:var(--disp);font-weight:400;font-size:30px;letter-spacing:.08em;text-shadow:none}
+body.gfx-neo #bossintro b.x3d{padding-left:0}
+body.gfx-neo .x3d.over{font-size:46px;letter-spacing:.05em;margin:0 0 8px}
+
+/* fenêtres : verre sombre, filet néon en haut, coins marqués */
+body.gfx-neo .modal{border-radius:8px;border-color:rgba(var(--accent-rgb),.45);
+  background:linear-gradient(180deg,rgba(var(--accent-rgb),.07),transparent 90px),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0 1px,transparent 1px 4px),var(--panel2);
+  box-shadow:0 22px 70px rgba(0,0,0,.92),0 0 46px -14px rgba(var(--accent-rgb),.75),inset 0 1px 0 rgba(255,255,255,.07)}
+body.gfx-neo .modal::before{content:'';position:absolute;left:18px;right:18px;top:0;height:2px;border-radius:2px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--sec),var(--accent),var(--sec),transparent);box-shadow:0 0 12px rgba(var(--accent-rgb),.8)}
+body.gfx-neo .modal h2{font-family:var(--disp);font-weight:400;font-size:26px;letter-spacing:.12em;line-height:1.15;
+  text-shadow:.06em .07em 0 rgba(255,43,214,.55),0 0 16px rgba(var(--accent-rgb),.55)}
+body.gfx-neo .panel{border-radius:7px;background:linear-gradient(180deg,rgba(255,255,255,.05),transparent 60px),var(--panel);
+  box-shadow:0 12px 34px rgba(0,0,0,.75),0 0 22px -8px var(--tc,var(--accent)),inset 0 1px 0 rgba(255,255,255,.07)}
+
+/* boutons : relief léger et lueur au survol */
+body.gfx-neo .btn{border-radius:4px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.015));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -2px 0 rgba(0,0,0,.35)}
+body.gfx-neo .btn:hover:not(:disabled){box-shadow:0 0 16px var(--accent),inset 0 1px 0 rgba(255,255,255,.4)}
+body.gfx-neo .btn.on{box-shadow:0 0 12px rgba(var(--accent-rgb),.6),inset 0 1px 0 rgba(255,255,255,.4)}
+
+/* bandeau du haut et barre du bas : filet néon qui balaie lentement */
+body.gfx-neo #hud{border-bottom-color:transparent;background:linear-gradient(180deg,rgba(2,3,10,.95),rgba(4,6,16,.7))}
+body.gfx-neo #hud::after,body.gfx-neo #dock::before{content:'';position:absolute;left:0;right:0;height:2px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(var(--accent-rgb),.25) 20%,var(--accent) 50%,var(--sec) 58%,rgba(var(--accent-rgb),.25) 80%,transparent) 0 0/200% 100%;
+  animation:neoline 9s linear infinite;opacity:.85}
+body.gfx-neo #hud::after{bottom:-1px}
+body.gfx-neo #dock::before{top:-1px}
+@keyframes neoline{to{background-position:-200% 0}}
+body.gfx-neo .hstat .lbl{font-family:var(--disp);font-weight:400;font-size:11px;letter-spacing:.16em}

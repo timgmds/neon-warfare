@@ -24,6 +24,11 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '10.0', d: ['Refonte graphique « Néon 10 », toujours en 2D : décors animés en WebGL pour les 5 thèmes (soleil synthwave, pluie Matrix, lave, trou noir, soleil en éruption).',
+    'Halo lumineux sur les tirs, les explosions et les tourelles.',
+    'Tourelles redessinées (socles en relief) et animées : le noyau respire, s\'illumine à chaque tir, et un anneau d\'énergie tourne autour des paliers 2 et plus. Les ennemis laissent une traînée lumineuse.',
+    'Titre et grandes annonces (vagues, boss, combos, victoire) en lettrage 3D rétro. Nouvelle interface : fenêtres, boutons et bandeaux.',
+    'L\'ancien rendu reste disponible : Options → Style graphique → Classique. En qualité basse, le jeu se passe des effets WebGL.'] },
   { v: '9.23', d: ['Après Oméga : nouvel élément, la quintessence ❂ (phases et défaite d\'Oméga, puis chaque boss après la vague 100).',
     'Arbre : palier V (Annihilation, Surcharge quantique, Dividendes du néant) puis rangs infinis.',
     'Trois canons reliques T5 au Labo : Lance-Néant, Annihilateur et Soleil noir.'] },

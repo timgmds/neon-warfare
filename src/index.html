@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#05060c">
-<title>Neon Warfare 9</title>
+<title>Neon Warfare 10</title>
 <!-- Fichier assemblé par tools/build.mjs à partir du dossier src/ : modifiez src/, puis lancez « node tools/build.mjs ». -->
 <style>
 /*@CSS*/
@@ -12,9 +12,11 @@
 </head>
 <body class="theme-cyber">
 <canvas id="cv-bg"></canvas>
+<canvas id="cv-glbg"></canvas>
 <canvas id="cv-fx"></canvas>
 <canvas id="cv-map"></canvas>
 <canvas id="cv-game"></canvas>
+<canvas id="cv-bloom"></canvas>
 <div id="vignette"></div>
 <div id="crt"></div>
 
@@ -70,7 +72,7 @@
 
 <div class="ov" id="ov-menu">
   <div class="menu">
-    <div class="title">NEON WARFARE<span>FUSION PROTOCOL · 9</span></div>
+    <div class="title"><b class="x3d" data-t="NEON WARFARE">NEON WARFARE</b><span>FUSION PROTOCOL · 10</span></div>
     <div class="cmdb" id="menu-cmd"></div>
     <div class="mbtns" id="menu-btns"></div>
     <div class="mfoot" id="menu-foot"></div>

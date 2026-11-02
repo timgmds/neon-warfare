@@ -10,7 +10,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => readFileSync(join(root, p), 'utf8').replace(/\r\n/g, '\n');
 const tpl = read('src/index.html');
 for (const mark of ['/*@CSS*/\n', '/*@JS*/\n']) if (tpl.split(mark).length !== 2) throw new Error(`src/index.html doit contenir une seule fois ${mark.trim()}`);
-const css = read('src/style.css');
+// polices intégrées : /*@FONT:nom*/ devient le contenu base64 de src/fonts/nom.woff2
+const css = read('src/style.css').replace(/\/\*@FONT:([\w-]+)\*\//g, (m, n) => readFileSync(join(root, 'src/fonts', n + '.woff2')).toString('base64'));
 const mods = readdirSync(join(root, 'src/js')).filter(f => /^\d+-.+\.js$/.test(f)).sort();
 const js = mods.map(f => {
   const t = read('src/js/' + f);
