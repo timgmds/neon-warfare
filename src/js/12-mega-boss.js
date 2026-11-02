@@ -8,6 +8,7 @@ const Mega = {
     for (const k of ['jam', 'summon', 'drain', 'rift', 'blink', 'aura']) if (P[k]) e.mt[k] = Math.round(P[k].every * (first ? .6 : .4));
     if (first) return;
     Res.drop('a', e.type === 'omega' ? 2 : 1, e.x, e.y - 50);   // chaque phase arrachée au méga-boss rapporte de l'abyssite
+    if (e.type === 'omega' || (e.wave || 0) > QFROM) Res.drop('q', 1, e.x, e.y - 72);   // … et, à partir d'Oméga, de la quintessence
     e.inv = 150; e.leapTo = 0; e.slowT = 0; e.freezeT = 0;
     if (P.shieldBack && e.maxShield) e.shield = Math.max(e.shield, e.maxShield * P.shieldBack);
     Render.shake(20); Render.flash(.45, e.d.color); Sfx.play('boss');

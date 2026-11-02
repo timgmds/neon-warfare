@@ -58,11 +58,11 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 
 | | |
 |---|---|
-| **26 tourelles** | 8 de base, 2 de soutien (Ventilo, Ordi) et **16 fusions** sur 3 paliers (T2 → T3 → T4), dont les soutiens **Nexus** (T2), **Oracle** (T3 : critiques et perforation) et **Cœur abyssal** (T4 : dégâts, cadence et portée sur 12 voisines). Une tourelle ne garde que le meilleur bonus de chaque type de soutien |
+| **29 tourelles** | 8 de base, 2 de soutien (Ventilo, Ordi), **16 fusions** sur 3 paliers (T2 → T3 → T4) et **3 reliques T5** après Oméga (Lance-Néant, Annihilateur, Soleil noir, payées en quintessence) ; dont les soutiens **Nexus** (T2), **Oracle** (T3 : critiques et perforation) et **Cœur abyssal** (T4 : dégâts, cadence et portée sur 12 voisines). Une tourelle ne garde que le meilleur bonus de chaque type de soutien |
 | **Spécialisations** | au niveau 5 (niveau 3 pour le soutien), chaque tourelle choisit **1 voie sur 2** qui change son comportement |
 | **Fin de partie** | après le Léviathan (vague 50) : **niveaux Oméga** 11 à 15 (+35 % de dégâts par niveau, crédits + 1 abyssite par niveau) et **Recherche Oméga** (+8 % de dégâts pour toutes les tourelles par rang, sans limite, en plasma) ; badge ⚔ qui estime le temps de tir nécessaire contre la vague suivante. Au-delà de la vague 50, les PV progressent de 13 % par vague, de quoi viser la vague 100 |
 | **Fusion des canons** | plans achetés au Labo avec des nanites, puis **fusion sur le terrain** de deux tourelles adjacentes |
-| **Arbre de compétences** | 30 compétences en 3 branches et 4 paliers : nanites (palier II), **plasma** (palier III) et **abyssite** (palier IV) ; une **raffinerie** transforme les nanites en trop en plasma |
+| **Arbre de compétences** | 39 compétences en 3 branches et 5 paliers : nanites (palier II), **plasma** (palier III), **abyssite** (palier IV), **quintessence** (palier V, après Oméga), puis 3 **rangs infinis** (dégâts, cadence, crédits) ; une **raffinerie** transforme les nanites en trop en plasma |
 | **Éléments rares** | **plasma ✺** (1 par boss dès la vague 10, 2 dès la 25, 3 dès la 40 ; parfois élites ; raffinerie) et **abyssite ⬟** (arrachée au Léviathan à chaque phase, puis aux boss après la vague 50). Les fusions **T3** demandent du plasma et l'Apocalypse **T4** de l'abyssite, pour le plan au Labo **et** pour chaque pose. Le plan dépend de la difficulté (T3 : 3 / 5 / 7 / 9 ✺, T4 : 2 / 3 / 4 / 5 ⬟) et chaque pose coûte un peu plus que la précédente (Standard : T3 0, 1, 2… ✺ ; T4 0, 2, 4… ⬟) ; revendre fait redescendre le prix |
 | **Capacités** | Frappe Orbitale (ciblée), Cryo-Bombe, Surcharge |
 | **Ennemis** | 22 types (dont régénérateurs, ruches, déphaseurs, nécromants, mastodontes, voileurs…), élites et **6 boss** à mécanique (Colosse, Hydre, Overlord, Scission, Sentinelle, Sauteur), présentés à leur arrivée |
@@ -160,6 +160,7 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v9.23** : après Oméga : quintessence ❂, palier V de l'arbre et rangs infinis, trois reliques T5 (Lance-Néant, Annihilateur, Soleil noir).
 - **v9.22** : bonus de soutien non cumulables par type (fin de l'empilement de Nexus) ; nouveaux soutiens Oracle (T3) et Cœur abyssal (T4).
 - **v9.21** : régénération de la phase 3 du Léviathan 0,7 % → 0,4 % de ses PV par seconde, d'après la mesure des dégâts par seconde nécessaires autour de la vague 50.
 - **Outils** : code source découpé dans `src/` (45 modules) et assemblé par `tools/build.mjs` en un seul fichier identique ; bot d'équilibrage à jour.

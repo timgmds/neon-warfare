@@ -4,7 +4,7 @@ const Game = {
   makeState(diffKey, map, seed) {
     G = {
       diffKey, diff: DIFFS[diffKey], seed, rs: seed ^ 0x5bd1e995, map, towers: [], tgrid: new Array(map.C * map.R).fill(null), enemies: [], drops: [],
-      strikes: [], vortices: [], spawnQ: [], waves: {}, money: 0, lives: 0, maxLives: 0, nanites: 0, res: { p: 0, a: 0, ref: 0 }, recycle: 0, waveNum: 0,
+      strikes: [], vortices: [], spawnQ: [], waves: {}, money: 0, lives: 0, maxLives: 0, nanites: 0, res: { p: 0, a: 0, q: 0, ref: 0 }, recycle: 0, waveNum: 0,
       cus: null, paused: 0, pst: {}, phase: 'prep', autoT: 480, tick: 0, nextId: 1, combo: 0, comboT: 0, overdriveT: 0, skills: {}, unlocked: new Set(),
       abil: { orbital: 0, emp: 0, overdrive: 0 }, used: {}, recycling: null, over: false, boss: null, seen: [], freshBp: null, mod: null,
       daily: null, mutKeys: [], mut: makeMut([]), demo: false, fusePairs: [],
@@ -52,7 +52,7 @@ const Game = {
     G.cmdStart = Object.assign({}, Store.data.cmd);
     if (G.gm === 'rush') G.money = Math.round(G.money * 1.5);
     if (G.cus) Custom.start();
-    if (G.gm === 'sandbox') { G.money = 99999; G.nanites = 999; G.res.p = G.res.a = 999; for (const r of RECIPES) G.unlocked.add(r.r); }
+    if (G.gm === 'sandbox') { G.money = 99999; G.nanites = 999; G.res.p = G.res.a = G.res.q = 999; for (const r of RECIPES) G.unlocked.add(r.r); }
     if (G.net === 'coop') {
       // un portefeuille par joueur : G.money désigne celui de l'auteur de l'action (ou du joueur local)
       const S = opts.slots || [0, 1], n = Math.max(...S) + 1;
@@ -60,7 +60,7 @@ const Game = {
       const m0 = i => Math.round((opts.perksBy ? (diff.money + 40 * ((opts.perksBy[i] || {}).h_money || 0)) * G.mut.money : G.money) * COOP.start);
       G.wallets = Array.from({ length: n }, (_, i) => m0(i)); delete G.money;
       // plasma et abyssite : chacun les siens (chaque boss en donne à tous les joueurs présents)
-      G.resW = Array.from({ length: n }, () => ({ p: 0, a: 0, ref: 0 })); bindRes();
+      G.resW = Array.from({ length: n }, () => ({ p: 0, a: 0, q: 0, ref: 0 })); bindRes();
       G.np = S.length; G.gone = {}; for (let i = 0; i < n; i++) if (!S.includes(i)) G.gone[i] = 1;
       G.tokens = Array(n).fill(Casino.TOKENS);
       Object.defineProperty(G, 'money', {
@@ -100,7 +100,7 @@ const Game = {
       G.portrait = !!s.portrait;
       if (s.gm && GMODES[s.gm]) { G.gm = s.gm; if (G.gm === 'chaos' && !s.daily) { G.mutKeys = ['chaos']; G.mut = makeMut(G.mutKeys); } }
       if (G.gm === 'custom') Custom.apply(s.cus);
-      Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, res: Object.assign({ p: 0, a: 0, ref: 0 }, s.res), recycle: s.recycle,
+      Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, res: Object.assign({ p: 0, a: 0, q: 0, ref: 0 }, s.res), recycle: s.recycle,
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
         doctrine: DOCTRINES[s.doctrine] ? s.doctrine : 'standard', missions: (s.missions || []).filter(m => MDEF[m.id]),
         cards: s.cards || {}, timed: s.timed || [], cardQ: s.cardQ || 0, offer: s.offer || null, xpRun: s.xpRun || 0, cx: s.cx || {},

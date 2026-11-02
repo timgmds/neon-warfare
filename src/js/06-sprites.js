@@ -23,7 +23,7 @@ function drawTowerBase(x, d) {
     }
     if (big) { x.setLineDash([3, 3]); circ(x, 0, 0, 21); x.strokeStyle = rgba(c, .45); x.lineWidth = 1; x.stroke(); x.setLineDash([]); }
   } else {
-    const R = [16, 0, 17.5, 18.5, 19][d.tier];
+    const R = [16, 0, 17.5, 18.5, 19, 20][d.tier];
     x.shadowColor = c; x.shadowBlur = d.tier >= 2 ? 14 : 8;
     if (d.tier === 0) circ(x, 0, 0, R);
     else if (d.tier === 2) polyPath(x, 8, R, Math.PI / 8);
@@ -37,7 +37,8 @@ function drawTowerBase(x, d) {
     x.fillStyle = '#4c5b78';
     for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + Math.PI / 4; circ(x, Math.cos(a) * (R - 2.4), Math.sin(a) * (R - 2.4), 1.2); x.fill(); }
     if (d.tier >= 3) { x.setLineDash([3, 4]); circ(x, 0, 0, R + 3); x.strokeStyle = rgba(c, .65); x.lineWidth = 1.2; x.stroke(); x.setLineDash([]); }
-    if (d.tier === 4) { circ(x, 0, 0, R + 6.5); x.strokeStyle = 'rgba(255,210,63,.55)'; x.lineWidth = 1; x.stroke(); }
+    if (d.tier >= 4) { circ(x, 0, 0, R + 6.5); x.strokeStyle = 'rgba(255,210,63,.55)'; x.lineWidth = 1; x.stroke(); }
+    if (d.tier === 5) { circ(x, 0, 0, R + 9); x.strokeStyle = 'rgba(255,240,138,.7)'; x.lineWidth = 1.4; x.setLineDash([2, 3]); x.stroke(); x.setLineDash([]); }
   }
   x.restore();
 }

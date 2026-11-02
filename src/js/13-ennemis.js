@@ -180,11 +180,12 @@ const Enemies = {
       const bn = (e.d.mega ? 15 : 3) + G.mut.bossNano;
       G.nanites += bn; G.stats.bosses++;
       const ew = e.wave || 0;   // 0 : boss envoyé par un adversaire (versus), sans éléments rares
-      if (e.d.mega) { Res.drop('p', e.type === 'omega' ? 12 : 8, e.x, e.y - 48); Res.drop('a', e.type === 'omega' ? 6 : 3, e.x, e.y - 68); }
+      if (e.d.mega) { Res.drop('p', e.type === 'omega' ? 12 : 8, e.x, e.y - 48); Res.drop('a', e.type === 'omega' ? 6 : 3, e.x, e.y - 68); Res.drop('q', e.type === 'omega' ? 5 : ew > QFROM ? 2 : 0, e.x, e.y - 88); }
       else {
         // 1 ✺ par boss dès la vague 10, 2 dès la 25, 3 dès la 40 (1 en Boss Rush, où il y a un boss par vague)
         if (ew >= 10) Res.drop('p', (G.gm === 'rush' ? 1 : ew >= 40 ? 3 : ew >= 25 ? 2 : 1) + (e.elite ? 1 : 0) + G.mod.prosp, e.x, e.y - 48);
         if (ew > Towers.omFrom()) Res.drop('a', 1 + G.mod.abyssB, e.x, e.y - 68);
+        if (ew > QFROM) Res.drop('q', 1 + G.mod.quintB, e.x, e.y - 88);
       }
       if (e.d.mega) {
         G.stats.megas = (G.stats.megas || 0) + 1; Ach.unlock(e.type);

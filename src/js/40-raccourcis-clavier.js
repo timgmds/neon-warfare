@@ -24,6 +24,9 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '9.23', d: ['Après Oméga : nouvel élément, la quintessence ❂ (phases et défaite d\'Oméga, puis chaque boss après la vague 100).',
+    'Arbre : palier V (Annihilation, Surcharge quantique, Dividendes du néant) puis rangs infinis.',
+    'Trois canons reliques T5 au Labo : Lance-Néant, Annihilateur et Soleil noir.'] },
   { v: '9.22', d: ['Soutiens : une tourelle ne garde que le meilleur bonus de chaque type de soutien (empiler les Nexus ne sert plus à rien).',
     'Nouveau soutien T3 : l\'Oracle (Nexus + Stase, en plasma) donne critiques et perforation du blindage.',
     'Nouveau soutien T4 : le Cœur abyssal (Oracle + Nexus, en abyssite) donne dégâts, cadence et portée à 12 voisines.'] },

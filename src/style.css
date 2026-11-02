@@ -317,6 +317,7 @@ body.no-crt #crt{display:none}
 .tier{text-align:center;font-size:10px;font-weight:800;letter-spacing:.24em;padding-top:8px;border-top:1px dashed;position:relative;z-index:2;margin-bottom:-8px}
 .tier.p{color:#ff8a3d;border-color:rgba(255,138,61,.5)}
 .tier.a{color:#b48cff;border-color:rgba(180,140,255,.5)}
+.tier.q{color:#fff08a;border-color:rgba(255,240,138,.5)}
 .snode.top .ic{width:62px;height:62px;border-width:4px;border-style:double;font-size:24px}
 .ars.ref{border-color:rgba(255,138,61,.45);background:linear-gradient(90deg,rgba(255,138,61,.1),rgba(255,138,61,.02))}
 .ars.ref .ic{color:#ff8a3d;border-color:#ff8a3d;box-shadow:0 0 12px rgba(255,138,61,.4)}

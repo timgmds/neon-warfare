@@ -31,38 +31,41 @@ const OMEGA = { from: 50, max: 15, dmg: 1.35, cost: 1.5, abyss: 1, ars: .08, ars
 const RES = {
   n: { i: '◈', c: '#00ffaa', n: 'nanites' },
   p: { i: '✺', c: '#ff8a3d', n: 'plasma' },
-  a: { i: '⬟', c: '#b48cff', n: 'abyssite' }
+  a: { i: '⬟', c: '#b48cff', n: 'abyssite' },
+  q: { i: '❂', c: '#fff08a', n: 'quintessence' }
 };
+const QFROM = 100;   // après Oméga (vague 100), les boss lâchent de la quintessence
 // fusions T3 (plasma) et T4 (abyssite) : le plan au Labo et chaque pose coûtent des éléments rares, selon la difficulté.
 // plan : index = palier. pose : [base, pas] par palier → la n-ième tourelle de ce palier déjà en jeu coûte base + pas × n
 // (la première est donc bon marché, c'est l'accumulation qui coûte cher ; revendre fait redescendre le prix)
 const ELEM_COST = {
-  recrue:    { plan: [0, 0, 0, 3, 2], pose: { 3: [-1, 1], 4: [0, 1] } },
-  standard:  { plan: [0, 0, 0, 5, 3], pose: { 3: [0, 1], 4: [0, 2] } },
-  hardcore:  { plan: [0, 0, 0, 7, 4], pose: { 3: [1, 1], 4: [0, 3] } },
-  cauchemar: { plan: [0, 0, 0, 9, 5], pose: { 3: [1, 2], 4: [0, 4] } }
+  recrue:    { plan: [0, 0, 0, 3, 2, 2], pose: { 3: [-1, 1], 4: [0, 1], 5: [0, 1] } },
+  standard:  { plan: [0, 0, 0, 5, 3, 3], pose: { 3: [0, 1], 4: [0, 2], 5: [1, 1] } },
+  hardcore:  { plan: [0, 0, 0, 7, 4, 4], pose: { 3: [1, 1], 4: [0, 3], 5: [1, 2] } },
+  cauchemar: { plan: [0, 0, 0, 9, 5, 5], pose: { 3: [1, 2], 4: [0, 4], 5: [2, 2] } }
 };
 // coopération : G.res lit et écrit la réserve du joueur qui agit (ou du joueur local), comme G.money
 function bindRes() {
-  const W = G.resW, cur = () => W[G.actor != null ? G.actor : Net.me] || W[0], o = { sp: G.res.sp || 0, sa: G.res.sa || 0 };
-  for (const k of ['p', 'a', 'ref']) Object.defineProperty(o, k, { get() { return cur()[k] || 0; }, set(v) { cur()[k] = v; }, enumerable: true });
+  const W = G.resW, cur = () => W[G.actor != null ? G.actor : Net.me] || W[0], o = { sp: G.res.sp || 0, sa: G.res.sa || 0, sq: G.res.sq || 0 };
+  for (const k of ['p', 'a', 'q', 'ref']) Object.defineProperty(o, k, { get() { return cur()[k] || 0; }, set(v) { cur()[k] = v; }, enumerable: true });
   G.res = o;
 }
 const Res = {
-  get(c) { return c === 'p' ? G.res.p : c === 'a' ? G.res.a : G.nanites; },
-  take(c, v) { if (c === 'p') G.res.p -= v; else if (c === 'a') G.res.a -= v; else G.nanites -= v; },
+  get(c) { return c === 'n' ? G.nanites : G.res[c] || 0; },
+  take(c, v) { if (c === 'n') G.nanites -= v; else G.res[c] = (G.res[c] || 0) - v; },
   gain(c, v, x, y) {
     if (!(v > 0)) return;
     const first = !G.res['s' + c];
     // coopération : un butin (boss, élite) revient en entier à chaque joueur présent ; une action ne crédite que son auteur
     if (G.resW && G.actor == null) { G.resW.forEach((w, i) => { if (!(G.gone && G.gone[i])) w[c] = (w[c] || 0) + v; }); }
-    else G.res[c] += v;
+    else G.res[c] = (G.res[c] || 0) + v;
     G.res['s' + c] = 1;
     if (G.demo) return;
     if (x != null) FX.float(x, y, `+${v} ${RES[c].i}`, RES[c].c, 17);
-    if (first) UI.toast(c === 'p' ? 'Nouvel élément : plasma ✺' : 'Nouvel élément : abyssite ⬟',
+    if (first) UI.toast(c === 'p' ? 'Nouvel élément : plasma ✺' : c === 'a' ? 'Nouvel élément : abyssite ⬟' : 'Nouvel élément : quintessence ❂',
       c === 'p' ? 'Lâché par les boss, parfois par les élites, ou raffiné à partir de nanites. Il débloque le <b>palier III</b> de l\'arbre de compétences (touche K).'
-        : `Arrachée au Léviathan, puis aux boss après la vague ${Towers.omFrom()}. Elle débloque le <b>palier IV</b> de l\'arbre et paie les <b>niveaux Oméga</b> des tourelles.`, RES[c].c, 7);
+        : c === 'a' ? `Arrachée au Léviathan, puis aux boss après la vague ${Towers.omFrom()}. Elle débloque le <b>palier IV</b> de l\'arbre et paie les <b>niveaux Oméga</b> des tourelles.`
+        : `Arrachée à Oméga, puis aux boss après la vague ${QFROM}. Elle débloque le <b>palier V</b> de l\'arbre, ses <b>rangs infinis</b> et les canons <b>reliques T5</b> au Labo.`, RES[c].c, 8);
   },
   tag(c, v) { return `<b style="color:${RES[c].c};font-family:var(--mono)">${v} ${RES[c].i}</b>`; },
   // butin d'élément (boss, élites, méga-boss) : multiplié en partie perso, la fraction devient une chance

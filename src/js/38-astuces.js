@@ -16,6 +16,8 @@ const TIPS = [
     t: 'Casino', d: () => `Entre deux vagues, tentez la machine à sous ou pariez sur la prochaine vague (${Keys.lbl('casino') || '—'}).` },
   { id: 'jam', w: () => G.towers.some(t => t.stun > 0 && t.jamP),
     t: 'Tourelle hors ligne', d: () => `Une IEM a coupé des tourelles : ${Keys.lbl('unjam') || '—'} les débrouille contre des crédits.` },
+  { id: 'quint', w: () => (G.res.q || 0) >= 2,
+    t: 'Quintessence ❂', d: () => `Elle débloque le palier V de l'arbre (${Keys.lbl('tree') || '—'}), ses rangs infinis, et les reliques T5 au Labo (${Keys.lbl('lab') || '—'}).` },
   { id: 'plasma', w: () => G.res.p >= 3,
     t: 'Plasma ✺', d: () => 'Le plasma paie le palier III de l\'arbre et les plans <b>T3</b> au Labo ; chaque pose d\'une T3 en coûte aussi.' },
   { id: 'spec', w: () => G.towers.some(t => Towers.needsSpec(t) && Act.owns(t)),

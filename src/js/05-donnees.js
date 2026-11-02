@@ -65,7 +65,14 @@ const TOWERS = {
     desc: 'Orage ionique : chaîne de 6 rebonds qui ralentit.' },
   // ----- FUSION T4 -----
   apocalypse: { name: 'Apocalypse', tier: 4, cost: 2800, range: 340, dmg: 520, rate: 190, color: '#ffd23f', kind: 'orbital', head: 'apoc', strikes: 3, sr: 52, heat: 50, cool: .5,
-    desc: 'Appelle 3 frappes orbitales sur les ennemis à portée. L\'arme ultime.' }
+    desc: 'Appelle 3 frappes orbitales sur les ennemis à portée. L\'arme ultime.' },
+  // ----- RELIQUES T5 (après Oméga, en quintessence) -----
+  lance:    { name: 'Lance-Néant', tier: 5, cost: 5200, range: 620, dmg: 2800, rate: 150, color: '#e9d8ff', kind: 'pierce', head: 'rail2', pierce: 1, heat: 60, cool: .3,
+    desc: 'Relique : un rayon de néant traverse toute la carte en ligne droite, ignore le blindage et pulvérise tout ce qu\'il touche.' },
+  annihil:  { name: 'Annihilateur', tier: 5, cost: 5600, range: 400, dmg: 900, rate: 200, color: '#fff08a', kind: 'orbital', head: 'apoc', strikes: 5, sr: 70, heat: 50, cool: .5,
+    desc: 'Relique : 5 frappes orbitales géantes à chaque salve. Plus rien ne passe.' },
+  sun:      { name: 'Soleil noir', tier: 5, cost: 5000, range: 230, dmg: 1400, rate: 110, color: '#ff6a3d', kind: 'proj', head: 'nova', spd: 5, psz: 10, splash: 150, heat: 60, cool: .5,
+    desc: 'Relique : une étoile effondrée qui écrase des zones entières en explosant.' }
 };
 for (const k in TOWERS) TOWERS[k].key = k;
 
@@ -85,9 +92,12 @@ const RECIPES = [
   { a: 'laser', b: 'stasis', r: 'singularity', n: 22 },
   { a: 'blizzard', b: 'tesla', r: 'storm', n: 18 },
   { a: 'nova', b: 'railgun', r: 'apocalypse', n: 35 },
-  { a: 'oracle', b: 'nexus', r: 'abyss', n: 30 }
+  { a: 'oracle', b: 'nexus', r: 'abyss', n: 30 },
+  { a: 'apocalypse', b: 'singularity', r: 'lance', n: 40 },
+  { a: 'apocalypse', b: 'storm', r: 'annihil', n: 40 },
+  { a: 'abyss', b: 'nova', r: 'sun', n: 40 }
 ];
-const TIER_NAMES = ['STANDARD', 'SOUTIEN', 'FUSION T2', 'FUSION T3', 'FUSION T4'];
+const TIER_NAMES = ['STANDARD', 'SOUTIEN', 'FUSION T2', 'FUSION T3', 'FUSION T4', 'RELIQUE T5'];
 const COMBO_STEPS = [25, 50, 75, 100, 150, 200, 300, 500];
 const COMBO_CALL = { 25: 'CARNAGE', 50: 'DÉCHAÎNÉ', 75: 'INARRÊTABLE', 100: 'APOCALYPTIQUE', 150: 'LÉGENDAIRE', 200: 'DIVIN', 300: 'COSMIQUE', 500: 'AU-DELÀ DU RÉEL' };
 /* ---------- modes de jeu (écran Nouvelle partie) ---------- */
@@ -113,6 +123,7 @@ const CUSTOM = [
   { k: 'n0', g: 'ÉLÉMENTS', n: 'Nanites de départ', v: [0, 3, 10, 25, 50, 100], d: 3, f: 'n', i: '◈' },
   { k: 'p0', g: 'ÉLÉMENTS', n: 'Plasma de départ', v: [0, 3, 5, 10, 25, 50], d: 0, f: 'n', i: '✺' },
   { k: 'a0', g: 'ÉLÉMENTS', n: 'Abyssite de départ', v: [0, 2, 5, 10, 25], d: 0, f: 'n', i: '⬟' },
+  { k: 'q0', g: 'ÉLÉMENTS', n: 'Quintessence de départ', v: [0, 2, 5, 10, 25], d: 0, f: 'n', i: '❂' },
   { k: 'omega', g: 'PARTIE', n: 'Niveaux Oméga après la vague', v: [10, 20, 30, 50, 75], d: 50, f: 'n' },
   { k: 'plans', g: 'PARTIE', n: 'Plans de fusion offerts', v: [0, 2, 3, 4], d: 0, l: ['AUCUN', 'T2', 'T2 + T3', 'TOUS'] },
   { k: 'ev', g: 'PARTIE', n: 'Événements aléatoires', v: [0, 1, 3], d: 1, l: ['AUCUN', 'NORMAUX', 'CHAOS'] },
@@ -138,6 +149,7 @@ const Custom = {
     G.nanites += c.n0 - 3; G.res.p = c.p0; G.res.a = c.a0;
     if (c.p0) G.res.sp = 1;
     if (c.a0) G.res.sa = 1;
+    G.res.q = c.q0; if (c.q0) G.res.sq = 1;
     for (const r of RECIPES) if (TOWERS[r.r].tier <= c.plans) G.unlocked.add(r.r);
   },
   differs() { const c = this.get(); return CUSTOM.some(d => c[d.k] !== d.d); },
@@ -356,6 +368,13 @@ const SKILLS = {
   // palier IV : abyssite
   a10: { br: 0, row: 6, col: 1, cur: 'a', top: true, i: '✹', n: 'Fureur abyssale', max: 3, cost: [2, 3, 4], req: [['a9', 1]], d: r => `+${25 * r}% dégâts et +${5 * r}% de coup critique.` },
   e10: { br: 1, row: 6, col: 1, cur: 'a', top: true, i: 'Ω', n: 'Protocole Oméga', max: 1, cost: [4], req: [['e9', 1]], d: () => 'Niveaux Oméga : +50% de dégâts par niveau au lieu de +35%.' },
+  // palier V : quintessence (après Oméga), puis rangs sans limite
+  a11: { br: 0, row: 7, col: 1, cur: 'q', top: true, i: '☄', n: 'Annihilation', max: 3, cost: [2, 3, 4], req: [['a10', 1]], d: r => `+${20 * r}% dégâts et dégâts critiques +${25 * r}%.` },
+  e11: { br: 1, row: 7, col: 1, cur: 'q', top: true, i: '⚛', n: 'Surcharge quantique', max: 3, cost: [2, 3, 4], req: [['e10', 1]], d: r => `+${10 * r}% de cadence et -${10 * r}% de chaleur.` },
+  c11: { br: 2, row: 7, col: 1, cur: 'q', top: true, i: '❂', n: 'Dividendes du néant', max: 2, cost: [3, 4], req: [['c10', 1]], d: r => `+${r} quintessence par boss après la vague ${QFROM} et +${20 * r}% de crédits par élimination.` },
+  a12: { br: 0, row: 8, col: 1, cur: 'q', top: true, inf: true, i: '∞', n: 'Puissance infinie', max: Infinity, cost: [2], req: [['a11', 1]], d: r => `+${6 * r}% dégâts (sans limite, +1 ❂ de prix par rang).` },
+  e12: { br: 1, row: 8, col: 1, cur: 'q', top: true, inf: true, i: '∞', n: 'Cadence infinie', max: Infinity, cost: [2], req: [['e11', 1]], d: r => `+${4 * r}% de cadence (sans limite, +1 ❂ de prix par rang).` },
+  c12: { br: 2, row: 8, col: 1, cur: 'q', top: true, inf: true, i: '∞', n: 'Fortune infinie', max: Infinity, cost: [2], req: [['c11', 1]], d: r => `+${6 * r}% de crédits par élimination et de primes de vague (sans limite, +1 ❂ de prix par rang).` },
   c10: { br: 2, row: 6, col: 1, cur: 'a', top: true, i: '⬟', n: 'Filon abyssal', max: 1, cost: [3], req: [['c9', 1]], d: () => '+1 abyssite par boss vaincu après la vague 50 et +25% de crédits par élimination.' }
 };
 

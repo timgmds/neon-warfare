@@ -1,7 +1,7 @@
 /* ============================== TOURELLES ============================== */
 const Towers = {
   _hit: [],
-  elemOf(k) { const t = TOWERS[k].tier; return t === 3 ? 'p' : t === 4 ? 'a' : null; },
+  elemOf(k) { const t = TOWERS[k].tier; return t === 3 ? 'p' : t === 4 ? 'a' : t === 5 ? 'q' : null; },
   // plan = synthèse au Labo ; sinon pose (construction ou fusion sur le terrain)
   elemCost(k, plan) {
     if (!this.elemOf(k)) return 0;
@@ -25,7 +25,7 @@ const Towers = {
   elemTxt(k, plan) { const c = this.elemOf(k), v = c ? this.elemCost(k, plan) : 0; return v ? ` + ${v} ${RES[c].i}` : ''; },
   elemMissing(k) {
     const c = this.elemOf(k);
-    if (Act.mine()) { Sfx.play('error'); UI.toast(c === 'p' ? 'Plasma requis' : 'Abyssite requise', `Poser une ${TOWERS[k].name} coûte aussi ${Res.tag(c, this.elemCost(k))} (${c === 'p' ? 'boss, élites, raffinerie' : 'méga-boss, puis boss après la vague ' + this.omFrom()}). Le prix monte avec le nombre de ${TOWERS[k].tier === 3 ? 'T3' : 'T4'} déjà posées.`, RES[c].c, 3.5); }
+    if (Act.mine()) { Sfx.play('error'); UI.toast(c === 'p' ? 'Plasma requis' : c === 'a' ? 'Abyssite requise' : 'Quintessence requise', `Poser une ${TOWERS[k].name} coûte aussi ${Res.tag(c, this.elemCost(k))} (${c === 'p' ? 'boss, élites, raffinerie' : c === 'a' ? 'méga-boss, puis boss après la vague ' + this.omFrom() : 'Oméga, puis boss après la vague ' + QFROM}). Le prix monte avec le nombre de T${TOWERS[k].tier} déjà posées.`, RES[c].c, 3.5); }
   },
   costOf(k) { return Math.round(TOWERS[k].cost * G.mod.cost * (G.mod.kcost[k] || 1) * (TOWERS[k].tier === 0 ? G.mod.t0cost : 1)); },
   // niveaux Oméga : une fois la vague 30 repoussée (en vague 30 ou plus tard)

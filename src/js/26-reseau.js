@@ -745,7 +745,7 @@ const Lock = {
     let h = (G.rs ^ Math.imul(G.tick, 2654435761) ^ Math.round(G.lives * 100)) | 0;
     for (const e of G.enemies) if (e.alive) h = (Math.imul(h, 31) + Math.round(e.hp) + Math.round(e.dist)) | 0;
     for (const w of G.wallets || []) h = (Math.imul(h, 17) + Math.round(w)) | 0;
-    for (const w of G.resW || []) h = (Math.imul(h, 13) + (w.p | 0) * 7 + (w.a | 0)) | 0;
+    for (const w of G.resW || []) h = (Math.imul(h, 13) + (w.p | 0) * 7 + (w.a | 0) + (w.q | 0) * 3) | 0;
     return (h ^ G.towers.length) >>> 0;
   },
   check(t) {

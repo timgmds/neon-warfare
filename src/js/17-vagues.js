@@ -118,7 +118,7 @@ const Waves = {
     let extra = '';
     if (G.income) { gain(G.income); extra += ` · revenu +${G.income}`; }
     if (G.mod.towerCash && G.towers.length) { const v = G.mod.towerCash * G.towers.length; gain(v, null); extra += ` · fonds de guerre +${v}`; }
-    if (G.gm === 'sandbox') { G.money = Math.max(G.money, 99999); G.nanites = Math.max(G.nanites, 999); G.res.p = Math.max(G.res.p, 999); G.res.a = Math.max(G.res.a, 999); }
+    if (G.gm === 'sandbox') { G.money = Math.max(G.money, 99999); G.nanites = Math.max(G.nanites, 999); G.res.p = Math.max(G.res.p, 999); G.res.a = Math.max(G.res.a, 999); G.res.q = Math.max(G.res.q || 0, 999); }
     if (G.sendStock) G.sendStock = {};
     if (G.mod.interest > 0) {
       const cap = 40 * w.n; let it = 0;

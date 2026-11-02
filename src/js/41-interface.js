@@ -190,10 +190,11 @@ const UI = {
       Missions.on('money', money);
       if (this.sel) this.refreshPanelButtons();
     }
-    const rk = G.res.p + ':' + G.res.a + ':' + (G.res.sp ? 1 : 0) + (G.res.sa ? 1 : 0);
+    const rk = G.res.p + ':' + G.res.a + ':' + (G.res.q || 0) + ':' + (G.res.sp ? 1 : 0) + (G.res.sa ? 1 : 0) + (G.res.sq ? 1 : 0);
     if (L.res !== rk) {
       L.res = rk;
-      $('hs-el').hidden = !(G.res.sp || G.res.sa || G.res.p || G.res.a);
+      $('hs-el').hidden = !(G.res.sp || G.res.sa || G.res.sq || G.res.p || G.res.a || G.res.q);
+      $('h-quint').textContent = RES.q.i + (G.res.q || 0); $('h-quint').hidden = !(G.res.sq || G.res.q);
       $('h-plasma').textContent = RES.p.i + G.res.p; $('h-abyss').textContent = RES.a.i + G.res.a;
       $('h-abyss').hidden = !(G.res.sa || G.res.a);
       this.refreshBadges(); this.refreshBar();
@@ -1005,7 +1006,7 @@ const UI = {
     requestAnimationFrame(() => this.drawLinks());
   },
   renderTree() {
-    $('tree-sub').innerHTML = `Disponibles : ${Res.tag('n', G.nanites)} · ${Res.tag('p', G.res.p)} · ${Res.tag('a', G.res.a)}<br>` +
+    $('tree-sub').innerHTML = `Disponibles : ${Res.tag('n', G.nanites)} · ${Res.tag('p', G.res.p)} · ${Res.tag('a', G.res.a)}${G.res.sq || G.res.q ? ' · ' + Res.tag('q', G.res.q || 0) : ''}<br>` +
       `<b>Palier II</b> en nanites (fin de vague, boss, butin). <b>Palier III</b> en plasma (boss, parfois élites, raffinerie). <b>Palier IV</b> en abyssite (méga-boss, puis boss après la vague ${Towers.omFrom()}). Les nœuds du 4<sup>e</sup> rang débloquent de nouvelles <b>capacités</b>.`;
     const root = $('tree'); root.innerHTML = '';
     BRANCHES.forEach((b, bi) => {
@@ -1014,10 +1015,10 @@ const UI = {
       col.innerHTML = `<h3>${b.name}</h3><div class="bd">${b.desc}</div>`;
       const rows = document.createElement('div'); rows.className = 'brows';
       rows.innerHTML = '<svg class="links"></svg>';
-      for (let r = 0; r < 7; r++) {
-        if (r === 4 || r === 6) {
-          const h = document.createElement('div'); h.className = 'tier ' + (r === 4 ? 'p' : 'a');
-          h.textContent = r === 4 ? `PALIER III · ${RES.p.i} PLASMA` : `PALIER IV · ${RES.a.i} ABYSSITE`;
+      for (let r = 0; r < 9; r++) {
+        if (r === 4 || r === 6 || r === 7 || r === 8) {
+          const h = document.createElement('div'); h.className = 'tier ' + (r === 4 ? 'p' : r === 6 ? 'a' : 'q');
+          h.textContent = r === 4 ? `PALIER III · ${RES.p.i} PLASMA` : r === 6 ? `PALIER IV · ${RES.a.i} ABYSSITE` : r === 7 ? `PALIER V · ${RES.q.i} QUINTESSENCE` : 'RANGS INFINIS';
           rows.appendChild(h);
         }
         const row = document.createElement('div'); row.className = 'brow';
@@ -1054,7 +1055,7 @@ const UI = {
     else if (can) cls += ' avail';
     else if (ok) cls += ' poor';
     el.className = cls; el.dataset.id = id;
-    el.innerHTML = `<div class="ic"><span>${TXT(s.i)}</span><span class="rk">${r}/${s.max}</span></div><div class="nm">${s.n}</div>`;
+    el.innerHTML = `<div class="ic"><span>${TXT(s.i)}</span><span class="rk">${r}/${s.inf ? '∞' : s.max}</span></div><div class="nm">${s.n}</div>`;
     el.onclick = () => {
       if (Act.do('skill', id)) {
         this.renderTree(); this.drawLinks();
@@ -1101,9 +1102,9 @@ const UI = {
     this.renderLab(); this.open('ov-lab');
   },
   renderLab() {
-    $('lab-sub').innerHTML = `Disponibles : ${Res.tag('n', G.nanites)} · ${Res.tag('p', G.res.p)} · ${Res.tag('a', G.res.a)}<br>Plans <b>T2</b> en nanites, <b>T3</b> en plasma, <b>T4</b> en abyssite ; chaque pose d'une T3 ou T4 coûte aussi son élément (selon la difficulté). Synthétisez un <b>plan</b> pour rendre une tourelle fusionnée constructible. Ensuite, <b>placez ses deux composants côte à côte</b> et sélectionnez-en un pour les <b>fusionner sur le terrain</b> : 80% de leur valeur est récupérée et leur niveau moyen conservé.`;
+    $('lab-sub').innerHTML = `Disponibles : ${Res.tag('n', G.nanites)} · ${Res.tag('p', G.res.p)} · ${Res.tag('a', G.res.a)} · ${Res.tag('q', G.res.q || 0)}<br>Plans <b>T2</b> en nanites, <b>T3</b> en plasma, <b>T4</b> en abyssite, <b>reliques T5</b> en quintessence (après Oméga) ; chaque pose d'une T3 ou T4 coûte aussi son élément (selon la difficulté). Synthétisez un <b>plan</b> pour rendre une tourelle fusionnée constructible. Ensuite, <b>placez ses deux composants côte à côte</b> et sélectionnez-en un pour les <b>fusionner sur le terrain</b> : 80% de leur valeur est récupérée et leur niveau moyen conservé.`;
     const Lb = $('lab'); Lb.innerHTML = '';
-    for (const tier of [2, 3, 4]) {
+    for (const tier of [2, 3, 4, 5]) {
       const h = document.createElement('div'); h.className = 'lab-tier'; h.textContent = TIER_NAMES[tier]; Lb.appendChild(h);
       const grid = document.createElement('div'); grid.className = 'rgrid';
       for (const r of RECIPES.filter(x => TOWERS[x.r].tier === tier)) {
@@ -1728,6 +1729,7 @@ const UI = {
         <li>Les fusions se combinent entre elles : T2 → T3 → l'ultime <b>Apocalypse</b> (T4). 14 recettes à découvrir.</li></ul>
       <h3>CHALEUR & SOUTIEN</h3><ul>
         <li>La <b>surcadence</b> double la cadence mais fait chauffer la tourelle. À 100% elle s'arrête jusqu'à refroidissement complet.</li>
+        <li><b style="color:#fff08a">Après Oméga (vague 100)</b> : la <b>quintessence ❂</b> (chaque phase d'Oméga, sa défaite, puis chaque boss) débloque le <b>palier V</b> de l'arbre, puis des <b>rangs infinis</b> (dégâts, cadence, crédits), et les trois <b>reliques T5</b> au Labo : <b>Lance-Néant</b> (Apocalypse + Singularité), <b>Annihilateur</b> (Apocalypse + Tempête) et <b>Soleil noir</b> (Cœur abyssal + Nova).</li>
         <li><b>Bonus de soutien</b> : une tourelle ne garde que le <b>meilleur bonus de chaque type</b> de soutien (deux Nexus autour d'elle ne comptent qu'une fois, mais un Nexus et un Ordi s'additionnent). Soutiens de haut niveau : l'<b>Oracle</b> T3 (Nexus + Stase : critiques et perforation du blindage) et le <b>Cœur abyssal</b> T4 (Oracle + Nexus : dégâts, cadence et portée sur 12 voisines).</li>
         <li><b>Ventilo</b> : refroidit les 4 voisines (avec 2 ventilos, beaucoup de tourelles tiennent la surcadence en permanence). <b>Ordi</b> : +25% de dégâts aux voisines. <b>Nexus</b> : les deux, sur 8 voisines.</li></ul>
       <h3>MISSIONS & PROTOCOLES</h3><ul>

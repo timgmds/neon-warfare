@@ -7,7 +7,7 @@ const Skills = {
     if (s.reqAny && !s.reqAny.some(([k, r]) => this.rank(k) >= r)) return false;
     return true;
   },
-  cost(id) { const s = SKILLS[id], r = this.rank(id); return r >= s.max ? Infinity : s.cost[r]; },
+  cost(id) { const s = SKILLS[id], r = this.rank(id); return r >= s.max ? Infinity : s.inf ? s.cost[0] + r : s.cost[r]; },
   cur(id) { return SKILLS[id].cur || 'n'; },
   canBuy(id) { return this.reqOk(id) && this.rank(id) < SKILLS[id].max && Res.get(this.cur(id)) >= this.cost(id); },
   anyBuyable() { for (const id in SKILLS) if (this.canBuy(id)) return true; return Towers.omega() && G.res.p >= this.arsCost(); },
@@ -79,6 +79,10 @@ const Skills = {
     for (const tp of G.timed) { const c = CARDS[tp.id]; if (c && c.ehp) m.ehp *= c.ehp; }
     if (G.cx && G.cx.spec) for (const k in G.cx.spec) m.kdmg[k] = (m.kdmg[k] || 1) * G.cx.spec[k];
     if (G.ev && EVENTS[G.ev.k].mod) { const em = EVENTS[G.ev.k].mod; for (const p in em) m[p] *= em[p]; }
+    // palier V et rangs infinis
+    m.dmg *= (1 + .2 * r('a11')) * (1 + .06 * r('a12')); m.critDmg += .25 * r('a11');
+    m.rate *= (1 + .1 * r('e11')) * (1 + .04 * r('e12')); m.heat *= 1 - .1 * r('e11');
+    m.bounty *= (1 + .2 * r('c11')) * (1 + .06 * r('c12')); m.waveBonus *= 1 + .06 * r('c12'); m.quintB = r('c11');
     G.mod = m;
   }
 };
