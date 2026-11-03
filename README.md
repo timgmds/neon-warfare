@@ -124,7 +124,7 @@ Le jeu vise 60 FPS constants, même sur machine modeste :
 
 Le jeu se distribue en **un seul fichier**, `neon-warfare.html`, mais il est **assemblé** à partir du dossier `src/` :
 `src/index.html` (la page, avec les repères `/*@CSS*/` et `/*@JS*/`), `src/style.css` et `src/js/NN-module.js`
-(48 modules, concaténés dans l'ordre des numéros) et `src/fonts/` (la police d'affichage Anton, intégrée en base64 à
+(54 modules, concaténés dans l'ordre des numéros) et `src/fonts/` (la police d'affichage Anton, intégrée en base64 à
 l'assemblage ; licence SIL OFL 1.1 dans `src/fonts/OFL-Anton.txt`). Pour modifier le jeu, éditez `src/`, puis :
 
 ```bash

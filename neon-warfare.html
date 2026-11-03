@@ -8977,7 +8977,9 @@ const Keys = {
   }
 };
 
-/* ============================== INTERFACE ============================== */
+/* ============================== INTERFACE ==============================
+   L'objet UI est réparti sur plusieurs fichiers : celui-ci (infobulles, annonces, HUD, barre de construction,
+   capacités), puis 41-interface-1 à 5, qui lui ajoutent leurs méthodes avec Object.assign. */
 const UI = {
   stack: [], placing: null, targeting: null, sel: null, selDebris: null, hotkeys: [], cards: {}, abEls: {},
   hover: { inside: false, touch: false, tx: -1, ty: -1, wx: 0, wy: 0, sx: 0, sy: 0 },
@@ -9542,6 +9544,9 @@ const UI = {
     }
   },
 
+};
+/* ============================== INTERFACE : sélection et panneau de tourelle ============================== */
+Object.assign(UI, {
   /* ---------- sélection & panneau de tourelle ---------- */
   select(t) {
     this.sel = t; this.selDebris = null; this.hideTip();
@@ -9767,7 +9772,9 @@ const UI = {
     const y = clamp(sy - ph / 2, View.top + 8, Math.max(View.top + 8, View.h - View.bottom - ph - 8));
     P.style.left = x + 'px'; P.style.top = y + 'px';
   },
-
+});
+/* ============================== INTERFACE : menu principal, nouvelle partie, pause, options et fenêtres ============================== */
+Object.assign(UI, {
   /* ---------- fenêtres modales ---------- */
   open(id) { if (!this.stack.includes(id)) this.stack.push(id); $(id).classList.add('show'); this.hideTip(); },
   close(id) {
@@ -10016,7 +10023,9 @@ const UI = {
     this.open('ov-opts');
   },
   toggleFps() { Store.s.fps = !Store.s.fps; Store.save(); $('fps').style.display = Store.s.fps ? 'block' : 'none'; },
-
+});
+/* ============================== INTERFACE : arbre de compétences, labo de fusion, fin de partie, héritage, succès ============================== */
+Object.assign(UI, {
   /* ---------- arbre de compétences ---------- */
   openTree() {
     if (!G || G.over) return;
@@ -10243,6 +10252,9 @@ const UI = {
     }
     this.open('ov-codex');
   },
+});
+/* ============================== INTERFACE : salon multijoueur et multijoueur en partie ============================== */
+Object.assign(UI, {
   /* ---------- multijoueur : salon ---------- */
   mpState: 'home', mpManual: null,
   openMP() {
@@ -10493,6 +10505,9 @@ const UI = {
     if ($('mpe-again')) $('mpe-again').onclick = () => MP.rematch();
     this.open('ov-mpend');
   },
+});
+/* ============================== INTERFACE : casino, analyse de combat, codex, historique et manuel ============================== */
+Object.assign(UI, {
   /* ---------- casino ---------- */
   csTab: 'slot', csLvl: 0, csBet: null, csPct: 0, spinning: false, holdMoney: null,
   openCasino(tab) {
@@ -10803,8 +10818,7 @@ const UI = {
     $('h-tuto').onclick = () => Tuto.launch();
     this.open('ov-help');
   }
-};
-
+});
 /* ============================== PERFORMANCES ============================== */
 const Perf = {
   acc: 0, frames: 0, fps: 60, slow: 0, degraded: false, simMs: 0, workMs: 0,
