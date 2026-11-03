@@ -147,7 +147,8 @@ en coopération elle est horodatée et exécutée au même tick sur les deux mac
 ## Classement en ligne
 
 Le classement du **Défi du jour** passe par **Firebase Firestore** (offre gratuite), en simples requêtes REST : aucune
-bibliothèque. Tant que `LB_CFG` (dans `src/js/39-classement-en-ligne.js`) est vide, il reste invisible dans le jeu.
+bibliothèque. `LB_CFG` (dans `src/js/39-classement-en-ligne.js`) pointe vers le projet `neon-warfare-f82fb` ; vide, le classement
+reste invisible dans le jeu. Pour utiliser un autre projet :
 
 1. Sur [console.firebase.google.com](https://console.firebase.google.com) : créer un projet (Google Analytics inutile).
 2. **Firestore Database** → Créer une base de données, en mode production.
@@ -183,6 +184,8 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v10.2** : classement en ligne du Défi du jour (Firebase Firestore) : publication du score avec le replay,
+  les 50 meilleurs joueurs de chaque jour, replays visibles depuis le classement.
 - **v10.1** : éditeur de cartes : chemin principal, entrées en plus, débris, annulation, cartes enregistrées et code de
   partage ; jouables en solo et en multijoueur (l'hôte choisit la carte dans le salon).
 - **v10.0** : refonte graphique « Néon 10 », toujours en 2D : décors animés en WebGL pour chaque thème, halo lumineux,

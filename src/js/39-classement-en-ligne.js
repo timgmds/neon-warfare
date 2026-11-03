@@ -6,7 +6,7 @@
    (firebase/firestore.rules) vérifient la forme de chaque envoi.
    Sans configuration (projectId et apiKey vides), le classement reste invisible. La clé d'API web de Firebase
    n'est pas un secret : elle identifie le projet, ce sont les règles qui protègent les données. */
-const LB_CFG = { projectId: '', apiKey: '' };
+const LB_CFG = { projectId: 'neon-warfare-f82fb', apiKey: 'AIzaSyACFuyehcHtb1f_83Re7KgNLiBejtapnRA' };
 
 const Online = {
   KMAX: 9999999, cache: {},
@@ -118,7 +118,7 @@ const Online = {
     if (!c || Date.now() - c.t > 30000) box.innerHTML = '<div class="note lbwait">Chargement…</div>';
     let L;
     try { L = c && Date.now() - c.t <= 30000 ? c.L : await this.top(day); } catch (e) {
-      if (this.day === day) box.innerHTML = '<div class="note lbwait">Classement inaccessible : vérifiez votre connexion.</div>';
+      if (this.day === day) box.innerHTML = '<div class="note lbwait">Classement inaccessible : vérifiez votre connexion. Certaines pages (comme l\'aperçu sur claude.ai) bloquent les connexions : jouez alors sur <b>timgmds.github.io/neon-warfare</b>.</div>';
       return;
     }
     if (this.day !== day || !UI.stack.includes('ov-lb')) return;

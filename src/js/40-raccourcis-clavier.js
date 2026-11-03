@@ -24,6 +24,9 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '10.2', d: ['Nouveau : le classement en ligne du Défi du jour (menu principal). Même carte et mêmes vagues pour tout le monde : qui tiendra le plus longtemps ?',
+    'À la fin d\'un Défi du jour, publiez votre score avec votre pseudo (rien ne part sans votre clic).',
+    'Chaque score est accompagné du replay de la partie : le bouton ▶ du classement permet de la regarder.'] },
   { v: '10.1', d: ['Nouveau : l\'éditeur de cartes (menu principal). Tracez le chemin des ennemis d\'un bord à l\'autre, ajoutez jusqu\'à deux entrées qui le rejoignent et des débris à recycler.',
     'Enregistrez vos cartes, partagez-les par code (Éditeur → Code de partage, à coller dans l\'éditeur ou dans le champ « code de carte » de Nouvelle partie).',
     'En multijoueur, l\'hôte choisit la carte dans le salon : aléatoire ou une de ses cartes perso, envoyée aux autres joueurs.',

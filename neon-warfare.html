@@ -1041,7 +1041,7 @@ body.gfx-neo .hstat .lbl{font-family:var(--disp);font-weight:400;font-size:11px;
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '10.1';
+const VERSION = '10.2';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -8317,7 +8317,7 @@ const Score = {
    (firebase/firestore.rules) vérifient la forme de chaque envoi.
    Sans configuration (projectId et apiKey vides), le classement reste invisible. La clé d'API web de Firebase
    n'est pas un secret : elle identifie le projet, ce sont les règles qui protègent les données. */
-const LB_CFG = { projectId: '', apiKey: '' };
+const LB_CFG = { projectId: 'neon-warfare-f82fb', apiKey: 'AIzaSyACFuyehcHtb1f_83Re7KgNLiBejtapnRA' };
 
 const Online = {
   KMAX: 9999999, cache: {},
@@ -8429,7 +8429,7 @@ const Online = {
     if (!c || Date.now() - c.t > 30000) box.innerHTML = '<div class="note lbwait">Chargement…</div>';
     let L;
     try { L = c && Date.now() - c.t <= 30000 ? c.L : await this.top(day); } catch (e) {
-      if (this.day === day) box.innerHTML = '<div class="note lbwait">Classement inaccessible : vérifiez votre connexion.</div>';
+      if (this.day === day) box.innerHTML = '<div class="note lbwait">Classement inaccessible : vérifiez votre connexion. Certaines pages (comme l\'aperçu sur claude.ai) bloquent les connexions : jouez alors sur <b>timgmds.github.io/neon-warfare</b>.</div>';
       return;
     }
     if (this.day !== day || !UI.stack.includes('ov-lb')) return;
@@ -8476,6 +8476,9 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '10.2', d: ['Nouveau : le classement en ligne du Défi du jour (menu principal). Même carte et mêmes vagues pour tout le monde : qui tiendra le plus longtemps ?',
+    'À la fin d\'un Défi du jour, publiez votre score avec votre pseudo (rien ne part sans votre clic).',
+    'Chaque score est accompagné du replay de la partie : le bouton ▶ du classement permet de la regarder.'] },
   { v: '10.1', d: ['Nouveau : l\'éditeur de cartes (menu principal). Tracez le chemin des ennemis d\'un bord à l\'autre, ajoutez jusqu\'à deux entrées qui le rejoignent et des débris à recycler.',
     'Enregistrez vos cartes, partagez-les par code (Éditeur → Code de partage, à coller dans l\'éditeur ou dans le champ « code de carte » de Nouvelle partie).',
     'En multijoueur, l\'hôte choisit la carte dans le salon : aléatoire ou une de ses cartes perso, envoyée aux autres joueurs.',
