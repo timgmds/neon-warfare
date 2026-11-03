@@ -824,6 +824,7 @@ const UI = {
       const go = () => { this.closeAll(); Game.newGame('standard', { daily: true }); };
       if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par le Défi du jour.', go); else go();
     }]);
+    if (Online.on()) list.push([`CLASSEMENT EN LIGNE<small>défi du jour · les meilleurs joueurs</small>`, 'gold', () => Online.open()]);
     list.push([`MULTIJOUEUR<small>versus ou coopération, de 2 à 4</small>`, 'nano', () => this.openMP()]);
     const nm = CMaps.list().length;
     list.push([`ÉDITEUR DE CARTES<small>${nm ? nm + ' carte' + (nm > 1 ? 's' : '') + ' perso' : 'dessinez vos propres chemins'}</small>`, '', () => Editor.open()]);
@@ -1180,6 +1181,7 @@ const UI = {
     $('over-body').innerHTML = `<h2 style="color:var(--dang)">${this.x3d('ÉCHEC SYSTÈME', 'over')}</h2>
       <div class="sub" style="margin-bottom:6px">${daily ? 'Défi du jour ' + G.daily : G.diff.name}${G.doctrine !== 'standard' ? ' · doctrine ' + DOCTRINES[G.doctrine].n : ''} · le noyau a cédé à la vague <b>${G.waveNum}</b></div>
       ${recLine}
+      ${Online.goBox()}
       <div class="gocode"><span>CODE DE CARTE</span><input id="go-code" readonly value="${G.cmap ? CMaps.code(G.cmap) : Hist.code()}" aria-label="Code de carte"><button class="btn" id="go-cc">COPIER</button>${daily ? '' : '<button class="btn sec" id="go-replay">REJOUER CETTE CARTE</button>'}</div>
       <div class="cmdb" style="margin:6px auto 4px"><div class="cl">NIV <b>${c1.lvl}</b><span>${Cmd.rank(c1.lvl).toUpperCase()}</span><em style="color:var(--gold)">+${fmt(G.xpRun)} XP</em></div>
         <div class="xpbar"><s id="go-xp" style="width:${startW.toFixed(1)}%"></s></div>
@@ -1209,6 +1211,7 @@ const UI = {
     const ci = $('go-code'), same = { gm: G.gm, seed: G.seed, portrait: G.portrait, map: cmap };
     ci.onfocus = () => ci.select();
     $('go-cc').onclick = () => this.copy(ci.value, ci);
+    Online.bindGo();
     if ($('go-replay')) $('go-replay').onclick = () => { this.closeAll(); Game.newGame(dk, same); };
     this.open('ov-over');
     $('go-again').focus();

@@ -776,6 +776,27 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .mapchip b{color:var(--sec);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .mapchip .btn{padding:3px 7px}
 
+/* ---------- CLASSEMENT EN LIGNE ---------- */
+.lbbox{margin:0 auto 10px;padding:9px 10px;border:1px solid rgba(255,210,63,.5);border-radius:10px;background:rgba(255,210,63,.05);display:flex;flex-direction:column;gap:7px;align-items:center}
+.lbh{font-size:10px;letter-spacing:.3em;color:var(--gold);font-weight:800}
+.lbrow{gap:8px;justify-content:center;flex-wrap:wrap;width:100%}
+.lbrow .mp-in{flex:1 1 150px;min-width:0;max-width:220px}
+.lbbox .note{text-align:center}
+.lbwait{padding:18px 0;text-align:center}
+.lbl{display:flex;flex-direction:column;gap:4px}
+.lbr{display:grid;grid-template-columns:28px minmax(0,1fr) auto auto 34px;grid-template-areas:"i b e e btn" "i dc s s btn";gap:0 10px;align-items:center;
+  padding:6px 8px;border:1px solid rgba(255,255,255,.08);border-radius:6px;background:rgba(255,255,255,.025)}
+.lbr i{grid-area:i;font-style:normal;font:700 15px var(--mono);color:var(--dim);text-align:center}
+.lbr:nth-child(1) i{color:var(--gold)}
+.lbr:nth-child(2) i{color:#d8e3f5}
+.lbr:nth-child(3) i{color:#e0915a}
+.lbr b{grid-area:b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.lbr .dc{grid-area:dc;font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbr em{grid-area:e;font-style:normal;font:700 13px var(--mono);color:var(--accent);text-align:right}
+.lbr small{grid-area:s;font-size:10px;color:var(--dim);text-align:right;white-space:nowrap}
+.lbr .btn{grid-area:btn;padding:5px 0;width:34px}
+.lbr.me{border-color:var(--gold);background:rgba(255,210,63,.07)}
+
 /* ================= STYLE NÉON 10 =================
    Tout ce bloc ne s'applique qu'en style Néon 10 (body.gfx-neo) : le style « classique » garde le rendu de la v9.
    Règle d'or : on change les couleurs, les fonds, les ombres et les polices des titres, jamais les dimensions des blocs. */

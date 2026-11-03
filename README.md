@@ -124,7 +124,7 @@ Le jeu vise 60 FPS constants, même sur machine modeste :
 
 Le jeu se distribue en **un seul fichier**, `neon-warfare.html`, mais il est **assemblé** à partir du dossier `src/` :
 `src/index.html` (la page, avec les repères `/*@CSS*/` et `/*@JS*/`), `src/style.css` et `src/js/NN-module.js`
-(47 modules, concaténés dans l'ordre des numéros) et `src/fonts/` (la police d'affichage Anton, intégrée en base64 à
+(48 modules, concaténés dans l'ordre des numéros) et `src/fonts/` (la police d'affichage Anton, intégrée en base64 à
 l'assemblage ; licence SIL OFL 1.1 dans `src/fonts/OFL-Anton.txt`). Pour modifier le jeu, éditez `src/`, puis :
 
 ```bash
@@ -137,12 +137,30 @@ Ne modifiez pas `neon-warfare.html` à la main : il serait écrasé au prochain 
 Les modules :
 
 `Store` · `Sfx` / `Music` (Web Audio) · données (`TOWERS`, `RECIPES`, `ENEMIES`, `EVENTS`, `SLOT_SYM`, `SENDS`…) ·
-`Spr` · `MapGen` / `Path` · `CMaps` / `Editor` (cartes perso) · `FX` · `GLFX` (décors et halo WebGL) · `Combat` · `Enemies` · `Towers` · `Shots` · `Traps` · `Waves` · `Abil` · `Skills` ·
+`Spr` · `MapGen` / `Path` · `CMaps` / `Editor` (cartes perso) · `Online` (classement en ligne) · `FX` · `GLFX` (décors et halo WebGL) · `Combat` · `Enemies` · `Towers` · `Shots` · `Traps` · `Waves` · `Abil` · `Skills` ·
 `Fusion` · `Missions` · `Cmd` · `Cards` · `Codex` · `Events` · `Casino` · `Net` / `Lock` / `MP` (réseau) · `Act` (actions
 du joueur) · `Stats` · `Game` · `Demo` · `Render` · `Input` · `UI` · boucle principale.
 
 Toute action du joueur passe par `Act` avec des arguments sérialisables : en solo elle s'exécute aussitôt,
 en coopération elle est horodatée et exécutée au même tick sur les deux machines.
+
+## Classement en ligne
+
+Le classement du **Défi du jour** passe par **Firebase Firestore** (offre gratuite), en simples requêtes REST : aucune
+bibliothèque. Tant que `LB_CFG` (dans `src/js/39-classement-en-ligne.js`) est vide, il reste invisible dans le jeu.
+
+1. Sur [console.firebase.google.com](https://console.firebase.google.com) : créer un projet (Google Analytics inutile).
+2. **Firestore Database** → Créer une base de données, en mode production.
+3. Onglet **Règles** : coller le contenu de `firebase/firestore.rules`, puis **Publier**. Elles n'autorisent que la lecture
+   et la création de scores bien formés ; aucune modification ni suppression.
+4. Paramètres du projet → **Vos applications** → icône Web `</>` : copier `projectId` et `apiKey` dans `LB_CFG`.
+   La clé web Firebase n'est pas un secret (elle identifie le projet, les règles protègent les données). On peut la
+   restreindre aux sites du jeu dans la console Google Cloud.
+
+Chaque score est un document `daily/{date}/scores/{id}` : pseudo, vague, éliminations, version, doctrine, heure du
+serveur et **replay de la partie**, que tout le monde peut regarder depuis le classement. Un jeu web ne peut pas prouver
+un score à lui seul : le replay public est le garde-fou contre la triche. Le classement ne fonctionne pas dans
+l'aperçu claude.ai (requêtes externes bloquées), seulement depuis le fichier local ou GitHub Pages.
 
 ## Outils de développement
 

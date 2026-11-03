@@ -1,0 +1,28 @@
+rules_version = '2';
+// Règles Firestore du classement en ligne de Neon Warfare (Défi du jour).
+// Lecture libre ; écriture : création seule, d'un score bien formé ; jamais de modification ni de suppression.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /daily/{day}/scores/{id} {
+      allow read: if day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+      allow create: if day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && id.size() <= 48
+        && request.resource.data.keys().hasOnly(['n', 'w', 'k', 's', 'u', 'v', 'g', 'r', 'd'])
+        && request.resource.data.keys().hasAll(['n', 'w', 'k', 's', 'u', 'v', 'd'])
+        && request.resource.data.n is string && request.resource.data.n.size() >= 2 && request.resource.data.n.size() <= 16
+        && request.resource.data.w is int && request.resource.data.w >= 1 && request.resource.data.w <= 1000
+        && request.resource.data.k is int && request.resource.data.k >= 0 && request.resource.data.k <= 9999999
+        && request.resource.data.s == request.resource.data.w * 10000000 + request.resource.data.k
+        && request.resource.data.u is string && request.resource.data.u.size() >= 8 && request.resource.data.u.size() <= 24
+        && request.resource.data.v is string && request.resource.data.v.size() <= 10
+        && (!('g' in request.resource.data) || (request.resource.data.g is string && request.resource.data.g.size() <= 20))
+        && (!('r' in request.resource.data) || (request.resource.data.r is string && request.resource.data.r.size() <= 900000))
+        && request.resource.data.d == request.time;
+      allow update, delete: if false;
+    }
+    // tout le reste est fermé
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
