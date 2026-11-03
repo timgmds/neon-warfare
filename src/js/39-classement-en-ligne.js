@@ -124,6 +124,30 @@ const Online = {
   cleanName(s) { return String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 16); },
   esc(s) { return String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]); },
 
+  /* ---------- cartes de la communauté : maps/{id}, créées par l'éditeur, jamais modifiées ---------- */
+  async mapsTop() {
+    const res = await this.req(':runQuery', { structuredQuery: {
+      from: [{ collectionId: 'maps' }], orderBy: [{ field: { fieldPath: 'd' }, direction: 'DESCENDING' }], limit: 80 } });
+    const seen = new Set(), out = [];
+    for (const x of res) {
+      const d = x.document; if (!d || !d.fields) continue;
+      const f = d.fields, str = k => (f[k] && f[k].stringValue) || '';
+      const key = str('u') + '|' + str('n'); if (seen.has(key)) continue;   // une seule version par auteur et par nom : la plus récente
+      seen.add(key);
+      const m = CMaps.read(str('c')); if (!m) continue;
+      m.n = str('n') || m.n;
+      out.push({ id: d.name.split('/').pop(), a: str('a'), u: str('u'), m });
+      if (out.length >= 50) break;
+    }
+    return out;
+  },
+  async mapPublish(m, author) {
+    const S = v => ({ stringValue: v }), id = this.uid() + '-' + Date.now().toString(36);
+    await this.req(':commit', { writes: [{ update: { name: `${this.docs()}/maps/${id}`,
+      fields: { n: S(m.n), a: S(author), u: S(this.uid()), c: S(CMaps.code(m)), v: S(VERSION) } },
+      updateTransforms: [{ fieldPath: 'd', setToServerValue: 'REQUEST_TIME' }], currentDocument: { exists: false } }] });
+  },
+
   /* ---------- pendant un Défi du jour : les scores déjà publiés à battre ---------- */
   rivalsLoad() {
     this.riv = null; this.passed = 0; this.rivalShow(true);

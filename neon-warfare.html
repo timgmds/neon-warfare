@@ -780,6 +780,7 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .ed-it{display:flex;align-items:center;gap:7px;padding:6px 8px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.03);min-width:0}
 .ed-it canvas{width:58px;height:30px;flex:0 0 auto;border-radius:3px}
 .ed-it b{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.ed-it b small{display:block;font-size:10px;color:var(--dim);font-weight:400}
 .ed-it .btn{padding:5px 7px;font-size:10px;letter-spacing:1px}
 .mapchip{display:inline-flex;align-items:center;gap:8px;padding:5px 6px 5px 10px;border:1px solid var(--sec);border-radius:6px;font-size:12px;color:var(--txt);max-width:100%}
 .mapchip b{color:var(--sec);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -992,7 +993,7 @@ body.calm .x3d::after,body.calm .title .tt,body.calm .title .v10,body.calm .titl
   <div class="ed-st" id="ed-st"></div>
   <div class="ed-row"><input id="ed-name" class="mp-in" maxlength="24" placeholder="Nom de la carte" autocomplete="off" aria-label="Nom de la carte">
     <button class="btn" id="ed-save">ENREGISTRER</button><button class="btn" id="ed-code">CODE DE PARTAGE</button><button class="btn" id="ed-imp">IMPORTER UN CODE</button><button class="btn prim" id="ed-play">JOUER CETTE CARTE</button></div>
-  <div class="lbl-s" id="ed-lh" style="margin:14px 0 4px">MES CARTES</div><div class="ed-list" id="ed-list"></div></div></div>
+  <div class="seg" id="ed-tabs" style="margin:14px 0 8px;max-width:420px" hidden></div><div class="lbl-s" id="ed-lh" style="margin:14px 0 4px">MES CARTES</div><div class="ed-list" id="ed-list"></div></div></div>
 <div class="ov" id="ov-lb"><div class="modal" style="width:640px"><button class="mclose" data-close>✕</button>
   <h2>CLASSEMENT EN LIGNE</h2><div class="sub" id="lb-sub"></div><div class="seg" id="lb-days" style="margin-bottom:8px"></div><div class="note" id="lb-ver" style="min-height:16px;margin-bottom:4px"></div><div id="lb-list"></div></div></div>
 <div class="ov" id="ov-keys"><div class="modal" style="width:640px"><button class="mclose" data-close>✕</button><h2>RACCOURCIS CLAVIER</h2>
@@ -8096,18 +8097,43 @@ const Editor = {
     B.querySelector('[data-a=clear]').onclick = () => { this.snap(); this.S = this.blank(); this.msg = ''; this.draw(); };
   },
   list() {
-    const L = CMaps.list(), box = $('ed-list');
-    $('ed-lh').textContent = `MES CARTES · ${L.length} / ${CMaps.MAX}`;
+    const L = CMaps.list(), box = $('ed-list'), tabs = $('ed-tabs');
+    tabs.hidden = !Online.on();
+    tabs.innerHTML = `<button data-k="mine" class="${this.tab !== 'com' ? 'on' : ''}">MES CARTES · ${L.length} / ${CMaps.MAX}</button><button data-k="com" class="${this.tab === 'com' ? 'on' : ''}">COMMUNAUTÉ</button>`;
+    tabs.querySelectorAll('button').forEach(b => b.onclick = () => { this.tab = b.dataset.k; Sfx.play('ui'); this.list(); });
+    if (this.tab === 'com' && Online.on()) { this.community(); return; }
+    $('ed-lh').textContent = `MES CARTES · ${L.length} / ${CMaps.MAX}`; $('ed-lh').hidden = Online.on();
     if (!L.length) { box.innerHTML = '<div class="note" style="padding:6px 0">Aucune carte enregistrée pour l\'instant.</div>'; return; }
     const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
     box.innerHTML = L.map((m, i) => `<div class="ed-it"><canvas></canvas><b title="${esc(m.n)}">${esc(m.n)}</b>
-      <button class="btn" data-i="${i}" data-a="e">MODIFIER</button><button class="btn prim" data-i="${i}" data-a="p">JOUER</button><button class="btn danger" data-i="${i}" data-a="d" title="Supprimer">✕</button></div>`).join('');
+      <button class="btn" data-i="${i}" data-a="e">MODIFIER</button><button class="btn prim" data-i="${i}" data-a="p">JOUER</button>${Online.on() ? `<button class="btn gold" data-i="${i}" data-a="s" title="Publier dans les cartes de la communauté">⇪</button>` : ''}<button class="btn danger" data-i="${i}" data-a="d" title="Supprimer">✕</button></div>`).join('');
     box.querySelectorAll('canvas').forEach((cv, i) => CMaps.thumb(cv, L[i]));
     box.querySelectorAll('button').forEach(b => b.onclick = () => {
       const m = L[+b.dataset.i]; if (!m) return;
       if (b.dataset.a === 'e') this.open(m);
       else if (b.dataset.a === 'p') this.launch(m);
+      else if (b.dataset.a === 's') UI.confirm('PUBLIER LA CARTE ?', `« ${esc(m.n)} » sera visible par tous les joueurs dans les cartes de la communauté, avec votre pseudo <b>${esc(MP.myName())}</b>. Une carte publiée ne peut plus être retirée depuis le jeu.`, async () => {
+        try { await Online.mapPublish(m, Online.cleanName(MP.myName()) || 'Anonyme'); Sfx.play('coin'); UI.toast('Carte publiée', `« ${esc(m.n)} » est dans les cartes de la communauté.`, '#39ff88', 3); }
+        catch (e) { Sfx.play('error'); UI.toast('Publication impossible', 'Pas de connexion, ou la galerie n' + String.fromCharCode(39) + 'est pas encore activée sur le serveur.', '#ff2a6d', 4); }
+      });
       else UI.confirm('SUPPRIMER LA CARTE ?', `« ${esc(m.n)} » sera effacée de cet appareil.`, () => { CMaps.remove(m.n); this.list(); });
+    });
+  },
+  // galerie : les dernières cartes publiées par les joueurs
+  async community() {
+    const box = $('ed-list'), esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
+    box.innerHTML = '<div class="note" style="padding:6px 0">Chargement…</div>';
+    let L;
+    try { L = await Online.mapsTop(); } catch (e) { if (this.tab === 'com') box.innerHTML = '<div class="note" style="padding:6px 0">Galerie inaccessible : pas de connexion, ou pas encore activée sur le serveur.</div>'; return; }
+    if (this.tab !== 'com' || !UI.stack.includes('ov-edit')) return;
+    if (!L.length) { box.innerHTML = '<div class="note" style="padding:6px 0">Aucune carte publiée pour l' + String.fromCharCode(39) + 'instant : partagez la vôtre avec le bouton ⇪ de Mes cartes.</div>'; return; }
+    box.innerHTML = L.map((x, i) => `<div class="ed-it"><canvas></canvas><b title="${esc(x.m.n)} — par ${esc(x.a)}">${esc(x.m.n)}<small>par ${esc(x.a)}</small></b>
+      <button class="btn prim" data-i="${i}" data-a="p">JOUER</button><button class="btn" data-i="${i}" data-a="c" title="Copier dans Mes cartes, pour la modifier">＋</button></div>`).join('');
+    box.querySelectorAll('canvas').forEach((cv, i) => CMaps.thumb(cv, L[i].m));
+    box.querySelectorAll('button').forEach(b => b.onclick = () => {
+      const x = L[+b.dataset.i]; if (!x) return;
+      if (b.dataset.a === 'p') this.launch(x.m);
+      else { const m = Object.assign({}, x.m, { n: x.m.n.slice(0, 24) }); CMaps.save(m); Sfx.play('coin'); UI.toast('Carte copiée', `« ${esc(m.n)} » est dans Mes cartes.`, '#39ff88', 3); }
     });
   },
   // la carte en cours, si elle est jouable (sinon le message d'erreur s'affiche)
@@ -8531,6 +8557,30 @@ const Online = {
   dayAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; },
   cleanName(s) { return String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 16); },
   esc(s) { return String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]); },
+
+  /* ---------- cartes de la communauté : maps/{id}, créées par l'éditeur, jamais modifiées ---------- */
+  async mapsTop() {
+    const res = await this.req(':runQuery', { structuredQuery: {
+      from: [{ collectionId: 'maps' }], orderBy: [{ field: { fieldPath: 'd' }, direction: 'DESCENDING' }], limit: 80 } });
+    const seen = new Set(), out = [];
+    for (const x of res) {
+      const d = x.document; if (!d || !d.fields) continue;
+      const f = d.fields, str = k => (f[k] && f[k].stringValue) || '';
+      const key = str('u') + '|' + str('n'); if (seen.has(key)) continue;   // une seule version par auteur et par nom : la plus récente
+      seen.add(key);
+      const m = CMaps.read(str('c')); if (!m) continue;
+      m.n = str('n') || m.n;
+      out.push({ id: d.name.split('/').pop(), a: str('a'), u: str('u'), m });
+      if (out.length >= 50) break;
+    }
+    return out;
+  },
+  async mapPublish(m, author) {
+    const S = v => ({ stringValue: v }), id = this.uid() + '-' + Date.now().toString(36);
+    await this.req(':commit', { writes: [{ update: { name: `${this.docs()}/maps/${id}`,
+      fields: { n: S(m.n), a: S(author), u: S(this.uid()), c: S(CMaps.code(m)), v: S(VERSION) } },
+      updateTransforms: [{ fieldPath: 'd', setToServerValue: 'REQUEST_TIME' }], currentDocument: { exists: false } }] });
+  },
 
   /* ---------- pendant un Défi du jour : les scores déjà publiés à battre ---------- */
   rivalsLoad() {

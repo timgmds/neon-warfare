@@ -182,18 +182,43 @@ const Editor = {
     B.querySelector('[data-a=clear]').onclick = () => { this.snap(); this.S = this.blank(); this.msg = ''; this.draw(); };
   },
   list() {
-    const L = CMaps.list(), box = $('ed-list');
-    $('ed-lh').textContent = `MES CARTES · ${L.length} / ${CMaps.MAX}`;
+    const L = CMaps.list(), box = $('ed-list'), tabs = $('ed-tabs');
+    tabs.hidden = !Online.on();
+    tabs.innerHTML = `<button data-k="mine" class="${this.tab !== 'com' ? 'on' : ''}">MES CARTES · ${L.length} / ${CMaps.MAX}</button><button data-k="com" class="${this.tab === 'com' ? 'on' : ''}">COMMUNAUTÉ</button>`;
+    tabs.querySelectorAll('button').forEach(b => b.onclick = () => { this.tab = b.dataset.k; Sfx.play('ui'); this.list(); });
+    if (this.tab === 'com' && Online.on()) { this.community(); return; }
+    $('ed-lh').textContent = `MES CARTES · ${L.length} / ${CMaps.MAX}`; $('ed-lh').hidden = Online.on();
     if (!L.length) { box.innerHTML = '<div class="note" style="padding:6px 0">Aucune carte enregistrée pour l\'instant.</div>'; return; }
     const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
     box.innerHTML = L.map((m, i) => `<div class="ed-it"><canvas></canvas><b title="${esc(m.n)}">${esc(m.n)}</b>
-      <button class="btn" data-i="${i}" data-a="e">MODIFIER</button><button class="btn prim" data-i="${i}" data-a="p">JOUER</button><button class="btn danger" data-i="${i}" data-a="d" title="Supprimer">✕</button></div>`).join('');
+      <button class="btn" data-i="${i}" data-a="e">MODIFIER</button><button class="btn prim" data-i="${i}" data-a="p">JOUER</button>${Online.on() ? `<button class="btn gold" data-i="${i}" data-a="s" title="Publier dans les cartes de la communauté">⇪</button>` : ''}<button class="btn danger" data-i="${i}" data-a="d" title="Supprimer">✕</button></div>`).join('');
     box.querySelectorAll('canvas').forEach((cv, i) => CMaps.thumb(cv, L[i]));
     box.querySelectorAll('button').forEach(b => b.onclick = () => {
       const m = L[+b.dataset.i]; if (!m) return;
       if (b.dataset.a === 'e') this.open(m);
       else if (b.dataset.a === 'p') this.launch(m);
+      else if (b.dataset.a === 's') UI.confirm('PUBLIER LA CARTE ?', `« ${esc(m.n)} » sera visible par tous les joueurs dans les cartes de la communauté, avec votre pseudo <b>${esc(MP.myName())}</b>. Une carte publiée ne peut plus être retirée depuis le jeu.`, async () => {
+        try { await Online.mapPublish(m, Online.cleanName(MP.myName()) || 'Anonyme'); Sfx.play('coin'); UI.toast('Carte publiée', `« ${esc(m.n)} » est dans les cartes de la communauté.`, '#39ff88', 3); }
+        catch (e) { Sfx.play('error'); UI.toast('Publication impossible', 'Pas de connexion, ou la galerie n' + String.fromCharCode(39) + 'est pas encore activée sur le serveur.', '#ff2a6d', 4); }
+      });
       else UI.confirm('SUPPRIMER LA CARTE ?', `« ${esc(m.n)} » sera effacée de cet appareil.`, () => { CMaps.remove(m.n); this.list(); });
+    });
+  },
+  // galerie : les dernières cartes publiées par les joueurs
+  async community() {
+    const box = $('ed-list'), esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
+    box.innerHTML = '<div class="note" style="padding:6px 0">Chargement…</div>';
+    let L;
+    try { L = await Online.mapsTop(); } catch (e) { if (this.tab === 'com') box.innerHTML = '<div class="note" style="padding:6px 0">Galerie inaccessible : pas de connexion, ou pas encore activée sur le serveur.</div>'; return; }
+    if (this.tab !== 'com' || !UI.stack.includes('ov-edit')) return;
+    if (!L.length) { box.innerHTML = '<div class="note" style="padding:6px 0">Aucune carte publiée pour l' + String.fromCharCode(39) + 'instant : partagez la vôtre avec le bouton ⇪ de Mes cartes.</div>'; return; }
+    box.innerHTML = L.map((x, i) => `<div class="ed-it"><canvas></canvas><b title="${esc(x.m.n)} — par ${esc(x.a)}">${esc(x.m.n)}<small>par ${esc(x.a)}</small></b>
+      <button class="btn prim" data-i="${i}" data-a="p">JOUER</button><button class="btn" data-i="${i}" data-a="c" title="Copier dans Mes cartes, pour la modifier">＋</button></div>`).join('');
+    box.querySelectorAll('canvas').forEach((cv, i) => CMaps.thumb(cv, L[i].m));
+    box.querySelectorAll('button').forEach(b => b.onclick = () => {
+      const x = L[+b.dataset.i]; if (!x) return;
+      if (b.dataset.a === 'p') this.launch(x.m);
+      else { const m = Object.assign({}, x.m, { n: x.m.n.slice(0, 24) }); CMaps.save(m); Sfx.play('coin'); UI.toast('Carte copiée', `« ${esc(m.n)} » est dans Mes cartes.`, '#39ff88', 3); }
     });
   },
   // la carte en cours, si elle est jouable (sinon le message d'erreur s'affiche)
