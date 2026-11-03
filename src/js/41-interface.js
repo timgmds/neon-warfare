@@ -143,6 +143,7 @@ const UI = {
     $('cv-game').classList.remove('placing', 'targeting');
     this.buildBar(); this.buildAbils(); this.refreshAuto(); this.refreshSpeed(); this.onPreview();
     $('missions').classList.remove('hidden'); this.applyMissionsMin(); this.renderMissions();
+    Online.rivalsLoad();
     Render.resize();
     this.refreshHUD(); this.refreshAbils(true); this.refreshBadges();
     if (!Store.data.tuto) {
@@ -153,7 +154,7 @@ const UI = {
   },
   exitGame() {
     this.mpHud(false); $('mp-wait').style.display = 'none'; $('rp-bar').hidden = true;
-    $('hud').classList.add('hidden'); $('dock').classList.add('hidden'); $('missions').classList.add('hidden');
+    $('hud').classList.add('hidden'); $('dock').classList.add('hidden'); $('missions').classList.add('hidden'); $('rival').hidden = true;
     $('tpanel').classList.remove('show'); $('bossbar').style.display = 'none';
     this.sel = null; this.selDebris = null; this.placing = null; this.targeting = null; this.hover.inside = false;
     this.hideTip();

@@ -66,6 +66,36 @@ const Online = {
   cleanName(s) { return String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 16); },
   esc(s) { return String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]); },
 
+  /* ---------- pendant un Défi du jour : les scores déjà publiés à battre ---------- */
+  rivalsLoad() {
+    this.riv = null; this.passed = 0; this.rivalShow(true);
+    if (!this.on() || !G || !G.daily || G.replay || G.net) return;
+    const day = G.daily;
+    this.top(day).then(L => {
+      if (!G || G.daily !== day || G.over) return;
+      const me = this.uid();
+      this.riv = L.filter(x => x.u !== me);
+      this.passed = this.riv.filter(x => x.w <= this.done()).length;
+      this.rivalShow(true);
+    }).catch(() => { /* hors ligne : pas de rivaux, la partie continue */ });
+  },
+  done() { return G.phase === 'prep' ? G.waveNum : G.waveNum - 1; },
+  // on « dépasse » un joueur en terminant la vague où il est tombé
+  rivalShow(quiet, doneN) {
+    const el = $('rival');
+    if (!this.riv || !this.riv.length || !G || !G.daily || G.over || G.replay) { el.hidden = true; return; }
+    const done = doneN != null ? doneN : this.done(), ahead = this.riv.filter(x => x.w > done), passed = this.riv.length - ahead.length, next = ahead[ahead.length - 1];
+    el.hidden = false;
+    el.innerHTML = `<span>DÉFI DU JOUR · ${ahead.length + 1}${ahead.length ? 'e' : 'er'} / ${this.riv.length + 1}</span>` +
+      (next ? `<b>À battre : ${this.esc(next.n)} · vague ${next.w}</b>` : '<b>Vous êtes en tête du jour !</b>');
+    if (!quiet && passed > this.passed) {
+      const beaten = this.riv[ahead.length];
+      UI.toast('Dépassé !', `Vous passez devant <b>${this.esc(beaten.n)}</b> (vague ${beaten.w}).${next ? '' : " Plus personne devant vous aujourd'hui !"}`, '#ffd23f', 4);
+      Sfx.play('mission');
+    }
+    this.passed = passed;
+  },
+
   /* ---------- fin de partie : bloc « publier mon score » ---------- */
   goBox() {
     if (!this.on() || !G || !G.daily || G.replay) return '';

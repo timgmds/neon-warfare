@@ -48,6 +48,7 @@ const Render = {
     Spr.setK(View.scale * View.dpr);
     $('bossbar').style.top = (View.top + 8) + 'px';
     $('missions').style.top = (View.top + 8) + 'px';
+    $('rival').style.top = (View.top + 8) + 'px';
     $('evchip').style.top = (View.top + 8) + 'px';
     $('mp').style.top = (View.top + (View.w < 640 ? 50 : 8)) + 'px';   // téléphone : sous la ligne des missions
   },

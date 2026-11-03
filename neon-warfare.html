@@ -785,6 +785,11 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .mapchip b{color:var(--sec);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .mapchip .btn{padding:3px 7px}
 
+/* rivaux du Défi du jour (en haut à gauche, pendant la partie) */
+#rival{position:absolute;left:10px;z-index:27;max-width:min(260px,46vw);padding:6px 10px;border:1px solid rgba(255,210,63,.55);border-radius:8px;
+  background:rgba(4,7,14,.84);pointer-events:none;display:flex;flex-direction:column;gap:2px}
+#rival span{font-size:9px;letter-spacing:.2em;color:var(--gold);font-weight:800}
+#rival b{font-size:12px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ---------- CLASSEMENT EN LIGNE ---------- */
 .lbbox{margin:0 auto 10px;padding:9px 10px;border:1px solid rgba(255,210,63,.5);border-radius:10px;background:rgba(255,210,63,.05);display:flex;flex-direction:column;gap:7px;align-items:center}
 .lbh{font-size:10px;letter-spacing:.3em;color:var(--gold);font-weight:800}
@@ -929,6 +934,7 @@ body.gfx-neo .hstat .lbl{font-family:var(--disp);font-weight:400;font-size:11px;
 
 <div id="missions" class="hidden"><div class="mh" id="mh"><span>MISSIONS</span><b id="m-cmd"></b><em id="m-tog">−</em></div>
   <div class="mxp"><s id="m-xp"></s></div><div id="mlist"></div></div>
+<div id="rival" hidden></div>
 <div id="mp" class="hidden"><div id="mp-info"></div><div class="mp-emr"><button id="mp-emt">MESSAGES ▾</button><div id="mp-em"></div></div></div>
 <div id="mp-wait">EN ATTENTE DE VOTRE PARTENAIRE…</div>
 <div id="mp-pause" hidden><b>⏸ PARTIE EN PAUSE</b><span id="mp-pby"></span><button class="btn prim" id="mp-resume">REPRENDRE</button></div>
@@ -4034,6 +4040,7 @@ const Waves = {
     if (w.n >= 25) Ach.unlock('wave25');
     if (w.n >= 50) Ach.unlock('wave50');
     if (w.n >= 100) Ach.unlock('wave100');
+    if (G.daily) Online.rivalShow(false, w.n);
     if (w.n >= 30 && G.daily) Ach.unlock('daily30');
     if (w.n >= 30 && Net.coop) Ach.unlock('coop30');
     if (w.n === Towers.omFrom() && G.gm !== 'sandbox') UI.toast('Niveaux Oméga débloqués', `Vos tourelles peuvent monter jusqu'au niveau ${OMEGA.max} (+35 % de dégâts par niveau, ${OMEGA.abyss} abyssite ⬟ par niveau), et la Recherche Oméga (en bas de l'arbre, touche K) augmente les dégâts de toutes les tourelles contre du plasma.`, '#ff4df0', 7);
@@ -6935,6 +6942,7 @@ const Render = {
     Spr.setK(View.scale * View.dpr);
     $('bossbar').style.top = (View.top + 8) + 'px';
     $('missions').style.top = (View.top + 8) + 'px';
+    $('rival').style.top = (View.top + 8) + 'px';
     $('evchip').style.top = (View.top + 8) + 'px';
     $('mp').style.top = (View.top + (View.w < 640 ? 50 : 8)) + 'px';   // téléphone : sous la ligne des missions
   },
@@ -8450,6 +8458,36 @@ const Online = {
   cleanName(s) { return String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 16); },
   esc(s) { return String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]); },
 
+  /* ---------- pendant un Défi du jour : les scores déjà publiés à battre ---------- */
+  rivalsLoad() {
+    this.riv = null; this.passed = 0; this.rivalShow(true);
+    if (!this.on() || !G || !G.daily || G.replay || G.net) return;
+    const day = G.daily;
+    this.top(day).then(L => {
+      if (!G || G.daily !== day || G.over) return;
+      const me = this.uid();
+      this.riv = L.filter(x => x.u !== me);
+      this.passed = this.riv.filter(x => x.w <= this.done()).length;
+      this.rivalShow(true);
+    }).catch(() => { /* hors ligne : pas de rivaux, la partie continue */ });
+  },
+  done() { return G.phase === 'prep' ? G.waveNum : G.waveNum - 1; },
+  // on « dépasse » un joueur en terminant la vague où il est tombé
+  rivalShow(quiet, doneN) {
+    const el = $('rival');
+    if (!this.riv || !this.riv.length || !G || !G.daily || G.over || G.replay) { el.hidden = true; return; }
+    const done = doneN != null ? doneN : this.done(), ahead = this.riv.filter(x => x.w > done), passed = this.riv.length - ahead.length, next = ahead[ahead.length - 1];
+    el.hidden = false;
+    el.innerHTML = `<span>DÉFI DU JOUR · ${ahead.length + 1}${ahead.length ? 'e' : 'er'} / ${this.riv.length + 1}</span>` +
+      (next ? `<b>À battre : ${this.esc(next.n)} · vague ${next.w}</b>` : '<b>Vous êtes en tête du jour !</b>');
+    if (!quiet && passed > this.passed) {
+      const beaten = this.riv[ahead.length];
+      UI.toast('Dépassé !', `Vous passez devant <b>${this.esc(beaten.n)}</b> (vague ${beaten.w}).${next ? '' : " Plus personne devant vous aujourd'hui !"}`, '#ffd23f', 4);
+      Sfx.play('mission');
+    }
+    this.passed = passed;
+  },
+
   /* ---------- fin de partie : bloc « publier mon score » ---------- */
   goBox() {
     if (!this.on() || !G || !G.daily || G.replay) return '';
@@ -8827,6 +8865,7 @@ const UI = {
     $('cv-game').classList.remove('placing', 'targeting');
     this.buildBar(); this.buildAbils(); this.refreshAuto(); this.refreshSpeed(); this.onPreview();
     $('missions').classList.remove('hidden'); this.applyMissionsMin(); this.renderMissions();
+    Online.rivalsLoad();
     Render.resize();
     this.refreshHUD(); this.refreshAbils(true); this.refreshBadges();
     if (!Store.data.tuto) {
@@ -8837,7 +8876,7 @@ const UI = {
   },
   exitGame() {
     this.mpHud(false); $('mp-wait').style.display = 'none'; $('rp-bar').hidden = true;
-    $('hud').classList.add('hidden'); $('dock').classList.add('hidden'); $('missions').classList.add('hidden');
+    $('hud').classList.add('hidden'); $('dock').classList.add('hidden'); $('missions').classList.add('hidden'); $('rival').hidden = true;
     $('tpanel').classList.remove('show'); $('bossbar').style.display = 'none';
     this.sel = null; this.selDebris = null; this.placing = null; this.targeting = null; this.hover.inside = false;
     this.hideTip();
