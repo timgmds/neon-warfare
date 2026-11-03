@@ -133,6 +133,8 @@ const Game = {
     this.state = 'play'; this.speed = 1; this.acc = 0; this.slowT = 0;
     FX.clear(); Shots.pool.clear();
     Towers.recalc();
+    // vérification d'un replay du classement : partie rejouée sans affichage, le menu reste à l'écran
+    if (G.replay && G.replay.headless) { this.state = 'menu'; return; }
     Music.intensity = 0;
     Perf.slow = 0;
     UI.enterGame();
@@ -158,6 +160,7 @@ const Game = {
     if (!G || G.over) return;
     G.over = true; G.lives = 0;
     if (G.demo) { Demo.pending = true; return; }
+    if (G.replay && G.replay.headless) return;
     if (G.replay) { Music.intensity = 0; setTimeout(() => { if (G && G.replay) Replay.finish(); }, 1200); return; }
     if (G.net) {
       Music.intensity = 0; UI.setPlacing(null); UI.setTargeting(null); UI.deselect();

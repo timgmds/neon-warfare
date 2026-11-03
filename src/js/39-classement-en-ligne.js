@@ -62,6 +62,64 @@ const Online = {
     const d = await this.req(`/daily/${day}/scores/${id}?mask.fieldPaths=r`);
     return Replay.read(d.fields && d.fields.r ? d.fields.r.stringValue : '');
   },
+  /* ---------- vérification des scores ----------
+     Chaque replay du haut du classement est rejoué en accéléré dans ce navigateur, sans affichage : si la partie
+     rejouée finit à la même vague avec le même nombre d'éliminations, le score est marqué « vérifié ».
+     Seulement pour la version du jeu en cours (une autre version peut s'écarter), et depuis le menu. */
+  ver() { return Store.data.lbVer || (Store.data.lbVer = {}); },
+  async verifyTop(day, L) {
+    if (this.verifying || Game.state !== 'menu') return;
+    const V = this.ver(), todo = L.slice(0, 10).filter(x => !V[x.id] && x.v === VERSION);
+    if (!todo.length) return;
+    this.verifying = true; this.vNote(day);
+    try {
+      for (const x of todo) {
+        if (!UI.stack.includes('ov-lb') || Game.state !== 'menu') break;
+        let r = null;
+        try { r = await this.replay(day, x.id); } catch (e) { break; }   // hors ligne : on réessaiera
+        if (!r || r.base) { V[x.id] = { s: 'n' }; continue; }   // partie reprise d'une sauvegarde : pas vérifiable ainsi
+        this.vNote(day, x.n);
+        const res = await this.simulate(r);
+        if (res.w < 0) break;   // interrompu (le joueur lance une partie, un replay…)
+        V[x.id] = { s: res.w === x.w && res.k === x.k ? 'ok' : 'ko', w: res.w };
+        Store.save();
+        if (this.day === day && UI.stack.includes('ov-lb')) this.rows(day, L);
+      }
+    } finally {
+      this.verifying = false; this.vNote(day);
+      for (const id in V) if (!L.some(x => x.id === id) && Object.keys(V).length > 200) delete V[id];
+      Store.save();
+      if (!G && Game.state === 'menu' && Store.s.demo) Demo.start();
+    }
+  },
+  vNote(day, who) {
+    const el = $('lb-ver'); if (!el) return;
+    el.textContent = this.verifying ? `Vérification des replays en cours${who ? ' : ' + who : ''}…` : '';
+  },
+  // rejoue une partie à toute vitesse, par tranches de 12 ms pour ne pas figer la page
+  simulate(r) {
+    return new Promise(done => {
+      const o = r.o, rp = { a: r.a, i: 0, end: r.end || null, v: r.v, mul: 1, paused: false, rec: r, headless: true };
+      Demo.busy = true;
+      try {
+        Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, gm: o.gm, cus: o.cus, map: o.map, perks: o.perks, doctrine: o.doctrine, events: o.events,
+          autoWave: o.autoWave, daily: !!o.daily, dailyDate: o.daily || undefined, replay: rp });
+      } catch (e) { Demo.busy = false; G = null; done({ w: -1 }); return; }
+      Demo.busy = false;
+      const finish = out => { if (G && G.replay === rp) { G = null; FX.clear(); Shots.pool.clear(); Render.dirtyMap = true; } done(out); };
+      const step = () => {
+        if (!G || G.replay !== rp || Game.state !== 'menu') { done({ w: -1 }); return; }
+        Demo.busy = true;
+        try {
+          const t0 = performance.now();
+          while (!G.over && G.tick < 3e6 && performance.now() - t0 < 12) { Replay.feed(); if (G.over) break; Game.update(); }
+        } catch (e) { Demo.busy = false; finish({ w: -1 }); return; } finally { Demo.busy = false; }
+        if (G.over || G.tick >= 3e6) finish({ w: G.waveNum, k: Math.min(this.KMAX, G.stats.kills) });
+        else setTimeout(step, 0);
+      };
+      step();
+    });
+  },
   dayAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; },
   cleanName(s) { return String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 16); },
   esc(s) { return String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]); },
@@ -142,6 +200,7 @@ const Online = {
     $('lb-days').innerHTML = days.map(d => `<button data-d="${d}" class="${d === day ? 'on' : ''}">${lab(d)}</button>`).join('');
     $('lb-days').querySelectorAll('button').forEach(b => b.onclick = () => { this.day = b.dataset.d; Sfx.play('ui'); this.render(); });
     const di = dailyInfo(day);
+    $('lb-ver').textContent = '';
     $('lb-sub').innerHTML = `Défi du <b>${day}</b> : ${di.mutKeys.map(k => MUTATORS[k].n).join(' + ')}. Même carte et mêmes vagues pour tout le monde. ` +
       'Le meilleur score de chaque joueur ; ▶ pour regarder sa partie.';
     const box = $('lb-list');
@@ -154,8 +213,14 @@ const Online = {
     }
     if (this.day !== day || !UI.stack.includes('ov-lb')) return;
     if (!L.length) { box.innerHTML = '<div class="note lbwait">Personne n\'a encore publié de score ce jour-là. À vous de jouer !</div>'; return; }
-    const me = this.uid();
-    box.innerHTML = `<div class="lbl">${L.map((x, i) => `<div class="lbr${x.u === me ? ' me' : ''}"><i>${i + 1}</i><b>${this.esc(x.n)}</b>` +
+    this.rows(day, L);
+    if (Game.state === 'menu') this.verifyTop(day, L);
+  },
+  rows(day, L) {
+    const box = $('lb-list'), me = this.uid(), V = this.ver();
+    const vt = x => { const v = V[x.id]; return !v ? '' : v.s === 'ok' ? '<span class="vf ok" title="Replay rejoué dans votre navigateur : même vague, mêmes éliminations">✓ vérifié</span>'
+      : v.s === 'ko' ? `<span class="vf ko" title="Le replay rejoué s'arrête à la vague ${v.w}">✗ écart</span>` : ''; };
+    box.innerHTML = `<div class="lbl">${L.map((x, i) => `<div class="lbr${x.u === me ? ' me' : ''}"><i>${i + 1}</i><b>${this.esc(x.n)}${vt(x)}</b>` +
       `<span class="dc">${DOCTRINES[x.g] && x.g !== 'standard' ? TXT(DOCTRINES[x.g].i) + ' ' + DOCTRINES[x.g].n : ''}</span>` +
       `<em>VAGUE ${x.w}</em><small>${fmt(x.k)} élim. · v${this.esc(x.v)}</small><button class="btn" data-i="${i}" title="Regarder la partie">▶</button></div>`).join('')}</div>`;
     box.querySelectorAll('button').forEach(b => b.onclick = async () => {

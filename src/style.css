@@ -800,6 +800,9 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
 .lbr em{grid-area:e;font-style:normal;font:700 13px var(--mono);color:var(--accent);text-align:right}
 .lbr small{grid-area:s;font-size:10px;color:var(--dim);text-align:right;white-space:nowrap}
 .lbr .btn{grid-area:btn;padding:5px 0;width:34px}
+.lbr .vf{font-size:9px;letter-spacing:.08em;margin-left:7px;padding:1px 5px;border-radius:4px;font-weight:800;vertical-align:2px}
+.lbr .vf.ok{color:#39ff88;border:1px solid rgba(57,255,136,.5)}
+.lbr .vf.ko{color:var(--dang);border:1px solid rgba(255,42,109,.5)}
 .lbr.me{border-color:var(--gold);background:rgba(255,210,63,.07)}
 
 /* ================= STYLE NÉON 10 =================
