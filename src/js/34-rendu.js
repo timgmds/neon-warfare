@@ -7,6 +7,7 @@ const View = { w: 0, h: 0, dpr: 1, scale: 1, ox: 0, oy: 0, top: 0, bottom: 0 };
 const Render = {
   cv: {}, cx: {}, hq: true, time: 0, alpha: 1, shakeA: 0, flashA: 0, flashC: '#fff',
   dirtyBg: true, dirtyMap: true, themeKey: 'theme-cyber', theme: THEMES['theme-cyber'], amb: [], rain: null, neo: true,
+  zoom: 1, panX: 0, panY: 0,   // zoom du joueur (molette, pincement) et décalage de la carte, en pixels d'écran
   init() {
     for (const k of ['bg', 'fx', 'map', 'game']) { this.cv[k] = $('cv-' + k); this.cx[k] = this.cv[k].getContext('2d'); }
     GLFX.init();
@@ -42,9 +43,13 @@ const Render = {
     if (!G) { View.scale = 1; View.ox = 0; View.oy = 0; return; }
     const W = G.map.C * TILE, H = G.map.R * TILE, pad = View.w < 640 ? 6 : 14;
     const aw = View.w - pad * 2, ah = View.h - View.top - View.bottom - pad * 2;
-    View.scale = Math.max(.15, Math.min(aw / W, ah / H));
-    View.ox = Math.round((View.w - W * View.scale) / 2);
-    View.oy = Math.round(View.top + pad + (ah - H * View.scale) / 2);
+    View.scale = Math.max(.15, Math.min(aw / W, ah / H)) * this.zoom;
+    // zoomée, la carte se déplace mais ne quitte jamais la zone de jeu ; sinon elle reste centrée
+    const sw = W * View.scale, sh = H * View.scale, cx = (View.w - sw) / 2, cy = View.top + pad + (ah - sh) / 2;
+    const ox = sw > aw ? clamp(cx + this.panX, View.w - pad - sw, pad) : cx;
+    const oy = sh > ah ? clamp(cy + this.panY, View.top + pad + ah - sh, View.top + pad) : cy;
+    this.panX = ox - cx; this.panY = oy - cy;
+    View.ox = Math.round(ox); View.oy = Math.round(oy);
     Spr.setK(View.scale * View.dpr);
     $('bossbar').style.top = (View.top + 8) + 'px';
     $('missions').style.top = (View.top + 8) + 'px';
@@ -53,6 +58,18 @@ const Render = {
     $('evchip').style.top = (View.top + 8) + 'px';
     $('mp').style.top = (View.top + (View.w < 640 ? 50 : 8)) + 'px';   // téléphone : sous la ligne des missions
   },
+  // zoom de facteur f autour du point d'écran (x, y) : le point de la carte sous le doigt ne bouge pas
+  zoomAt(f, x, y) {
+    if (!G) return;
+    const z = clamp(this.zoom * f, 1, 3); if (z === this.zoom) return;
+    const wx = (x - View.ox) / View.scale, wy = (y - View.oy) / View.scale;
+    this.zoom = z; this.fit();
+    this.panX += x - (View.ox + wx * View.scale); this.panY += y - (View.oy + wy * View.scale);
+    this.view();
+  },
+  pan(dx, dy) { if (!G || this.zoom <= 1) return; this.panX += dx; this.panY += dy; this.view(); },
+  resetZoom() { this.zoom = 1; this.panX = this.panY = 0; },
+  view() { this.fit(); this.dirtyMap = true; UI.placePanel(); },
   setTheme(key) {
     if (!THEMES[key]) key = 'theme-cyber';
     this.themeKey = key; this.theme = THEMES[key];

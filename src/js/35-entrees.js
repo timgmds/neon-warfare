@@ -5,8 +5,29 @@ const Input = {
     c.addEventListener('pointermove', e => this.move(e));
     c.addEventListener('pointerdown', e => this.down(e));
     c.addEventListener('pointerleave', () => { UI.hover.inside = false; UI.hideTip(); });
-    c.addEventListener('contextmenu', e => { e.preventDefault(); UI.cancel(); });
+    c.addEventListener('contextmenu', e => { e.preventDefault(); if (!this.rdrag || this.rdrag[2] < 6) UI.cancel(); this.rdrag = null; });
     c.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });   // pas de défilement automatique au clic molette
+    // zoom : molette (vers le curseur), pincement à deux doigts (qui déplace aussi la carte), glisser avec le clic droit
+    c.addEventListener('wheel', e => { if (!G || Game.state !== 'play') return; e.preventDefault(); Render.zoomAt(Math.pow(1.0018, -e.deltaY), e.clientX, e.clientY); }, { passive: false });
+    const T = this.touches = new Map();
+    c.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'touch') { T.set(e.pointerId, [e.clientX, e.clientY]); if (T.size === 2) { this.pinchD = 0; clearTimeout(this.longT); this.longT = 0; } }
+      else if (e.button === 2) this.rdrag = [e.clientX, e.clientY, 0];
+    }, true);
+    c.addEventListener('pointermove', e => {
+      if (this.rdrag && e.buttons & 2) {
+        const dx = e.clientX - this.rdrag[0], dy = e.clientY - this.rdrag[1];
+        this.rdrag = [e.clientX, e.clientY, this.rdrag[2] + Math.abs(dx) + Math.abs(dy)]; Render.pan(dx, dy); return;
+      }
+      if (!T.has(e.pointerId)) return;
+      T.set(e.pointerId, [e.clientX, e.clientY]);
+      if (T.size !== 2) return;
+      const [a, b] = [...T.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      if (this.pinchD) { Render.zoomAt(d / this.pinchD, mx, my); Render.pan(mx - this.pinchM[0], my - this.pinchM[1]); }
+      this.pinchD = d; this.pinchM = [mx, my];
+    });
+    const up = e => { T.delete(e.pointerId); if (T.size < 2) this.pinchD = 0; if (T.size === 0) this.pinchEnd = performance.now(); };
+    c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
     // appui long au doigt (coopération) : marqueur pour les partenaires
     const stopLong = () => { clearTimeout(this.longT); this.longT = 0; };
     c.addEventListener('pointerup', stopLong); c.addEventListener('pointercancel', stopLong);
@@ -34,6 +55,7 @@ const Input = {
   },
   down(e) {
     if (!G || Game.state !== 'play' || G.over || e.button === 2) return;
+    if (e.pointerType === 'touch' && (this.touches.size > 1 || performance.now() - (this.pinchEnd || 0) < 250 && this.touches.size)) return;
     this.locate(e);
     const h = UI.hover, M = G.map;
     if (Net.coop) {

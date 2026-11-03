@@ -143,7 +143,7 @@ const UI = {
     $('cv-game').classList.remove('placing', 'targeting');
     this.buildBar(); this.buildAbils(); this.refreshAuto(); this.refreshSpeed(); this.onPreview();
     $('missions').classList.remove('hidden'); this.applyMissionsMin(); this.renderMissions();
-    Online.rivalsLoad();
+    Online.rivalsLoad(); Render.resetZoom();
     Render.resize();
     this.refreshHUD(); this.refreshAbils(true); this.refreshBadges();
     // toute première partie : le tutoriel guidé démarre de lui-même (il se relance depuis le Manuel)
