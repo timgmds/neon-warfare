@@ -85,7 +85,7 @@
   <div id="cus-box" hidden></div>
   <div class="lbl-s" style="margin-bottom:8px">MENACE</div>
   <div class="dgrid" id="diff-grid"></div>
-  <div class="seedrow"><span class="lbl-s">GRAINE / CODE DE CARTE <span style="opacity:.6">(facultatif : un nombre, un mot, ou le code d'un ami)</span></span><input id="seed-in" class="mp-in" maxlength="32" placeholder="ex. 42, neon, 1A2B3C-L-S" autocomplete="off"><span id="seed-ok" class="note"></span></div></div></div>
+  <div class="seedrow"><span class="lbl-s">GRAINE / CODE DE CARTE <span style="opacity:.6">(facultatif : un nombre, un mot, ou le code d'un ami)</span></span><span id="seed-map" hidden></span><input id="seed-in" class="mp-in" maxlength="32" placeholder="ex. 42, neon, 1A2B3C-L-S" autocomplete="off"><span id="seed-ok" class="note"></span></div></div></div>
 <div class="ov" id="ov-cards"><div class="modal cmodal" style="width:900px">
   <h2 id="cards-t">PROTOCOLE</h2><div class="sub" id="cards-sub"></div>
   <div class="cgrid" id="cards"></div>
@@ -100,6 +100,14 @@
   <div class="row" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" data-close>FERMER</button><button class="btn prim" id="xf-go">OK</button></div></div></div>
 <div class="ov" id="ov-rpend"><div class="modal" style="width:480px"><h2 style="color:#b48cff">FIN DU REPLAY</h2><div class="sub" id="rpe-sub"></div>
   <div class="row" style="justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap"><button class="btn" id="rpe-menu">MENU</button><button class="btn" id="rpe-code">CODE DU REPLAY</button><button class="btn prim" id="rpe-again">REVOIR</button></div></div></div>
+<div class="ov" id="ov-edit"><div class="modal" style="width:1000px"><button class="mclose" data-close>✕</button>
+  <h2>ÉDITEUR DE CARTES</h2><div class="sub">Tracez le chemin des ennemis en glissant d'un bord de la carte à un autre : ils arrivent par la première case, le noyau est sur la dernière. Ajoutez jusqu'à deux entrées en plus qui rejoignent le chemin, et des débris à recycler. Les cartes perso se jouent en solo comme en multijoueur, mais ne comptent pas pour les records, succès, XP et fragments.</div>
+  <div class="ed-bar" id="ed-tools"></div>
+  <div class="ed-wrap"><canvas id="ed-cv"></canvas></div>
+  <div class="ed-st" id="ed-st"></div>
+  <div class="ed-row"><input id="ed-name" class="mp-in" maxlength="24" placeholder="Nom de la carte" autocomplete="off" aria-label="Nom de la carte">
+    <button class="btn" id="ed-save">ENREGISTRER</button><button class="btn" id="ed-code">CODE DE PARTAGE</button><button class="btn" id="ed-imp">IMPORTER UN CODE</button><button class="btn prim" id="ed-play">JOUER CETTE CARTE</button></div>
+  <div class="lbl-s" id="ed-lh" style="margin:14px 0 4px">MES CARTES</div><div class="ed-list" id="ed-list"></div></div></div>
 <div class="ov" id="ov-keys"><div class="modal" style="width:640px"><button class="mclose" data-close>✕</button><h2>RACCOURCIS CLAVIER</h2>
   <div class="sub">Cliquez sur une touche puis appuyez sur la nouvelle (Échap pour annuler, ✕ pour n'en mettre aucune). Une touche déjà utilisée est retirée de l'autre commande.</div>
   <div id="keys-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="keys-reset">TOUCHES PAR DÉFAUT</button></div></div></div>

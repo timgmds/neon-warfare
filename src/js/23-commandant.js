@@ -6,7 +6,7 @@ const Cmd = {
   nextDoctrine(l) { return Object.values(DOCTRINES).filter(d => d.lvl > l).sort((a, b) => a.lvl - b.lvl)[0] || null; },
   gain(x) {
     x = Math.round(x);
-    if (!x || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom'))) return;
+    if (!x || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom' || G.cmap))) return;
     const c = Store.data.cmd;
     c.xp += x;
     if (G) G.xpRun += x;

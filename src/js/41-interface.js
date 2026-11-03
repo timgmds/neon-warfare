@@ -825,6 +825,8 @@ const UI = {
       if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par le Défi du jour.', go); else go();
     }]);
     list.push([`MULTIJOUEUR<small>versus ou coopération, de 2 à 4</small>`, 'nano', () => this.openMP()]);
+    const nm = CMaps.list().length;
+    list.push([`ÉDITEUR DE CARTES<small>${nm ? nm + ' carte' + (nm > 1 ? 's' : '') + ' perso' : 'dessinez vos propres chemins'}</small>`, '', () => Editor.open()]);
     list.push([`HÉRITAGE<small>${Store.data.meta.frags} fragments</small>`, 'gold', () => this.openMeta()]);
     list.push([`PALMARÈS<small>${Object.keys(Store.data.ach).filter(k => ACH[k]).length} / ${Object.keys(ACH).length} succès · historique</small>`, '', () => this.openAch()]);
     const cx = Codex.progress();
@@ -855,20 +857,30 @@ const UI = {
       el.innerHTML = `<h3>${d.name}</h3><p>${d.desc}</p><div class="st">PV ennemis <b>x${d.hp}</b><br>Intégrité <b>${d.lives}</b> · Crédits <b>${d.money}</b><br>Fragments <b>x${d.frag}</b><br>Record : <b>${rec ? 'vague ' + rec : '—'}</b></div>`;
       el.onclick = () => {
         const go = () => {
-          const sd = Hist.parse($('seed-in').value);
+          const cm = this.pendMap || CMaps.read($('seed-in').value), sd = cm ? null : Hist.parse($('seed-in').value);
           this.closeAll();
           const cus = gm === 'custom' ? Custom.get() : null;
-          if (sd) Game.newGame(sd.diff || k, { gm: sd.free ? gm : sd.gm, cus, seed: sd.seed, portrait: sd.portrait == null ? undefined : sd.portrait }); else Game.newGame(k, { gm, cus });
+          this.pendMap = null;
+          if (cm) Game.newGame(k, { gm, cus, map: cm });
+          else if (sd) Game.newGame(sd.diff || k, { gm: sd.free ? gm : sd.gm, cus, seed: sd.seed, portrait: sd.portrait == null ? undefined : sd.portrait }); else Game.newGame(k, { gm, cus });
         };
         if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par la nouvelle.', go);
         else go();
       };
       g.appendChild(el);
     }
-    const si = $('seed-in'), so = $('seed-ok');
+    const si = $('seed-in'), so = $('seed-ok'), sm = $('seed-map'), pm = this.pendMap;
+    // carte perso choisie dans l'éditeur : elle remplace la graine
+    sm.hidden = !pm; si.hidden = !!pm;
+    if (pm) {
+      sm.className = 'mapchip'; sm.innerHTML = `CARTE PERSO <b>${pm.n.replace(/</g, '&lt;')}</b><button class="btn" title="Revenir à une carte générée">✕</button>`;
+      sm.querySelector('button').onclick = () => { this.pendMap = null; this.openNew(); };
+    }
     si.oninput = () => {
-      const sd = Hist.parse(si.value);
-      so.innerHTML = !sd ? '' : sd.free ? `<b style="color:var(--ok)">Graine « ${sd.free.replace(/</g, '&lt;')} »</b> · même texte = même carte et mêmes vagues — cliquez une menace pour lancer.`
+      const cm = pm ? null : CMaps.read(si.value);
+      if (cm) { so.innerHTML = `<b style="color:var(--ok)">Carte perso « ${cm.n.replace(/</g, '&lt;')} »</b> — cliquez une menace pour la jouer.`; return; }
+      const sd = pm ? null : Hist.parse(si.value);
+      so.innerHTML = pm ? 'Cliquez une menace pour lancer la partie sur cette carte.' : !sd ? '' : sd.free ? `<b style="color:var(--ok)">Graine « ${sd.free.replace(/</g, '&lt;')} »</b> · même texte = même carte et mêmes vagues — cliquez une menace pour lancer.`
         : `<b style="color:var(--ok)">Code de défi</b> · ${sd.diff ? DIFFS[sd.diff].name : 'menace au choix'} · ${GMODES[sd.gm].n} — cliquez une menace pour lancer.`;
     };
     si.oninput();
@@ -893,7 +905,7 @@ const UI = {
       ]);
       this.open('ov-pause'); Sfx.play('ui'); return;
     }
-    $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · Code de carte <b>${Hist.code()}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
+    $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · ${G.cmap ? `Carte perso <b>${G.cmap.n.replace(/</g, '&lt;')}</b>` : `Code de carte <b>${Hist.code()}</b>`}<br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
       `<br>Doctrine <b>${G.docs && G.docs.length ? G.docs.map(k => DOCTRINES[k].n).join(' + ') : DOCTRINES[G.doctrine].n}</b> · Commandant niv. <b>${Store.data.cmd.lvl}</b>` +
       (G.daily ? '<br>' + G.mutKeys.map(k => `<b style="color:var(--gold)">${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>') : '') +
       (G.cus ? '<br><b style="color:#b48cff">Partie perso</b> : ' + (CUSTOM.filter(d => G.cus[d.k] !== d.d).map(d => `${d.n} ${Custom.txt(d, G.cus[d.k])}`).join(' · ') || 'réglages par défaut') : '');
@@ -905,7 +917,7 @@ const UI = {
       ['MANUEL', '', () => this.openHelp()],
       ['CODEX', '', () => this.openCodex()],
       ['RECOMMENCER', '', () => this.confirm('RECOMMENCER ?', G.daily ? 'Le Défi du jour reprend depuis le début.' : 'Nouvelle carte, même difficulté. La partie en cours sera perdue.', () => {
-        const dk = G.diffKey, daily = !!G.daily, gm = G.gm, cus = G.cus; this.closeAll(); Game.newGame(dk, { daily, gm, cus });
+        const dk = G.diffKey, daily = !!G.daily, gm = G.gm, cus = G.cus, map = G.cmap; this.closeAll(); Game.newGame(dk, { daily, gm, cus, map });
       })],
       [G.phase === 'prep' ? 'SAUVEGARDER & QUITTER' : 'QUITTER<small>reprise au début de la vague en cours</small>', '', () => Game.quit()],
       ['ABANDONNER', 'danger', () => this.confirm('ABANDONNER ?', 'La partie sera perdue. Les fragments gagnés restent acquis.', () => { this.closeAll(); Act.do('giveup'); })]
@@ -920,6 +932,22 @@ const UI = {
   },
   openXfer(exp, rec) {
     const ta = $('xf-txt'), go = $('xf-go');
+    if (exp === 'mapexp' || exp === 'mapimp') {
+      const out = exp === 'mapexp';
+      $('xf-t').textContent = out ? 'CODE DE LA CARTE' : 'IMPORTER UNE CARTE';
+      $('xf-sub').innerHTML = out ? 'Envoyez ce code à un ami : il le colle dans <b>Éditeur de cartes → Importer un code</b>, ou directement dans le champ « code de carte » de Nouvelle partie.' : 'Collez ici le code d\'une carte perso (il commence par NWM1:).';
+      ta.value = out ? CMaps.code(rec) : ''; ta.readOnly = out; go.textContent = out ? 'COPIER LE CODE' : 'IMPORTER';
+      go.onclick = () => {
+        if (out) { this.copy(ta.value, ta); return; }
+        const m = CMaps.read(ta.value);
+        if (!m) { Sfx.play('error'); this.toast('Code invalide', 'Ce texte n\'est pas un code de carte Neon Warfare complet.', '#ff2a6d', 4); return; }
+        CMaps.save(m); this.close('ov-xfer'); Editor.open(m);
+        this.toast('Carte importée', `« ${m.n.replace(/</g, '&lt;')} » est dans Mes cartes.`, '#39ff88', 3);
+      };
+      this.open('ov-xfer');
+      if (out) setTimeout(() => { ta.focus(); ta.select(); }, 50);
+      return;
+    }
     if (exp === 'rpexp' || exp === 'rpimp') {
       const out = exp === 'rpexp';
       $('xf-t').textContent = out ? 'CODE DU REPLAY' : 'IMPORTER UN REPLAY';
@@ -1152,7 +1180,7 @@ const UI = {
     $('over-body').innerHTML = `<h2 style="color:var(--dang)">${this.x3d('ÉCHEC SYSTÈME', 'over')}</h2>
       <div class="sub" style="margin-bottom:6px">${daily ? 'Défi du jour ' + G.daily : G.diff.name}${G.doctrine !== 'standard' ? ' · doctrine ' + DOCTRINES[G.doctrine].n : ''} · le noyau a cédé à la vague <b>${G.waveNum}</b></div>
       ${recLine}
-      <div class="gocode"><span>CODE DE CARTE</span><input id="go-code" readonly value="${Hist.code()}" aria-label="Code de carte"><button class="btn" id="go-cc">COPIER</button>${daily ? '' : '<button class="btn sec" id="go-replay">REJOUER CETTE CARTE</button>'}</div>
+      <div class="gocode"><span>CODE DE CARTE</span><input id="go-code" readonly value="${G.cmap ? CMaps.code(G.cmap) : Hist.code()}" aria-label="Code de carte"><button class="btn" id="go-cc">COPIER</button>${daily ? '' : '<button class="btn sec" id="go-replay">REJOUER CETTE CARTE</button>'}</div>
       <div class="cmdb" style="margin:6px auto 4px"><div class="cl">NIV <b>${c1.lvl}</b><span>${Cmd.rank(c1.lvl).toUpperCase()}</span><em style="color:var(--gold)">+${fmt(G.xpRun)} XP</em></div>
         <div class="xpbar"><s id="go-xp" style="width:${startW.toFixed(1)}%"></s></div>
         ${ups > 0 ? `<div class="nx" style="color:var(--gold);font-weight:700">▲ ${ups} niveau${ups > 1 ? 'x' : ''} gagné${ups > 1 ? 's' : ''} !</div>` : ''}
@@ -1172,12 +1200,13 @@ const UI = {
     $('go-meta').onclick = () => { Game.quit(false); this.openMeta(); };
     $('go-stats').onclick = () => this.openStats();
     $('go-dare').onclick = () => {
-      const code = Hist.code();
+      const code = G.cmap ? CMaps.code(G.cmap) : Hist.code();
       this.copy(`Neon Warfare ${VERSION} : j'ai tenu jusqu'à la vague ${G.waveNum} en ${G.diff.name}${G.gm !== 'classic' ? ' (' + GMODES[G.gm].n + ')' : ''} ! Même carte, mêmes vagues : Nouvelle partie → code de carte ${code}`);
       this.toast('Défi copié', `Envoyez-le à un ami : il saisira le code <b>${code}</b> dans Nouvelle partie.`, '#ff2bd6', 5);
     };
-    $('go-again').onclick = () => { this.closeAll(); Game.newGame(dk, { daily }); };
-    const ci = $('go-code'), same = { gm: G.gm, seed: G.seed, portrait: G.portrait };
+    const cmap = G.cmap;
+    $('go-again').onclick = () => { this.closeAll(); Game.newGame(dk, { daily, map: cmap }); };
+    const ci = $('go-code'), same = { gm: G.gm, seed: G.seed, portrait: G.portrait, map: cmap };
     ci.onfocus = () => ci.select();
     $('go-cc').onclick = () => this.copy(ci.value, ci);
     if ($('go-replay')) $('go-replay').onclick = () => { this.closeAll(); Game.newGame(dk, same); };
@@ -1261,6 +1290,9 @@ const UI = {
         </div>
         <div class="lbl-s" style="margin:12px 0 6px">MENACE</div>
         <div class="seg" id="mp-diff">${Object.keys(DIFFS).map(k => `<button data-d="${k}" class="${MP.diff === k ? 'on' : ''}" style="--tc:${DIFFS[k].color}">${DIFFS[k].name.toUpperCase()}</button>`).join('')}</div>
+        <div class="lbl-s" style="margin:12px 0 6px">CARTE ${host ? '<span style="opacity:.6">(vos cartes perso, faites dans l\'éditeur)</span>' : ''}</div>
+        <div class="seg mp-maps" id="mp-map">${host ? [null, ...CMaps.list()].map((m, i) => `<button data-i="${i - 1}" class="${(MP.cmap ? MP.cmap.n : null) === (m ? m.n : null) ? 'on' : ''}">${m ? esc(m.n).toUpperCase() : 'ALÉATOIRE'}</button>`).join('')
+          : `<button class="on">${MP.mapName ? 'CARTE PERSO · ' + esc(MP.mapName).toUpperCase() : 'ALÉATOIRE'}</button>`}</div>
         <div class="lbl-s" style="margin:12px 0 6px">VOTRE DOCTRINE <span style="opacity:.6">(en coopération, les doctrines de tous les joueurs s'additionnent ; une doctrine en double ne compte qu'une fois)</span></div>
         <div class="docs" id="mp-docs">${Object.keys(DOCTRINES).filter(k => DOCTRINES[k].lvl <= Store.data.cmd.lvl).map(k => `<button class="doc${MP.myDoc() === k ? ' on' : ''}" data-k="${k}" title="${esc(DOCTRINES[k].d)}"><i>${TXT(DOCTRINES[k].i)}</i>${DOCTRINES[k].n}</button>`).join('')}</div>
         <div class="mp-chat"><div class="mp-log" id="mp-log"></div><form id="mp-form"><input id="mp-msg" maxlength="140" placeholder="Message…" autocomplete="off"><button class="btn">ENVOYER</button></form></div>
@@ -1271,6 +1303,7 @@ const UI = {
         </div>`;
       B.querySelectorAll('.mp-mode').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setMode(b.dataset.m); });
       B.querySelectorAll('#mp-diff button').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setDiff(b.dataset.d); });
+      if (host) B.querySelectorAll('#mp-map button').forEach(b => b.onclick = () => { Sfx.play('ui'); MP.setMap(CMaps.list()[+b.dataset.i]); });
       B.querySelectorAll('#mp-docs button').forEach(b => b.onclick = () => { Store.data.doctrine = b.dataset.k; Store.save(); Sfx.play('ui'); MP.sendMe(); this.renderMP(); });
       $('mp-quit').onclick = () => MP.leave();
       if (host) $('mp-go').onclick = () => MP.launch(); else $('mp-ready').onclick = () => { Sfx.play('ui'); MP.toggleReady(); };
@@ -1464,7 +1497,7 @@ const UI = {
       <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
       ${G.net === 'versus' ? `<div>Ennemis envoyés <b>${G.sentTotal || 0}</b></div><div>Ennemis reçus <b>${G.recvTotal || 0}</b></div><div>Primes de survie <b>${fmt(G.survGain || 0)}¢</b></div><div>Revenu final <b>+${G.income || 0}¢</b></div>` : `<div>Tourelles <b>${G.towers.length}</b></div><div>Boss vaincus <b>${s.bosses}</b></div>`}</div>
       <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span></div>
-      <div class="gocode"><span>CODE DE CARTE</span><input id="mpe-code" readonly value="${Hist.code()}" aria-label="Code de carte"><button class="btn" id="mpe-cc">COPIER</button></div>
+      <div class="gocode"><span>CODE DE CARTE</span><input id="mpe-code" readonly value="${G.cmap ? CMaps.code(G.cmap) : Hist.code()}" aria-label="Code de carte"><button class="btn" id="mpe-cc">COPIER</button></div>
       <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="mpe-quit">QUITTER</button>${host && over ? '<button class="btn" id="mpe-lobby">SALON</button>' : ''}<button class="btn" id="mpe-stats">STATS</button>
       ${host ? (over ? '<button class="btn prim big" id="mpe-again">REVANCHE !</button>' : '<button class="btn prim big" disabled>PARTIE EN COURS…</button>') : Net.connected ? '<span class="note" style="align-self:center">L\'hôte peut relancer une partie…</span>' : ''}</div>`;
     $('mpe-quit').onclick = () => MP.leave();
@@ -1753,6 +1786,10 @@ const UI = {
         <li><b>Défier un ami</b> : à la fin d'une partie, copiez son <b>code de carte</b> (ex. 1A2B3C-L-S). Saisi dans Nouvelle partie, il redonne exactement la même carte et les mêmes vagues. Le <b>Palmarès</b> garde l'historique de vos 30 dernières parties.</li>
         <li><b>Analyse de combat</b> (<kbd>G</kbd>) : graphiques de la partie en cours — dégâts, éliminations, tirs et rentabilité de chaque tourelle, et dégâts par vague. Le <b>Codex</b> réunit les fiches de tout ce que vous avez rencontré.</li>
         <li>La partie est <b>sauvegardée automatiquement</b> entre les vagues.</li></ul>
+      <h3>ÉDITEUR DE CARTES</h3><ul>
+        <li>Menu principal → <b>Éditeur de cartes</b>. Outil <b>Chemin</b> : glissez d'une case du bord à une autre ; les ennemis entrent par la première case, le noyau est sur la dernière (${CMaps.MIN} cases au moins). Repassez sur vos pas pour revenir en arrière, touchez une case du chemin pour le reprendre à partir de là.</li>
+        <li><b>Entrée en plus</b> (deux au maximum) : partez d'une case libre du bord et rejoignez le chemin principal. <b>Débris</b> : cases à recycler. <b>Gomme</b>, <b>Annuler</b> (Ctrl+Z), <b>Aléatoire</b> pour partir d'une carte générée.</li>
+        <li><b>Code de partage</b> : un ami le colle dans l'éditeur (Importer un code) ou dans le champ « code de carte » de Nouvelle partie. En multijoueur, l'hôte choisit la carte dans le salon. Les cartes perso ne comptent ni pour les records ni pour les succès, l'XP et les fragments.</li></ul>
       <h3>MULTIJOUEUR</h3><ul>
         <li><b>Menu → Multijoueur</b> : de 2 à 4 joueurs. L'hôte crée un salon, avec un code au hasard (NEON-XXXX) ou <b>un code de son choix</b>, et le donne aux autres. Dans le salon, l'hôte peut <b>exclure</b> un joueur (✕). Sans internet, la <b>connexion manuelle</b> échange deux codes par copier-coller (une invitation par joueur).</li>
         <li><b>Versus à plusieurs</b> : cliquez sur un adversaire dans le panneau de gauche pour en faire la <b>cible</b> de vos envois. Le dernier debout gagne ; le classement s'affiche en fin de partie.</li>

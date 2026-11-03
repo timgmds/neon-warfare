@@ -214,7 +214,7 @@ void main(){vec2 uv=gl_FragCoord.xy/uR;vec3 s=vec3(0.);
     const B = this.bloom;
     if (!B || !B.on || B.lost) return;
     const gl = B.gl, P = B.p, w = B.src.width, h = B.src.height;
-    if (!G) { if (!B.blank) { gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); B.blank = true; } return; }
+    if (!G || !Render.cv.game.width || !Render.cv.game.height) { if (!B.blank) { gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); B.blank = true; } return; }
     B.blank = false;
     B.sx.clearRect(0, 0, w, h);
     B.sx.drawImage(Render.cv.game, 0, 0, w, h);

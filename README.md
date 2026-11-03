@@ -73,6 +73,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Casino néon** | entre les vagues : **machine à sous** (3 jetons, jackpot progressif, malédiction aux trois crânes) et **paris** sur la vague suivante |
 | **Modes** | Classique, **Boss Rush** (un boss par vague), **Chaos** (événements en rafale), **Bac à sable** (ressources illimitées), **Partie perso** (17 réglages : PV, vitesse et nombre d'ennemis, fréquence des boss, crédits, primes, intégrité, nanites, gains et coûts en éléments, ressources de départ, vague des niveaux Oméga, plans offerts, événements, IEM temporaire ou à payer ; sans records ni progression) |
 | **Défi du jour** | même carte et mêmes 2 mutateurs pour tout le monde ce jour-là, record journalier |
+| **Éditeur de cartes** | menu principal : tracez le chemin d'un bord à l'autre, jusqu'à 2 entrées en plus, des débris ; cartes enregistrées, code de partage `NWM1:`, choix de la carte par l'hôte en multijoueur (sans records ni progression) |
 | **Graine libre** | dans Nouvelle partie, un nombre ou n'importe quel mot (`neon`, `timg`…) : même texte = même carte et mêmes vagues |
 | **Défier un ami** | chaque partie a un **code de carte** (ex. `1A2B3C-L-S`), affiché en fin de partie avec **Copier** et **Rejouer cette carte** : saisi dans Nouvelle partie, il redonne la même carte et les mêmes vagues ; historique des 30 dernières parties dans le Palmarès, rejouables d'un clic (▶) |
 | **Missions & protocoles** | 3 objectifs courts toujours actifs ; toutes les 2 vagues, 1 carte à choisir parmi 3. 48 protocoles en 4 familles (économie, attaque, défense, tactique), 9 pactes et 6 **légendaires** dès la vague 12 |
@@ -123,7 +124,7 @@ Le jeu vise 60 FPS constants, même sur machine modeste :
 
 Le jeu se distribue en **un seul fichier**, `neon-warfare.html`, mais il est **assemblé** à partir du dossier `src/` :
 `src/index.html` (la page, avec les repères `/*@CSS*/` et `/*@JS*/`), `src/style.css` et `src/js/NN-module.js`
-(46 modules, concaténés dans l'ordre des numéros) et `src/fonts/` (la police d'affichage Anton, intégrée en base64 à
+(47 modules, concaténés dans l'ordre des numéros) et `src/fonts/` (la police d'affichage Anton, intégrée en base64 à
 l'assemblage ; licence SIL OFL 1.1 dans `src/fonts/OFL-Anton.txt`). Pour modifier le jeu, éditez `src/`, puis :
 
 ```bash
@@ -136,7 +137,7 @@ Ne modifiez pas `neon-warfare.html` à la main : il serait écrasé au prochain 
 Les modules :
 
 `Store` · `Sfx` / `Music` (Web Audio) · données (`TOWERS`, `RECIPES`, `ENEMIES`, `EVENTS`, `SLOT_SYM`, `SENDS`…) ·
-`Spr` · `MapGen` / `Path` · `FX` · `GLFX` (décors et halo WebGL) · `Combat` · `Enemies` · `Towers` · `Shots` · `Traps` · `Waves` · `Abil` · `Skills` ·
+`Spr` · `MapGen` / `Path` · `CMaps` / `Editor` (cartes perso) · `FX` · `GLFX` (décors et halo WebGL) · `Combat` · `Enemies` · `Towers` · `Shots` · `Traps` · `Waves` · `Abil` · `Skills` ·
 `Fusion` · `Missions` · `Cmd` · `Cards` · `Codex` · `Events` · `Casino` · `Net` / `Lock` / `MP` (réseau) · `Act` (actions
 du joueur) · `Stats` · `Game` · `Demo` · `Render` · `Input` · `UI` · boucle principale.
 
@@ -164,6 +165,8 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v10.1** : éditeur de cartes : chemin principal, entrées en plus, débris, annulation, cartes enregistrées et code de
+  partage ; jouables en solo et en multijoueur (l'hôte choisit la carte dans le salon).
 - **v10.0** : refonte graphique « Néon 10 », toujours en 2D : décors animés en WebGL pour chaque thème, halo lumineux,
   tourelles redessinées et animées, traînées lumineuses des ennemis, titre et grandes annonces en lettrage 3D rétro,
   nouvelle interface. L'ancien rendu reste disponible (Options → Style graphique → Classique).

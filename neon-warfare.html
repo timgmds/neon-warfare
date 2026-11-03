@@ -765,6 +765,26 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   #b-wave{padding:8px 14px;min-width:0}
 }
 
+/* ---------- ÉDITEUR DE CARTES ---------- */
+.ed-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.ed-sp{flex:1 1 0}
+.ed-wrap{border:1px solid rgba(var(--accent-rgb),.35);border-radius:6px;overflow:hidden;background:#04070e}
+#ed-cv{display:block;width:100%;aspect-ratio:29/15;touch-action:none;cursor:crosshair}
+.ed-st{margin:8px 0 10px;font-size:12px;color:var(--dim);line-height:1.5}
+.ed-st b{color:var(--txt)}
+.ed-st .ok{color:var(--ok)}
+.ed-st .err{color:var(--dang)}
+.ed-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ed-row .mp-in{flex:1 1 180px;min-width:0}
+.ed-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.ed-it{display:flex;align-items:center;gap:7px;padding:6px 8px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.03);min-width:0}
+.ed-it canvas{width:58px;height:30px;flex:0 0 auto;border-radius:3px}
+.ed-it b{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.ed-it .btn{padding:5px 7px;font-size:10px;letter-spacing:1px}
+.mapchip{display:inline-flex;align-items:center;gap:8px;padding:5px 6px 5px 10px;border:1px solid var(--sec);border-radius:6px;font-size:12px;color:var(--txt);max-width:100%}
+.mapchip b{color:var(--sec);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mapchip .btn{padding:3px 7px}
+
 /* ================= STYLE NÉON 10 =================
    Tout ce bloc ne s'applique qu'en style Néon 10 (body.gfx-neo) : le style « classique » garde le rendu de la v9.
    Règle d'or : on change les couleurs, les fonds, les ombres et les polices des titres, jamais les dimensions des blocs. */
@@ -916,7 +936,7 @@ body.gfx-neo .hstat .lbl{font-family:var(--disp);font-weight:400;font-size:11px;
   <div id="cus-box" hidden></div>
   <div class="lbl-s" style="margin-bottom:8px">MENACE</div>
   <div class="dgrid" id="diff-grid"></div>
-  <div class="seedrow"><span class="lbl-s">GRAINE / CODE DE CARTE <span style="opacity:.6">(facultatif : un nombre, un mot, ou le code d'un ami)</span></span><input id="seed-in" class="mp-in" maxlength="32" placeholder="ex. 42, neon, 1A2B3C-L-S" autocomplete="off"><span id="seed-ok" class="note"></span></div></div></div>
+  <div class="seedrow"><span class="lbl-s">GRAINE / CODE DE CARTE <span style="opacity:.6">(facultatif : un nombre, un mot, ou le code d'un ami)</span></span><span id="seed-map" hidden></span><input id="seed-in" class="mp-in" maxlength="32" placeholder="ex. 42, neon, 1A2B3C-L-S" autocomplete="off"><span id="seed-ok" class="note"></span></div></div></div>
 <div class="ov" id="ov-cards"><div class="modal cmodal" style="width:900px">
   <h2 id="cards-t">PROTOCOLE</h2><div class="sub" id="cards-sub"></div>
   <div class="cgrid" id="cards"></div>
@@ -931,6 +951,14 @@ body.gfx-neo .hstat .lbl{font-family:var(--disp);font-weight:400;font-size:11px;
   <div class="row" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" data-close>FERMER</button><button class="btn prim" id="xf-go">OK</button></div></div></div>
 <div class="ov" id="ov-rpend"><div class="modal" style="width:480px"><h2 style="color:#b48cff">FIN DU REPLAY</h2><div class="sub" id="rpe-sub"></div>
   <div class="row" style="justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap"><button class="btn" id="rpe-menu">MENU</button><button class="btn" id="rpe-code">CODE DU REPLAY</button><button class="btn prim" id="rpe-again">REVOIR</button></div></div></div>
+<div class="ov" id="ov-edit"><div class="modal" style="width:1000px"><button class="mclose" data-close>✕</button>
+  <h2>ÉDITEUR DE CARTES</h2><div class="sub">Tracez le chemin des ennemis en glissant d'un bord de la carte à un autre : ils arrivent par la première case, le noyau est sur la dernière. Ajoutez jusqu'à deux entrées en plus qui rejoignent le chemin, et des débris à recycler. Les cartes perso se jouent en solo comme en multijoueur, mais ne comptent pas pour les records, succès, XP et fragments.</div>
+  <div class="ed-bar" id="ed-tools"></div>
+  <div class="ed-wrap"><canvas id="ed-cv"></canvas></div>
+  <div class="ed-st" id="ed-st"></div>
+  <div class="ed-row"><input id="ed-name" class="mp-in" maxlength="24" placeholder="Nom de la carte" autocomplete="off" aria-label="Nom de la carte">
+    <button class="btn" id="ed-save">ENREGISTRER</button><button class="btn" id="ed-code">CODE DE PARTAGE</button><button class="btn" id="ed-imp">IMPORTER UN CODE</button><button class="btn prim" id="ed-play">JOUER CETTE CARTE</button></div>
+  <div class="lbl-s" id="ed-lh" style="margin:14px 0 4px">MES CARTES</div><div class="ed-list" id="ed-list"></div></div></div>
 <div class="ov" id="ov-keys"><div class="modal" style="width:640px"><button class="mclose" data-close>✕</button><h2>RACCOURCIS CLAVIER</h2>
   <div class="sub">Cliquez sur une touche puis appuyez sur la nouvelle (Échap pour annuler, ✕ pour n'en mettre aucune). Une touche déjà utilisée est retirée de l'autre commande.</div>
   <div id="keys-list"></div><div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="keys-reset">TOUCHES PAR DÉFAUT</button></div></div></div>
@@ -990,7 +1018,7 @@ body.gfx-neo .hstat .lbl{font-family:var(--disp);font-weight:400;font-size:11px;
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '10.0';
+const VERSION = '10.1';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -4384,7 +4412,7 @@ const Cmd = {
   nextDoctrine(l) { return Object.values(DOCTRINES).filter(d => d.lvl > l).sort((a, b) => a.lvl - b.lvl)[0] || null; },
   gain(x) {
     x = Math.round(x);
-    if (!x || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom'))) return;
+    if (!x || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom' || G.cmap))) return;
     const c = Store.data.cmd;
     c.xp += x;
     if (G) G.xpRun += x;
@@ -5308,7 +5336,7 @@ const MP = {
   admit(p) {   // hôte : un invité vient d'arriver
     this.pl[p] = { name: 'Joueur ' + (p + 1), ready: false, v: '?', ping: 0 };
     if (UI.mpState !== 'lobby') { UI.mpState = 'lobby'; UI.mpManual = null; }
-    Net.sendTo(p, { t: 'cfg', mode: this.mode, diff: this.diff });
+    Net.sendTo(p, { t: 'cfg', mode: this.mode, diff: this.diff, map: this.cmap ? this.cmap.n : null });
     this.syncRoster();
     Sfx.play('mission');
   },
@@ -5326,10 +5354,12 @@ const MP = {
     else Net.send({ t: 'me', doc: this.myDoc(), perks: this.myPerks() });
   },
   setPing(p, v, rl) { if (this.pl[p]) { this.pl[p].ping = v; this.pl[p].rl = !!rl; } },
-  sendCfg() { if (Net.role === 'host') Net.send({ t: 'cfg', mode: this.mode, diff: this.diff }); },
+  sendCfg() { if (Net.role === 'host') Net.send({ t: 'cfg', mode: this.mode, diff: this.diff, map: this.cmap ? this.cmap.n : null }); },
   unready() { for (const p in this.pl) if (+p) this.pl[p].ready = false; },
   setMode(m) { if (Net.role !== 'host') return; this.mode = m; this.unready(); this.sendCfg(); this.syncRoster(); },
   setDiff(d) { if (Net.role !== 'host') return; this.diff = d; this.unready(); this.sendCfg(); this.syncRoster(); },
+  // carte perso de l'hôte (null : carte générée) ; elle part en entier avec le message de lancement
+  setMap(m) { if (Net.role !== 'host') return; this.cmap = m || null; this.unready(); this.sendCfg(); this.syncRoster(); },
   toggleReady() { this.ready = !this.ready; Net.send({ t: 'ready', v: this.ready }); UI.renderMP(); },
   allReady() { const G2 = Object.keys(this.pl).filter(p => +p !== Net.me); return G2.length > 0 && G2.every(p => this.pl[p].ready); },
   // hôte : exclure un joueur (il ne pourra pas revenir sous le même nom tant que le salon existe)
@@ -5363,7 +5393,7 @@ const MP = {
       perks: coop ? Object.assign({}, Store.data.meta.perks) : {}, doctrine: coop && docOk ? dk : 'standard',
       docs: coop ? Object.fromEntries(slots.map(p => [p, (this.pl[p] || {}).doc || 'standard'])) : null,
       perksBy: coop ? Object.fromEntries(slots.map(p => [p, (this.pl[p] || {}).perks || {}])) : null,
-      events: Store.s.events !== false, autoWave: coop ? !!Store.s.autoWave : true, slots
+      events: Store.s.events !== false, autoWave: coop ? !!Store.s.autoWave : true, slots, map: this.cmap || null
     };
     Net.send({ t: 'start', o, pl: this.pl });
     this.begin(o);
@@ -5378,7 +5408,7 @@ const MP = {
     const others = this.others();
     this.target = others.find(p => p > Net.me); if (this.target == null) this.target = others[0];
     if (Net.coop) Lock.reset(0);
-    Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, docs: o.docs, perksBy: o.perksBy, mp: o.mode, events: o.events, autoWave: o.autoWave, slots: this.slots });
+    Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, docs: o.docs, perksBy: o.perksBy, mp: o.mode, events: o.events, autoWave: o.autoWave, slots: this.slots, map: o.map });
     UI.mpHud(true);
     UI.banner(Net.versus ? 'VERSUS' : 'COOPÉRATION', this.slots.map(p => this.name(p).toUpperCase()).join(' · '), MP_COL[Net.me]);
     const n = this.slots.length;
@@ -5736,7 +5766,7 @@ const MP = {
       Net.reset(); UI.closeAll(); UI.mpState = 'home'; UI.openMP(); Net.setStatus('L\'hôte vous a exclu du salon.', true);
       MP.kicked = false;
     },
-    cfg(m) { MP.mode = m.mode; MP.diff = m.diff; MP.ready = false; UI.renderMP(); },
+    cfg(m) { MP.mode = m.mode; MP.diff = m.diff; MP.mapName = m.map ? String(m.map).slice(0, 24) : null; MP.ready = false; UI.renderMP(); },
     ready(m) { if (MP.pl[m.p]) { MP.pl[m.p].ready = !!m.v; MP.syncRoster(); if (m.v) Sfx.play('ui'); } },
     chat(m) {
       const s = String(m.s || '').slice(0, 140);
@@ -6163,7 +6193,7 @@ const Hist = {
     if (!G || G.demo) return;
     let mvp = null; for (const k in G.tstats) if (G.tstats[k].dealt > 0 && (!mvp || G.tstats[k].dealt > G.tstats[mvp].dealt)) mvp = k;
     const H = Store.data.hist || (Store.data.hist = []);
-    H.unshift(Object.assign({ d: Date.now(), gm: G.gm, diff: G.diffKey, w: G.waveNum, k: G.stats.kills, mvp, net: G.net || '', daily: G.daily || '', code: Hist.code() }, extra));
+    H.unshift(Object.assign({ d: Date.now(), gm: G.gm, diff: G.diffKey, w: G.waveNum, k: G.stats.kills, mvp, net: G.net || '', daily: G.daily || '', code: G.cmap ? '' : Hist.code(), map: G.cmap ? G.cmap.n : undefined }, extra));
     if (H.length > 30) H.length = 30;
     Store.save();
   },
@@ -6181,7 +6211,7 @@ const Hist = {
 
 const Ach = {
   unlock(id) {
-    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom'))) return;
+    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom' || G.cmap))) return;
     Store.data.ach[id] = Date.now(); Store.data.meta.frags += 3; Store.save();
     UI.toast('Succès : ' + ACH[id].n, ACH[id].d + ' <span class="frags">+3 ✦</span>', '#ffd23f', 4.5);
     Sfx.play('ach');
@@ -6198,7 +6228,7 @@ const SaveSys = {
   pack() {
     const M = G.map;
     return {
-      v: 8, gm: G.gm, cus: G.cus, rec: G.rec ? 1 : 0, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
+      v: 8, gm: G.gm, cus: G.cus, cmap: G.cmap || null, rec: G.rec ? 1 : 0, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
       doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, cx: G.cx,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       rs: G.rs, nanites: G.nanites, res: G.res, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
@@ -6238,7 +6268,10 @@ const Game = {
     const daily = opts.daily ? dailyInfo(opts.dailyDate || undefined) : null;
     const seed = daily ? daily.seed : opts.seed != null ? opts.seed : (Math.random() * 2147483647) | 0;
     const portrait = opts.portrait != null ? opts.portrait : View.w < View.h * .9;
-    this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
+    // carte perso (éditeur) : vérifiée ici aussi, car elle peut venir d'un code ou du réseau
+    const cm = opts.map && !daily && CMaps.check(opts.map) ? opts.map : null;
+    this.makeState(diffKey, cm ? CMaps.toMap(cm, portrait) : MapGen.generate(seed, portrait), seed);
+    G.cmap = cm;
     G.perks = pk; G.net = opts.mp || null; G.portrait = !!portrait;
     // coopération : Héritage d'équipe et doctrines de tous les joueurs (une doctrine en double ne compte qu'une fois)
     if (G.net === 'coop' && opts.perksBy) {
@@ -6314,6 +6347,7 @@ const Game = {
       G.portrait = !!s.portrait;
       if (s.gm && GMODES[s.gm]) { G.gm = s.gm; if (G.gm === 'chaos' && !s.daily) { G.mutKeys = ['chaos']; G.mut = makeMut(G.mutKeys); } }
       if (G.gm === 'custom') Custom.apply(s.cus);
+      G.cmap = s.cmap || null;
       Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, res: Object.assign({ p: 0, a: 0, q: 0, ref: 0 }, s.res), recycle: s.recycle,
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
         doctrine: DOCTRINES[s.doctrine] ? s.doctrine : 'standard', missions: (s.missions || []).filter(m => MDEF[m.id]),
@@ -6376,7 +6410,7 @@ const Game = {
       FX.spark(ex, ey, '#ff2a6d', 80, 7, 60, 3); Render.flash(.6, '#ff2a6d'); Render.shake(25); Sfx.play('boom'); Sfx.play('leak');
       MP.defeat(); return;
     }
-    const frags = G.gm === 'sandbox' || G.gm === 'custom' ? 0 : Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2 + (G.stats.megas || 0) * 25) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1) * (G.gm === 'rush' ? 1.5 : 1)));
+    const frags = G.gm === 'sandbox' || G.gm === 'custom' || G.cmap ? 0 : Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2 + (G.stats.megas || 0) * 25) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1) * (G.gm === 'rush' ? 1.5 : 1)));
     Store.data.meta.frags += frags;
     let best, prev;
     if (G.daily) {
@@ -6385,7 +6419,7 @@ const Game = {
       if (best) D[G.daily] = G.waveNum;
     } else {
       const rk = G.gm === 'classic' ? G.diffKey : G.diffKey + ':' + G.gm;
-      prev = Store.data.records[rk] || 0; best = G.gm !== 'sandbox' && G.gm !== 'custom' && G.waveNum > prev;
+      prev = Store.data.records[rk] || 0; best = G.gm !== 'sandbox' && G.gm !== 'custom' && !G.cmap && G.waveNum > prev;
       if (best) Store.data.records[rk] = G.waveNum;
     }
     Store.data.stats.kills += G.stats.kills;
@@ -6759,7 +6793,7 @@ void main(){vec2 uv=gl_FragCoord.xy/uR;vec3 s=vec3(0.);
     const B = this.bloom;
     if (!B || !B.on || B.lost) return;
     const gl = B.gl, P = B.p, w = B.src.width, h = B.src.height;
-    if (!G) { if (!B.blank) { gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); B.blank = true; } return; }
+    if (!G || !Render.cv.game.width || !Render.cv.game.height) { if (!B.blank) { gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); B.blank = true; } return; }
     B.blank = false;
     B.sx.clearRect(0, 0, w, h);
     B.sx.drawImage(Render.cv.game, 0, 0, w, h);
@@ -7758,6 +7792,353 @@ const App = {
   }
 };
 
+/* ============================== CARTES PERSO & ÉDITEUR ==============================
+   Une carte perso : { n: nom, C, R, c: cases (chaîne, '2' = débris), p: tracés [x0, y0, x1, y1, …] }.
+   Tracé 0 : le chemin principal, d'un bord à un autre (le noyau est sur sa dernière case). Les suivants : des entrées
+   en plus, qui partent d'un bord et rejoignent le chemin principal ; leur fin reprend celle du chemin principal,
+   exactement comme les cartes « en fourche » du générateur.
+   Elles se jouent en solo et en multijoueur (l'hôte envoie la carte), mais ne comptent ni pour les records ni pour
+   les succès, l'XP et les fragments, comme la Partie perso : un chemin taillé sur mesure rendrait tout trop facile. */
+const CMaps = {
+  MAX: 24, MIN: 20,
+  list() { return Store.data.maps || (Store.data.maps = []); },
+  // code de partage : les débris y sont notés par leur position (r), plus court que la grille entière
+  code(m) {
+    const r = []; for (let i = 0; i < m.c.length; i++) if (m.c[i] === '2') r.push(i);
+    return 'NWM1:' + B64.enc(JSON.stringify({ n: m.n, C: m.C, R: m.R, r, p: m.p }));
+  },
+  read(txt) {
+    const s = String(txt || '').trim(), k = s.indexOf('NWM1:');
+    if (k < 0) return null;
+    try {
+      const m = JSON.parse(B64.dec(s.slice(k + 5).split(/\s/)[0]));
+      if (m && Array.isArray(m.r) && m.C * m.R > 0 && m.C * m.R < 2000) { const c = new Array(m.C * m.R).fill('0'); for (const i of m.r) if (i >= 0 && i < c.length) c[i] = '2'; m.c = c.join(''); delete m.r; }
+      return this.check(m) ? m : null;
+    } catch (e) { return null; }
+  },
+  // structure et règles : même contrôle pour une carte enregistrée, reçue par code ou par le réseau
+  check(m) {
+    if (!m || m.C !== MapGen.C || m.R !== MapGen.R || typeof m.c !== 'string' || m.c.length !== m.C * m.R) return false;
+    if (!Array.isArray(m.p) || !m.p.length || m.p.length > 3 || !m.p.every(f => Array.isArray(f) && f.every(v => Number.isInteger(v)))) return false;
+    m.n = String(m.n || 'Carte perso').slice(0, 24);
+    return !Editor.validate(Editor.fromMap(m)).err;
+  },
+  // carte de jeu, au même format que MapGen.generate
+  toMap(m, portrait) {
+    const C = m.C, R = m.R, cells = new Uint8Array(C * R);
+    for (let i = 0; i < C * R; i++) if (m.c.charCodeAt(i) === 50) cells[i] = 2;
+    const paths = m.p.map(f => { const t = []; for (let i = 0; i + 1 < f.length; i += 2) t.push([f[i], f[i + 1]]); return t; });
+    for (const P of paths) for (const [x, y] of P) cells[y * C + x] = 1;
+    const map = { C, R, cells, paths };
+    return portrait ? MapGen.transpose(map) : map;
+  },
+  save(m) {
+    const L = this.list(), i = L.findIndex(x => x.n === m.n);
+    if (i >= 0) L.splice(i, 1);
+    L.unshift(m); if (L.length > this.MAX) L.length = this.MAX;
+    Store.save();
+  },
+  remove(n) { Store.data.maps = this.list().filter(x => x.n !== n); Store.save(); },
+  // vignette : les tracés sur fond sombre
+  thumb(cv, m, css = 58) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), h = css * m.R / m.C;
+    cv.width = Math.round(css * dpr); cv.height = Math.round(h * dpr);
+    const x = cv.getContext('2d'), T = cv.width / m.C;
+    x.fillStyle = '#04070e'; x.fillRect(0, 0, cv.width, cv.height);
+    x.lineCap = x.lineJoin = 'round'; x.lineWidth = T * .7;
+    m.p.forEach((f, k) => {
+      x.strokeStyle = k ? '#ff2bd6' : '#00f3ff'; x.beginPath();
+      for (let i = 0; i + 1 < f.length; i += 2) x[i ? 'lineTo' : 'moveTo']((f[i] + .5) * T, (f[i + 1] + .5) * T);
+      x.stroke();
+    });
+  }
+};
+
+const Editor = {
+  S: null, tool: 'path', hist: [], cur: null, rockMode: 1, hover: -1, msg: '', ready: false,
+  C: () => MapGen.C, R: () => MapGen.R,
+  blank() { return { main: [], br: [], rocks: new Uint8Array(MapGen.C * MapGen.R) }; },
+  // état d'édition ← carte : le tronçon propre de chaque entrée en plus, et l'indice de sa jonction sur le chemin principal
+  fromMap(m) {
+    const C = m.C, R = m.R, S = this.blank();
+    for (let i = 0; i < C * R; i++) S.rocks[i] = m.c.charCodeAt(i) === 50 ? 1 : 0;
+    const tiles = f => { const t = []; for (let i = 0; i + 1 < f.length; i += 2) t.push([f[i], f[i + 1]]); return t; };
+    S.main = tiles(m.p[0] || []);
+    const key = t => t[1] * C + t[0], idx = new Map(S.main.map((t, i) => [key(t), i]));
+    for (const f of m.p.slice(1)) {
+      const T = tiles(f), k = T.findIndex(t => idx.has(key(t)));
+      let mi = k > 0 ? idx.get(key(T[k])) : -1;
+      // la fin de l'entrée doit reprendre exactement la fin du chemin principal
+      if (mi >= 0 && (T.length - k !== S.main.length - mi || T.slice(k).some((t, j) => key(t) !== key(S.main[mi + j])))) mi = -1;
+      S.br.push({ own: k > 0 ? T.slice(0, k) : T, m: mi });
+    }
+    return S;
+  },
+  toData(S, n) {
+    const C = MapGen.C, R = MapGen.R, used = this.usedSet(S);
+    let c = '';
+    for (let i = 0; i < C * R; i++) c += S.rocks[i] && !used.has(i) ? '2' : '0';
+    const flat = T => T.flat();
+    return { n: String(n || 'Carte perso').slice(0, 24), C, R, c, p: [flat(S.main), ...S.br.map(b => flat(b.own.concat(S.main.slice(b.m))))] };
+  },
+  usedSet(S) {
+    const C = MapGen.C, u = new Set();
+    for (const [x, y] of S.main) u.add(y * C + x);
+    for (const b of S.br) for (const [x, y] of b.own) u.add(y * C + x);
+    return u;
+  },
+  // une case de bord, et le pas suivant qui rentre dans la carte
+  inward(a, b) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], C = MapGen.C, R = MapGen.R;
+    return (a[0] === 0 && dx === 1) || (a[0] === C - 1 && dx === -1) || (a[1] === 0 && dy === 1) || (a[1] === R - 1 && dy === -1);
+  },
+  edge(t) { return t[0] === 0 || t[1] === 0 || t[0] === MapGen.C - 1 || t[1] === MapGen.R - 1; },
+  validate(S) {
+    const C = MapGen.C, R = MapGen.R, M = S.main, seen = new Set();
+    const seq = T => {
+      for (let i = 0; i < T.length; i++) {
+        const [x, y] = T[i];
+        if (!(x >= 0 && y >= 0 && x < C && y < R)) return false;
+        const k = y * C + x; if (seen.has(k)) return false; seen.add(k);
+        if (i && Math.abs(x - T[i - 1][0]) + Math.abs(y - T[i - 1][1]) !== 1) return false;
+      }
+      return true;
+    };
+    if (M.length < 2) return { err: 'Tracez le chemin des ennemis : partez d\'un bord de la carte.' };
+    if (!seq(M)) return { err: 'Le chemin principal est invalide.' };
+    if (!this.inward(M[0], M[1])) return { err: 'Le chemin doit commencer sur un bord et partir vers l\'intérieur.' };
+    if (!this.inward(M[M.length - 1], M[M.length - 2])) return { err: 'Menez le chemin jusqu\'à un bord : le noyau se place sur sa dernière case.' };
+    if (M.length < CMaps.MIN) return { err: `Chemin trop court : ${M.length} cases, il en faut au moins ${CMaps.MIN}.` };
+    if (S.br.length > 2) return { err: 'Trois entrées au maximum.' };
+    for (const b of S.br) {
+      if (b.own.length < 2 || !seq(b.own)) return { err: 'Une entrée en plus est invalide.' };
+      if (!this.inward(b.own[0], b.own[1])) return { err: 'Chaque entrée en plus doit partir d\'un bord vers l\'intérieur.' };
+      if (b.m < 0) return { err: 'Chaque entrée en plus doit rejoindre le chemin principal.' };
+      const L = b.own[b.own.length - 1], J = M[b.m];
+      if (!J || Math.abs(L[0] - J[0]) + Math.abs(L[1] - J[1]) !== 1) return { err: 'Une entrée en plus est mal raccordée.' };
+      if (b.m < 2 || b.m > M.length - 4) return { err: 'Une entrée en plus doit rejoindre le chemin loin de son début et du noyau.' };
+    }
+    return { ok: true };
+  },
+
+  /* ---------- fenêtre ---------- */
+  open(m) {
+    this.S = m ? this.fromMap(m) : this.blank();
+    $('ed-name').value = m ? m.n : this.freeName();
+    this.hist = []; this.tool = 'path'; this.msg = '';
+    this.init();
+    UI.open('ov-edit');
+    this.tools(); this.list(); this.draw();
+    requestAnimationFrame(() => this.draw());
+  },
+  freeName() { const L = CMaps.list(); let i = L.length + 1; while (L.some(x => x.n === 'Ma carte ' + i)) i++; return 'Ma carte ' + i; },
+  init() {
+    if (this.ready) return;
+    this.ready = true;
+    const cv = $('ed-cv');
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); const t = this.tile(e); if (!t) return; try { cv.setPointerCapture(e.pointerId); } catch (er) { /* pointeur simulé */ } this.down(t); this.draw(); });
+    cv.addEventListener('pointermove', e => {
+      const t = this.tile(e), h = t ? t[1] * MapGen.C + t[0] : -1;
+      if (this.cur && t) this.move(t);
+      if (h !== this.hover || this.cur) { this.hover = h; this.draw(); }
+    });
+    const up = () => { if (this.cur) { this.cur = null; this.draw(); } };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    cv.addEventListener('pointerleave', () => { this.hover = -1; this.draw(); });
+    window.addEventListener('resize', () => { if (UI.stack.includes('ov-edit')) this.draw(); });
+    window.addEventListener('keydown', e => {
+      if (UI.top() !== 'ov-edit' || e.target.tagName === 'INPUT') return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); this.undo(); }
+    });
+    $('ed-save').onclick = () => this.save();
+    $('ed-play').onclick = () => this.play();
+    $('ed-code').onclick = () => { const d = this.data(true); if (d) UI.openXfer('mapexp', d); };
+    $('ed-imp').onclick = () => UI.openXfer('mapimp');
+  },
+  tools() {
+    const T = [['path', '✎ CHEMIN', 'Glissez d\'un bord à un autre. Repassez sur vos pas pour revenir en arrière ; cliquez sur une case du chemin pour le reprendre à partir de là.'],
+      ['br', '⑂ ENTRÉE EN PLUS', 'Une seconde (ou troisième) entrée : partez d\'un bord libre et rejoignez le chemin principal.'],
+      ['rock', '◆ DÉBRIS', 'Débris à recycler (ils bloquent la construction tant qu\'on ne les a pas recyclés).'],
+      ['erase', '⌫ GOMME', 'Efface un débris, ou coupe un chemin à partir de la case touchée.']];
+    const B = $('ed-tools');
+    B.innerHTML = T.map(([k, n, d]) => `<button class="btn${this.tool === k ? ' on' : ''}" data-k="${k}" data-tip="${d}">${n}</button>`).join('') +
+      '<span class="ed-sp"></span><button class="btn" data-a="undo" data-tip="Annuler la dernière modification [Ctrl+Z]">↶ ANNULER</button>' +
+      '<button class="btn" data-a="rnd" data-tip="Part d\'une carte générée au hasard, à retoucher">⚄ ALÉATOIRE</button>' +
+      '<button class="btn danger" data-a="clear">✕ TOUT EFFACER</button>';
+    B.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { this.tool = b.dataset.k; Sfx.play('ui'); this.tools(); });
+    B.querySelector('[data-a=undo]').onclick = () => this.undo();
+    B.querySelector('[data-a=rnd]').onclick = () => {
+      this.snap();
+      const g = MapGen.generate((Math.random() * 2147483647) | 0, false);
+      this.S = this.fromMap({ C: g.C, R: g.R, c: Array.from(g.cells, v => v === 2 ? '2' : '0').join(''), p: g.paths.map(P => P.flat()) });
+      this.draw();
+    };
+    B.querySelector('[data-a=clear]').onclick = () => { this.snap(); this.S = this.blank(); this.msg = ''; this.draw(); };
+  },
+  list() {
+    const L = CMaps.list(), box = $('ed-list');
+    $('ed-lh').textContent = `MES CARTES · ${L.length} / ${CMaps.MAX}`;
+    if (!L.length) { box.innerHTML = '<div class="note" style="padding:6px 0">Aucune carte enregistrée pour l\'instant.</div>'; return; }
+    const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
+    box.innerHTML = L.map((m, i) => `<div class="ed-it"><canvas></canvas><b title="${esc(m.n)}">${esc(m.n)}</b>
+      <button class="btn" data-i="${i}" data-a="e">MODIFIER</button><button class="btn prim" data-i="${i}" data-a="p">JOUER</button><button class="btn danger" data-i="${i}" data-a="d" title="Supprimer">✕</button></div>`).join('');
+    box.querySelectorAll('canvas').forEach((cv, i) => CMaps.thumb(cv, L[i]));
+    box.querySelectorAll('button').forEach(b => b.onclick = () => {
+      const m = L[+b.dataset.i]; if (!m) return;
+      if (b.dataset.a === 'e') this.open(m);
+      else if (b.dataset.a === 'p') this.launch(m);
+      else UI.confirm('SUPPRIMER LA CARTE ?', `« ${esc(m.n)} » sera effacée de cet appareil.`, () => { CMaps.remove(m.n); this.list(); });
+    });
+  },
+  // la carte en cours, si elle est jouable (sinon le message d'erreur s'affiche)
+  data(loud) {
+    const v = this.validate(this.S);
+    if (v.err) { if (loud) { Sfx.play('error'); this.msg = v.err; this.draw(); } return null; }
+    return this.toData(this.S, $('ed-name').value.trim() || this.freeName());
+  },
+  save() {
+    const d = this.data(true); if (!d) return;
+    $('ed-name').value = d.n; CMaps.save(d); this.list(); Sfx.play('coin');
+    UI.toast('Carte enregistrée', `« ${d.n.replace(/</g, '&lt;')} » est dans Mes cartes, et au choix dans le salon multijoueur.`, '#39ff88', 3);
+  },
+  play() { const d = this.data(true); if (d) this.launch(d); },
+  // ouvre « Nouvelle partie » avec cette carte : on y choisit encore doctrine, mode et menace
+  launch(m) { UI.pendMap = m; UI.closeAll(); UI.openNew(); },
+
+  /* ---------- édition ---------- */
+  tile(e) {
+    const r = $('ed-cv').getBoundingClientRect();
+    const x = Math.floor((e.clientX - r.left) / r.width * MapGen.C), y = Math.floor((e.clientY - r.top) / r.height * MapGen.R);
+    return x >= 0 && y >= 0 && x < MapGen.C && y < MapGen.R ? [x, y] : null;
+  },
+  snap() { this.hist.push(JSON.stringify({ main: this.S.main, br: this.S.br, rocks: Array.from(this.S.rocks) })); if (this.hist.length > 60) this.hist.shift(); },
+  undo() {
+    const h = this.hist.pop(); if (!h) return;
+    const o = JSON.parse(h); this.S = { main: o.main, br: o.br, rocks: Uint8Array.from(o.rocks) };
+    this.msg = ''; Sfx.play('ui'); this.draw();
+  },
+  key(t) { return t[1] * MapGen.C + t[0]; },
+  same(a, b) { return a && b && a[0] === b[0] && a[1] === b[1]; },
+  mainIdx(t) { return this.S.main.findIndex(m => this.same(m, t)); },
+  // le chemin principal a raccourci : les entrées qui le rejoignaient plus loin ne sont plus raccordées
+  detach() { for (const b of this.S.br) if (b.m >= this.S.main.length) b.m = -1; },
+  down(t) {
+    const S = this.S, k = this.key(t), used = this.usedSet(S);
+    this.snap(); this.msg = '';
+    if (this.tool === 'rock') {
+      if (used.has(k)) { this.hist.pop(); return; }
+      this.rockMode = S.rocks[k] ? 0 : 1; S.rocks[k] = this.rockMode; this.cur = { rock: 1 };
+    } else if (this.tool === 'erase') {
+      this.erase(t); this.cur = { erase: 1 };
+    } else if (this.tool === 'path') {
+      const i = this.mainIdx(t);
+      if (!S.main.length) {
+        if (!this.edge(t) || used.has(k)) { this.hist.pop(); this.msg = 'Commencez le chemin sur une case du bord : c\'est par là qu\'arrivent les ennemis.'; return; }
+        S.main.push(t); S.rocks[k] = 0;
+      } else if (i >= 0) { S.main.length = i + 1; this.detach(); }
+      else if (!this.step({ T: S.main }, t)) { this.hist.pop(); this.msg = 'Continuez le chemin depuis sa dernière case (cerclée de blanc), ou touchez une de ses cases pour le reprendre là.'; return; }
+      this.cur = { T: S.main };
+    } else {
+      let b = S.br.find(x => x.own.some(o => this.same(o, t)));
+      if (b) { b.own.length = b.own.findIndex(o => this.same(o, t)) + 1; b.m = -1; }
+      else if ((b = S.br.find(x => x.m < 0 && this.step({ T: x.own, b: x }, t)))) { /* prolongée */ }
+      else if (S.br.length < 2 && this.edge(t) && !used.has(k) && S.main.length) { b = { own: [t], m: -1 }; S.br.push(b); S.rocks[k] = 0; }
+      else { this.hist.pop(); this.msg = !S.main.length ? 'Tracez d\'abord le chemin principal.' : S.br.length >= 2 ? 'Deux entrées en plus au maximum : touchez une entrée existante pour la modifier.' : 'Une entrée en plus part d\'une case libre du bord.'; return; }
+      this.cur = { T: b.own, b };
+    }
+  },
+  move(t) {
+    const c = this.cur, S = this.S, k = this.key(t);
+    if (c.rock) { if (!this.usedSet(S).has(k)) S.rocks[k] = this.rockMode; return; }
+    if (c.erase) { this.erase(t); return; }
+    // on avance case par case vers le pointeur, même si la souris a sauté plusieurs cases
+    for (let n = 0; n < 60; n++) {
+      const T = c.T, head = c.b && c.b.m >= 0 ? S.main[c.b.m] : T[T.length - 1];
+      if (this.same(head, t)) return;
+      const dx = t[0] - head[0], dy = t[1] - head[1];
+      const nx = Math.abs(dx) >= Math.abs(dy) ? [head[0] + Math.sign(dx), head[1]] : [head[0], head[1] + Math.sign(dy)];
+      if (!this.step(c, nx)) return;
+    }
+  },
+  // un pas du tracé vers la case t (voisine de sa tête) : avance, recule, ou raccorde une entrée en plus
+  step(c, t) {
+    const S = this.S, T = c.T, b = c.b;
+    if (b && b.m >= 0) { if (this.same(T[T.length - 1], t)) { b.m = -1; return true; } return false; }
+    const L = T[T.length - 1];
+    if (Math.abs(t[0] - L[0]) + Math.abs(t[1] - L[1]) !== 1) return false;
+    if (T.length > 1 && this.same(T[T.length - 2], t)) { T.pop(); if (!b) this.detach(); return true; }
+    if (b) { const mi = this.mainIdx(t); if (mi >= 0) { b.m = mi; return true; } }
+    if (this.usedSet(S).has(this.key(t))) return false;
+    T.push(t); S.rocks[this.key(t)] = 0;
+    return true;
+  },
+  erase(t) {
+    const S = this.S, k = this.key(t), i = this.mainIdx(t);
+    if (S.rocks[k]) { S.rocks[k] = 0; return; }
+    if (i >= 0) { S.main.length = i; this.detach(); if (!S.main.length) S.br.length = 0; return; }
+    const bi = S.br.findIndex(x => x.own.some(o => this.same(o, t)));
+    if (bi >= 0) {
+      const b = S.br[bi], j = b.own.findIndex(o => this.same(o, t));
+      if (j <= 0) S.br.splice(bi, 1); else { b.own.length = j; b.m = -1; }
+    }
+  },
+
+  /* ---------- dessin ---------- */
+  draw() {
+    const cv = $('ed-cv'), r = cv.getBoundingClientRect();
+    if (!this.S || r.width < 10) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1), C = MapGen.C, R = MapGen.R, S = this.S;
+    const W = Math.round(r.width * dpr), H = Math.round(r.width * R / C * dpr);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const x = cv.getContext('2d'), T = W / C, A = Render.theme.accent, ctr = t => [(t[0] + .5) * T, (t[1] + .5) * T];
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.fillStyle = '#04070e'; x.fillRect(0, 0, W, H);
+    // bande des bords (où commencent et finissent les chemins) et quadrillage
+    x.fillStyle = rgba(A, .06);
+    x.fillRect(0, 0, W, T); x.fillRect(0, H - T, W, T); x.fillRect(0, T, T, H - 2 * T); x.fillRect(W - T, T, T, H - 2 * T);
+    x.strokeStyle = 'rgba(255,255,255,.06)'; x.lineWidth = 1; x.beginPath();
+    for (let i = 1; i < C; i++) { x.moveTo(i * T, 0); x.lineTo(i * T, H); }
+    for (let j = 1; j < R; j++) { x.moveTo(0, j * T); x.lineTo(W, j * T); }
+    x.stroke();
+    // débris
+    x.save(); x.scale(T / TILE, T / TILE);
+    for (let j = 0; j < R; j++) for (let i = 0; i < C; i++) if (S.rocks[j * C + i]) Render.drawRock(x, (i + .5) * TILE, (j + .5) * TILE, i * 31 + j * 17 + 5);
+    x.restore();
+    // tracés
+    const line = (P, col, a = 1) => {
+      if (!P.length) return;
+      x.globalAlpha = a; x.lineCap = x.lineJoin = 'round';
+      const path = () => { x.beginPath(); P.forEach((t, i) => { const [px, py] = ctr(t); i ? x.lineTo(px, py) : x.moveTo(px, py); }); if (P.length === 1) x.lineTo(ctr(P[0])[0] + .01, ctr(P[0])[1]); };
+      path(); x.shadowColor = col; x.shadowBlur = 10 * dpr; x.strokeStyle = rgba(col, .5); x.lineWidth = T * .8; x.stroke(); x.shadowBlur = 0;
+      path(); x.strokeStyle = '#05080f'; x.lineWidth = T * .62; x.stroke();
+      path(); x.strokeStyle = rgba(col, .9); x.lineWidth = Math.max(1.5, T * .1); x.setLineDash([T * .25, T * .3]); x.stroke(); x.setLineDash([]);
+      x.globalAlpha = 1;
+    };
+    for (const b of S.br) line(b.m >= 0 ? b.own.concat([S.main[b.m]]) : b.own, '#ff2bd6', b.m >= 0 ? 1 : .7);
+    line(S.main, A);
+    // entrées (triangle), noyau (hexagone), têtes de tracé en cours (anneau blanc)
+    const tri = (t, col) => {
+      const [px, py] = ctr(t); x.fillStyle = col; x.beginPath();
+      const d = t[0] === 0 ? [1, 0] : t[0] === C - 1 ? [-1, 0] : t[1] === 0 ? [0, 1] : [0, -1], s = T * .32;
+      x.moveTo(px + d[0] * s, py + d[1] * s); x.lineTo(px - d[0] * s - d[1] * s, py - d[1] * s - d[0] * s); x.lineTo(px - d[0] * s + d[1] * s, py - d[1] * s + d[0] * s); x.closePath(); x.fill();
+    };
+    const ring = t => { const [px, py] = ctr(t); x.strokeStyle = '#fff'; x.lineWidth = Math.max(1.5, T * .08); x.beginPath(); x.arc(px, py, T * .42, 0, TAU); x.stroke(); };
+    if (S.main.length) tri(S.main[0], A);
+    for (const b of S.br) if (b.own.length) { tri(b.own[0], '#ff2bd6'); if (b.m < 0) ring(b.own[b.own.length - 1]); }
+    const v = this.validate(S);
+    if (S.main.length > 1 && this.edge(S.main[S.main.length - 1]) && this.inward(S.main[S.main.length - 1], S.main[S.main.length - 2])) {
+      const [px, py] = ctr(S.main[S.main.length - 1]);
+      x.save(); x.translate(px, py); x.fillStyle = '#ffd23f'; x.shadowColor = '#ffd23f'; x.shadowBlur = 10 * dpr; polyPath(x, 6, T * .4, Math.PI / 6); x.fill(); x.restore();
+    } else if (S.main.length) ring(S.main[S.main.length - 1]);
+    // case survolée
+    if (this.hover >= 0) { x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 1.5; x.strokeRect((this.hover % C) * T + 1, ((this.hover / C) | 0) * T + 1, T - 2, T - 2); }
+    // état
+    let rocks = 0; for (const r0 of S.rocks) rocks += r0;
+    const n = S.br.length + (S.main.length ? 1 : 0);
+    $('ed-st').innerHTML = `Chemin <b>${S.main.length}</b> cases · <b>${n}</b> entrée${n > 1 ? 's' : ''} · <b>${rocks}</b> débris — ` +
+      (this.msg ? `<b class="err">${this.msg}</b>` : v.err ? `<span class="err">${v.err}</span>` : '<b class="ok">✓ Carte jouable</b>');
+  }
+};
 /* ============================== REPLAYS ==============================
    La simulation solo est déterministe et toute action passe par Act : un replay n'est que la graine, les réglages
    de départ (ou l'état restauré si la partie a été reprise depuis une sauvegarde) et la liste des actions avec leur tick. */
@@ -7770,7 +8151,7 @@ const Replay = {
   // début d'enregistrement : nouvelle partie solo
   record() {
     if (!G || G.net || G.demo || G.replay) return;
-    G.rec = { v: VERSION, o: { diff: G.diffKey, seed: G.seed, portrait: G.portrait, gm: G.gm, cus: G.cus, perks: Object.assign({}, G.perks), doctrine: G.doctrine,
+    G.rec = { v: VERSION, o: { diff: G.diffKey, seed: G.seed, portrait: G.portrait, gm: G.gm, cus: G.cus, map: G.cmap || null, perks: Object.assign({}, G.perks), doctrine: G.doctrine,
       events: G.events, autoWave: G.autoWave, daily: G.daily || null }, a: [] };
   },
   // partie reprise depuis une sauvegarde : le replay repart de cet état
@@ -7804,7 +8185,7 @@ const Replay = {
       if (G.cardQ > 0 && !G.offer) G.offer = Cards.roll();   // comme au chargement d'une sauvegarde
     } else {
       const o = r.o;
-      Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, gm: o.gm, cus: o.cus, perks: o.perks, doctrine: o.doctrine, events: o.events, autoWave: o.autoWave,
+      Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, gm: o.gm, cus: o.cus, map: o.map, perks: o.perks, doctrine: o.doctrine, events: o.events, autoWave: o.autoWave,
         daily: !!o.daily, dailyDate: o.daily || undefined, replay: rp });
     }
     if (r.v !== VERSION) UI.toast('Replay d\'une autre version', `Enregistré en v${r.v}, vous avez la v${VERSION} : il peut s'écarter de la partie d'origine.`, '#ffd23f', 6);
@@ -7931,6 +8312,10 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '10.1', d: ['Nouveau : l\'éditeur de cartes (menu principal). Tracez le chemin des ennemis d\'un bord à l\'autre, ajoutez jusqu\'à deux entrées qui le rejoignent et des débris à recycler.',
+    'Enregistrez vos cartes, partagez-les par code (Éditeur → Code de partage, à coller dans l\'éditeur ou dans le champ « code de carte » de Nouvelle partie).',
+    'En multijoueur, l\'hôte choisit la carte dans le salon : aléatoire ou une de ses cartes perso, envoyée aux autres joueurs.',
+    'Les cartes perso ne comptent pas pour les records, succès, XP et fragments (comme la Partie perso).'] },
   { v: '10.0', d: ['Refonte graphique « Néon 10 », toujours en 2D : décors animés en WebGL pour les 5 thèmes (soleil synthwave, pluie Matrix, lave, trou noir, soleil en éruption).',
     'Halo lumineux sur les tirs, les explosions et les tourelles.',
     'Tourelles redessinées (socles en relief) et animées : le noyau respire, s\'illumine à chaque tir, et un anneau d\'énergie tourne autour des paliers 2 et plus. Les ennemis laissent une traînée lumineuse.',
@@ -8882,6 +9267,8 @@ const UI = {
       if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par le Défi du jour.', go); else go();
     }]);
     list.push([`MULTIJOUEUR<small>versus ou coopération, de 2 à 4</small>`, 'nano', () => this.openMP()]);
+    const nm = CMaps.list().length;
+    list.push([`ÉDITEUR DE CARTES<small>${nm ? nm + ' carte' + (nm > 1 ? 's' : '') + ' perso' : 'dessinez vos propres chemins'}</small>`, '', () => Editor.open()]);
     list.push([`HÉRITAGE<small>${Store.data.meta.frags} fragments</small>`, 'gold', () => this.openMeta()]);
     list.push([`PALMARÈS<small>${Object.keys(Store.data.ach).filter(k => ACH[k]).length} / ${Object.keys(ACH).length} succès · historique</small>`, '', () => this.openAch()]);
     const cx = Codex.progress();
@@ -8912,20 +9299,30 @@ const UI = {
       el.innerHTML = `<h3>${d.name}</h3><p>${d.desc}</p><div class="st">PV ennemis <b>x${d.hp}</b><br>Intégrité <b>${d.lives}</b> · Crédits <b>${d.money}</b><br>Fragments <b>x${d.frag}</b><br>Record : <b>${rec ? 'vague ' + rec : '—'}</b></div>`;
       el.onclick = () => {
         const go = () => {
-          const sd = Hist.parse($('seed-in').value);
+          const cm = this.pendMap || CMaps.read($('seed-in').value), sd = cm ? null : Hist.parse($('seed-in').value);
           this.closeAll();
           const cus = gm === 'custom' ? Custom.get() : null;
-          if (sd) Game.newGame(sd.diff || k, { gm: sd.free ? gm : sd.gm, cus, seed: sd.seed, portrait: sd.portrait == null ? undefined : sd.portrait }); else Game.newGame(k, { gm, cus });
+          this.pendMap = null;
+          if (cm) Game.newGame(k, { gm, cus, map: cm });
+          else if (sd) Game.newGame(sd.diff || k, { gm: sd.free ? gm : sd.gm, cus, seed: sd.seed, portrait: sd.portrait == null ? undefined : sd.portrait }); else Game.newGame(k, { gm, cus });
         };
         if (Store.data.save) this.confirm('ÉCRASER LA SAUVEGARDE ?', 'Une partie sauvegardée existe déjà. Elle sera remplacée par la nouvelle.', go);
         else go();
       };
       g.appendChild(el);
     }
-    const si = $('seed-in'), so = $('seed-ok');
+    const si = $('seed-in'), so = $('seed-ok'), sm = $('seed-map'), pm = this.pendMap;
+    // carte perso choisie dans l'éditeur : elle remplace la graine
+    sm.hidden = !pm; si.hidden = !!pm;
+    if (pm) {
+      sm.className = 'mapchip'; sm.innerHTML = `CARTE PERSO <b>${pm.n.replace(/</g, '&lt;')}</b><button class="btn" title="Revenir à une carte générée">✕</button>`;
+      sm.querySelector('button').onclick = () => { this.pendMap = null; this.openNew(); };
+    }
     si.oninput = () => {
-      const sd = Hist.parse(si.value);
-      so.innerHTML = !sd ? '' : sd.free ? `<b style="color:var(--ok)">Graine « ${sd.free.replace(/</g, '&lt;')} »</b> · même texte = même carte et mêmes vagues — cliquez une menace pour lancer.`
+      const cm = pm ? null : CMaps.read(si.value);
+      if (cm) { so.innerHTML = `<b style="color:var(--ok)">Carte perso « ${cm.n.replace(/</g, '&lt;')} »</b> — cliquez une menace pour la jouer.`; return; }
+      const sd = pm ? null : Hist.parse(si.value);
+      so.innerHTML = pm ? 'Cliquez une menace pour lancer la partie sur cette carte.' : !sd ? '' : sd.free ? `<b style="color:var(--ok)">Graine « ${sd.free.replace(/</g, '&lt;')} »</b> · même texte = même carte et mêmes vagues — cliquez une menace pour lancer.`
         : `<b style="color:var(--ok)">Code de défi</b> · ${sd.diff ? DIFFS[sd.diff].name : 'menace au choix'} · ${GMODES[sd.gm].n} — cliquez une menace pour lancer.`;
     };
     si.oninput();
@@ -8950,7 +9347,7 @@ const UI = {
       ]);
       this.open('ov-pause'); Sfx.play('ui'); return;
     }
-    $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · Code de carte <b>${Hist.code()}</b><br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
+    $('pause-info').innerHTML = `${G.daily ? 'DÉFI DU JOUR ' + G.daily : G.diff.name} · Vague <b>${G.waveNum}</b> · ${G.cmap ? `Carte perso <b>${G.cmap.n.replace(/</g, '&lt;')}</b>` : `Code de carte <b>${Hist.code()}</b>`}<br>${fmt(G.stats.kills)} éliminations · ${G.towers.length} tourelles` +
       `<br>Doctrine <b>${G.docs && G.docs.length ? G.docs.map(k => DOCTRINES[k].n).join(' + ') : DOCTRINES[G.doctrine].n}</b> · Commandant niv. <b>${Store.data.cmd.lvl}</b>` +
       (G.daily ? '<br>' + G.mutKeys.map(k => `<b style="color:var(--gold)">${MUTATORS[k].n}</b> : ${MUTATORS[k].d}`).join('<br>') : '') +
       (G.cus ? '<br><b style="color:#b48cff">Partie perso</b> : ' + (CUSTOM.filter(d => G.cus[d.k] !== d.d).map(d => `${d.n} ${Custom.txt(d, G.cus[d.k])}`).join(' · ') || 'réglages par défaut') : '');
@@ -8962,7 +9359,7 @@ const UI = {
       ['MANUEL', '', () => this.openHelp()],
       ['CODEX', '', () => this.openCodex()],
       ['RECOMMENCER', '', () => this.confirm('RECOMMENCER ?', G.daily ? 'Le Défi du jour reprend depuis le début.' : 'Nouvelle carte, même difficulté. La partie en cours sera perdue.', () => {
-        const dk = G.diffKey, daily = !!G.daily, gm = G.gm, cus = G.cus; this.closeAll(); Game.newGame(dk, { daily, gm, cus });
+        const dk = G.diffKey, daily = !!G.daily, gm = G.gm, cus = G.cus, map = G.cmap; this.closeAll(); Game.newGame(dk, { daily, gm, cus, map });
       })],
       [G.phase === 'prep' ? 'SAUVEGARDER & QUITTER' : 'QUITTER<small>reprise au début de la vague en cours</small>', '', () => Game.quit()],
       ['ABANDONNER', 'danger', () => this.confirm('ABANDONNER ?', 'La partie sera perdue. Les fragments gagnés restent acquis.', () => { this.closeAll(); Act.do('giveup'); })]
@@ -8977,6 +9374,22 @@ const UI = {
   },
   openXfer(exp, rec) {
     const ta = $('xf-txt'), go = $('xf-go');
+    if (exp === 'mapexp' || exp === 'mapimp') {
+      const out = exp === 'mapexp';
+      $('xf-t').textContent = out ? 'CODE DE LA CARTE' : 'IMPORTER UNE CARTE';
+      $('xf-sub').innerHTML = out ? 'Envoyez ce code à un ami : il le colle dans <b>Éditeur de cartes → Importer un code</b>, ou directement dans le champ « code de carte » de Nouvelle partie.' : 'Collez ici le code d\'une carte perso (il commence par NWM1:).';
+      ta.value = out ? CMaps.code(rec) : ''; ta.readOnly = out; go.textContent = out ? 'COPIER LE CODE' : 'IMPORTER';
+      go.onclick = () => {
+        if (out) { this.copy(ta.value, ta); return; }
+        const m = CMaps.read(ta.value);
+        if (!m) { Sfx.play('error'); this.toast('Code invalide', 'Ce texte n\'est pas un code de carte Neon Warfare complet.', '#ff2a6d', 4); return; }
+        CMaps.save(m); this.close('ov-xfer'); Editor.open(m);
+        this.toast('Carte importée', `« ${m.n.replace(/</g, '&lt;')} » est dans Mes cartes.`, '#39ff88', 3);
+      };
+      this.open('ov-xfer');
+      if (out) setTimeout(() => { ta.focus(); ta.select(); }, 50);
+      return;
+    }
     if (exp === 'rpexp' || exp === 'rpimp') {
       const out = exp === 'rpexp';
       $('xf-t').textContent = out ? 'CODE DU REPLAY' : 'IMPORTER UN REPLAY';
@@ -9209,7 +9622,7 @@ const UI = {
     $('over-body').innerHTML = `<h2 style="color:var(--dang)">${this.x3d('ÉCHEC SYSTÈME', 'over')}</h2>
       <div class="sub" style="margin-bottom:6px">${daily ? 'Défi du jour ' + G.daily : G.diff.name}${G.doctrine !== 'standard' ? ' · doctrine ' + DOCTRINES[G.doctrine].n : ''} · le noyau a cédé à la vague <b>${G.waveNum}</b></div>
       ${recLine}
-      <div class="gocode"><span>CODE DE CARTE</span><input id="go-code" readonly value="${Hist.code()}" aria-label="Code de carte"><button class="btn" id="go-cc">COPIER</button>${daily ? '' : '<button class="btn sec" id="go-replay">REJOUER CETTE CARTE</button>'}</div>
+      <div class="gocode"><span>CODE DE CARTE</span><input id="go-code" readonly value="${G.cmap ? CMaps.code(G.cmap) : Hist.code()}" aria-label="Code de carte"><button class="btn" id="go-cc">COPIER</button>${daily ? '' : '<button class="btn sec" id="go-replay">REJOUER CETTE CARTE</button>'}</div>
       <div class="cmdb" style="margin:6px auto 4px"><div class="cl">NIV <b>${c1.lvl}</b><span>${Cmd.rank(c1.lvl).toUpperCase()}</span><em style="color:var(--gold)">+${fmt(G.xpRun)} XP</em></div>
         <div class="xpbar"><s id="go-xp" style="width:${startW.toFixed(1)}%"></s></div>
         ${ups > 0 ? `<div class="nx" style="color:var(--gold);font-weight:700">▲ ${ups} niveau${ups > 1 ? 'x' : ''} gagné${ups > 1 ? 's' : ''} !</div>` : ''}
@@ -9229,12 +9642,13 @@ const UI = {
     $('go-meta').onclick = () => { Game.quit(false); this.openMeta(); };
     $('go-stats').onclick = () => this.openStats();
     $('go-dare').onclick = () => {
-      const code = Hist.code();
+      const code = G.cmap ? CMaps.code(G.cmap) : Hist.code();
       this.copy(`Neon Warfare ${VERSION} : j'ai tenu jusqu'à la vague ${G.waveNum} en ${G.diff.name}${G.gm !== 'classic' ? ' (' + GMODES[G.gm].n + ')' : ''} ! Même carte, mêmes vagues : Nouvelle partie → code de carte ${code}`);
       this.toast('Défi copié', `Envoyez-le à un ami : il saisira le code <b>${code}</b> dans Nouvelle partie.`, '#ff2bd6', 5);
     };
-    $('go-again').onclick = () => { this.closeAll(); Game.newGame(dk, { daily }); };
-    const ci = $('go-code'), same = { gm: G.gm, seed: G.seed, portrait: G.portrait };
+    const cmap = G.cmap;
+    $('go-again').onclick = () => { this.closeAll(); Game.newGame(dk, { daily, map: cmap }); };
+    const ci = $('go-code'), same = { gm: G.gm, seed: G.seed, portrait: G.portrait, map: cmap };
     ci.onfocus = () => ci.select();
     $('go-cc').onclick = () => this.copy(ci.value, ci);
     if ($('go-replay')) $('go-replay').onclick = () => { this.closeAll(); Game.newGame(dk, same); };
@@ -9318,6 +9732,9 @@ const UI = {
         </div>
         <div class="lbl-s" style="margin:12px 0 6px">MENACE</div>
         <div class="seg" id="mp-diff">${Object.keys(DIFFS).map(k => `<button data-d="${k}" class="${MP.diff === k ? 'on' : ''}" style="--tc:${DIFFS[k].color}">${DIFFS[k].name.toUpperCase()}</button>`).join('')}</div>
+        <div class="lbl-s" style="margin:12px 0 6px">CARTE ${host ? '<span style="opacity:.6">(vos cartes perso, faites dans l\'éditeur)</span>' : ''}</div>
+        <div class="seg mp-maps" id="mp-map">${host ? [null, ...CMaps.list()].map((m, i) => `<button data-i="${i - 1}" class="${(MP.cmap ? MP.cmap.n : null) === (m ? m.n : null) ? 'on' : ''}">${m ? esc(m.n).toUpperCase() : 'ALÉATOIRE'}</button>`).join('')
+          : `<button class="on">${MP.mapName ? 'CARTE PERSO · ' + esc(MP.mapName).toUpperCase() : 'ALÉATOIRE'}</button>`}</div>
         <div class="lbl-s" style="margin:12px 0 6px">VOTRE DOCTRINE <span style="opacity:.6">(en coopération, les doctrines de tous les joueurs s'additionnent ; une doctrine en double ne compte qu'une fois)</span></div>
         <div class="docs" id="mp-docs">${Object.keys(DOCTRINES).filter(k => DOCTRINES[k].lvl <= Store.data.cmd.lvl).map(k => `<button class="doc${MP.myDoc() === k ? ' on' : ''}" data-k="${k}" title="${esc(DOCTRINES[k].d)}"><i>${TXT(DOCTRINES[k].i)}</i>${DOCTRINES[k].n}</button>`).join('')}</div>
         <div class="mp-chat"><div class="mp-log" id="mp-log"></div><form id="mp-form"><input id="mp-msg" maxlength="140" placeholder="Message…" autocomplete="off"><button class="btn">ENVOYER</button></form></div>
@@ -9328,6 +9745,7 @@ const UI = {
         </div>`;
       B.querySelectorAll('.mp-mode').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setMode(b.dataset.m); });
       B.querySelectorAll('#mp-diff button').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setDiff(b.dataset.d); });
+      if (host) B.querySelectorAll('#mp-map button').forEach(b => b.onclick = () => { Sfx.play('ui'); MP.setMap(CMaps.list()[+b.dataset.i]); });
       B.querySelectorAll('#mp-docs button').forEach(b => b.onclick = () => { Store.data.doctrine = b.dataset.k; Store.save(); Sfx.play('ui'); MP.sendMe(); this.renderMP(); });
       $('mp-quit').onclick = () => MP.leave();
       if (host) $('mp-go').onclick = () => MP.launch(); else $('mp-ready').onclick = () => { Sfx.play('ui'); MP.toggleReady(); };
@@ -9521,7 +9939,7 @@ const UI = {
       <div class="gostats"><div>Vague atteinte <b>${G.waveNum}</b></div><div>Éliminations <b>${fmt(s.kills)}</b></div>
       ${G.net === 'versus' ? `<div>Ennemis envoyés <b>${G.sentTotal || 0}</b></div><div>Ennemis reçus <b>${G.recvTotal || 0}</b></div><div>Primes de survie <b>${fmt(G.survGain || 0)}¢</b></div><div>Revenu final <b>+${G.income || 0}¢</b></div>` : `<div>Tourelles <b>${G.towers.length}</b></div><div>Boss vaincus <b>${s.bosses}</b></div>`}</div>
       <div class="sub" style="font-size:13px">Fragments d'Héritage : <span class="frags">+${frags} ✦</span></div>
-      <div class="gocode"><span>CODE DE CARTE</span><input id="mpe-code" readonly value="${Hist.code()}" aria-label="Code de carte"><button class="btn" id="mpe-cc">COPIER</button></div>
+      <div class="gocode"><span>CODE DE CARTE</span><input id="mpe-code" readonly value="${G.cmap ? CMaps.code(G.cmap) : Hist.code()}" aria-label="Code de carte"><button class="btn" id="mpe-cc">COPIER</button></div>
       <div class="row gobtns" style="justify-content:center;gap:10px;margin-top:12px"><button class="btn" id="mpe-quit">QUITTER</button>${host && over ? '<button class="btn" id="mpe-lobby">SALON</button>' : ''}<button class="btn" id="mpe-stats">STATS</button>
       ${host ? (over ? '<button class="btn prim big" id="mpe-again">REVANCHE !</button>' : '<button class="btn prim big" disabled>PARTIE EN COURS…</button>') : Net.connected ? '<span class="note" style="align-self:center">L\'hôte peut relancer une partie…</span>' : ''}</div>`;
     $('mpe-quit').onclick = () => MP.leave();
@@ -9810,6 +10228,10 @@ const UI = {
         <li><b>Défier un ami</b> : à la fin d'une partie, copiez son <b>code de carte</b> (ex. 1A2B3C-L-S). Saisi dans Nouvelle partie, il redonne exactement la même carte et les mêmes vagues. Le <b>Palmarès</b> garde l'historique de vos 30 dernières parties.</li>
         <li><b>Analyse de combat</b> (<kbd>G</kbd>) : graphiques de la partie en cours — dégâts, éliminations, tirs et rentabilité de chaque tourelle, et dégâts par vague. Le <b>Codex</b> réunit les fiches de tout ce que vous avez rencontré.</li>
         <li>La partie est <b>sauvegardée automatiquement</b> entre les vagues.</li></ul>
+      <h3>ÉDITEUR DE CARTES</h3><ul>
+        <li>Menu principal → <b>Éditeur de cartes</b>. Outil <b>Chemin</b> : glissez d'une case du bord à une autre ; les ennemis entrent par la première case, le noyau est sur la dernière (${CMaps.MIN} cases au moins). Repassez sur vos pas pour revenir en arrière, touchez une case du chemin pour le reprendre à partir de là.</li>
+        <li><b>Entrée en plus</b> (deux au maximum) : partez d'une case libre du bord et rejoignez le chemin principal. <b>Débris</b> : cases à recycler. <b>Gomme</b>, <b>Annuler</b> (Ctrl+Z), <b>Aléatoire</b> pour partir d'une carte générée.</li>
+        <li><b>Code de partage</b> : un ami le colle dans l'éditeur (Importer un code) ou dans le champ « code de carte » de Nouvelle partie. En multijoueur, l'hôte choisit la carte dans le salon. Les cartes perso ne comptent ni pour les records ni pour les succès, l'XP et les fragments.</li></ul>
       <h3>MULTIJOUEUR</h3><ul>
         <li><b>Menu → Multijoueur</b> : de 2 à 4 joueurs. L'hôte crée un salon, avec un code au hasard (NEON-XXXX) ou <b>un code de son choix</b>, et le donne aux autres. Dans le salon, l'hôte peut <b>exclure</b> un joueur (✕). Sans internet, la <b>connexion manuelle</b> échange deux codes par copier-coller (une invitation par joueur).</li>
         <li><b>Versus à plusieurs</b> : cliquez sur un adversaire dans le panneau de gauche pour en faire la <b>cible</b> de vos envois. Le dernier debout gagne ; le classement s'affiche en fin de partie.</li>

@@ -55,7 +55,7 @@ const MP = {
   admit(p) {   // hôte : un invité vient d'arriver
     this.pl[p] = { name: 'Joueur ' + (p + 1), ready: false, v: '?', ping: 0 };
     if (UI.mpState !== 'lobby') { UI.mpState = 'lobby'; UI.mpManual = null; }
-    Net.sendTo(p, { t: 'cfg', mode: this.mode, diff: this.diff });
+    Net.sendTo(p, { t: 'cfg', mode: this.mode, diff: this.diff, map: this.cmap ? this.cmap.n : null });
     this.syncRoster();
     Sfx.play('mission');
   },
@@ -73,10 +73,12 @@ const MP = {
     else Net.send({ t: 'me', doc: this.myDoc(), perks: this.myPerks() });
   },
   setPing(p, v, rl) { if (this.pl[p]) { this.pl[p].ping = v; this.pl[p].rl = !!rl; } },
-  sendCfg() { if (Net.role === 'host') Net.send({ t: 'cfg', mode: this.mode, diff: this.diff }); },
+  sendCfg() { if (Net.role === 'host') Net.send({ t: 'cfg', mode: this.mode, diff: this.diff, map: this.cmap ? this.cmap.n : null }); },
   unready() { for (const p in this.pl) if (+p) this.pl[p].ready = false; },
   setMode(m) { if (Net.role !== 'host') return; this.mode = m; this.unready(); this.sendCfg(); this.syncRoster(); },
   setDiff(d) { if (Net.role !== 'host') return; this.diff = d; this.unready(); this.sendCfg(); this.syncRoster(); },
+  // carte perso de l'hôte (null : carte générée) ; elle part en entier avec le message de lancement
+  setMap(m) { if (Net.role !== 'host') return; this.cmap = m || null; this.unready(); this.sendCfg(); this.syncRoster(); },
   toggleReady() { this.ready = !this.ready; Net.send({ t: 'ready', v: this.ready }); UI.renderMP(); },
   allReady() { const G2 = Object.keys(this.pl).filter(p => +p !== Net.me); return G2.length > 0 && G2.every(p => this.pl[p].ready); },
   // hôte : exclure un joueur (il ne pourra pas revenir sous le même nom tant que le salon existe)
@@ -110,7 +112,7 @@ const MP = {
       perks: coop ? Object.assign({}, Store.data.meta.perks) : {}, doctrine: coop && docOk ? dk : 'standard',
       docs: coop ? Object.fromEntries(slots.map(p => [p, (this.pl[p] || {}).doc || 'standard'])) : null,
       perksBy: coop ? Object.fromEntries(slots.map(p => [p, (this.pl[p] || {}).perks || {}])) : null,
-      events: Store.s.events !== false, autoWave: coop ? !!Store.s.autoWave : true, slots
+      events: Store.s.events !== false, autoWave: coop ? !!Store.s.autoWave : true, slots, map: this.cmap || null
     };
     Net.send({ t: 'start', o, pl: this.pl });
     this.begin(o);
@@ -125,7 +127,7 @@ const MP = {
     const others = this.others();
     this.target = others.find(p => p > Net.me); if (this.target == null) this.target = others[0];
     if (Net.coop) Lock.reset(0);
-    Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, docs: o.docs, perksBy: o.perksBy, mp: o.mode, events: o.events, autoWave: o.autoWave, slots: this.slots });
+    Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, perks: o.perks, doctrine: o.doctrine, docs: o.docs, perksBy: o.perksBy, mp: o.mode, events: o.events, autoWave: o.autoWave, slots: this.slots, map: o.map });
     UI.mpHud(true);
     UI.banner(Net.versus ? 'VERSUS' : 'COOPÉRATION', this.slots.map(p => this.name(p).toUpperCase()).join(' · '), MP_COL[Net.me]);
     const n = this.slots.length;
@@ -483,7 +485,7 @@ const MP = {
       Net.reset(); UI.closeAll(); UI.mpState = 'home'; UI.openMP(); Net.setStatus('L\'hôte vous a exclu du salon.', true);
       MP.kicked = false;
     },
-    cfg(m) { MP.mode = m.mode; MP.diff = m.diff; MP.ready = false; UI.renderMP(); },
+    cfg(m) { MP.mode = m.mode; MP.diff = m.diff; MP.mapName = m.map ? String(m.map).slice(0, 24) : null; MP.ready = false; UI.renderMP(); },
     ready(m) { if (MP.pl[m.p]) { MP.pl[m.p].ready = !!m.v; MP.syncRoster(); if (m.v) Sfx.play('ui'); } },
     chat(m) {
       const s = String(m.s || '').slice(0, 140);

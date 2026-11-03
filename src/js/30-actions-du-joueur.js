@@ -66,7 +66,7 @@ const Hist = {
     if (!G || G.demo) return;
     let mvp = null; for (const k in G.tstats) if (G.tstats[k].dealt > 0 && (!mvp || G.tstats[k].dealt > G.tstats[mvp].dealt)) mvp = k;
     const H = Store.data.hist || (Store.data.hist = []);
-    H.unshift(Object.assign({ d: Date.now(), gm: G.gm, diff: G.diffKey, w: G.waveNum, k: G.stats.kills, mvp, net: G.net || '', daily: G.daily || '', code: Hist.code() }, extra));
+    H.unshift(Object.assign({ d: Date.now(), gm: G.gm, diff: G.diffKey, w: G.waveNum, k: G.stats.kills, mvp, net: G.net || '', daily: G.daily || '', code: G.cmap ? '' : Hist.code(), map: G.cmap ? G.cmap.n : undefined }, extra));
     if (H.length > 30) H.length = 30;
     Store.save();
   },
@@ -84,7 +84,7 @@ const Hist = {
 
 const Ach = {
   unlock(id) {
-    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom'))) return;
+    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom' || G.cmap))) return;
     Store.data.ach[id] = Date.now(); Store.data.meta.frags += 3; Store.save();
     UI.toast('Succès : ' + ACH[id].n, ACH[id].d + ' <span class="frags">+3 ✦</span>', '#ffd23f', 4.5);
     Sfx.play('ach');

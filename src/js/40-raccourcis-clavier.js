@@ -24,6 +24,10 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '10.1', d: ['Nouveau : l\'éditeur de cartes (menu principal). Tracez le chemin des ennemis d\'un bord à l\'autre, ajoutez jusqu\'à deux entrées qui le rejoignent et des débris à recycler.',
+    'Enregistrez vos cartes, partagez-les par code (Éditeur → Code de partage, à coller dans l\'éditeur ou dans le champ « code de carte » de Nouvelle partie).',
+    'En multijoueur, l\'hôte choisit la carte dans le salon : aléatoire ou une de ses cartes perso, envoyée aux autres joueurs.',
+    'Les cartes perso ne comptent pas pour les records, succès, XP et fragments (comme la Partie perso).'] },
   { v: '10.0', d: ['Refonte graphique « Néon 10 », toujours en 2D : décors animés en WebGL pour les 5 thèmes (soleil synthwave, pluie Matrix, lave, trou noir, soleil en éruption).',
     'Halo lumineux sur les tirs, les explosions et les tourelles.',
     'Tourelles redessinées (socles en relief) et animées : le noyau respire, s\'illumine à chaque tir, et un anneau d\'énergie tourne autour des paliers 2 et plus. Les ennemis laissent une traînée lumineuse.',

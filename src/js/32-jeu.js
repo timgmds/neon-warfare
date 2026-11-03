@@ -24,7 +24,10 @@ const Game = {
     const daily = opts.daily ? dailyInfo(opts.dailyDate || undefined) : null;
     const seed = daily ? daily.seed : opts.seed != null ? opts.seed : (Math.random() * 2147483647) | 0;
     const portrait = opts.portrait != null ? opts.portrait : View.w < View.h * .9;
-    this.makeState(diffKey, MapGen.generate(seed, portrait), seed);
+    // carte perso (éditeur) : vérifiée ici aussi, car elle peut venir d'un code ou du réseau
+    const cm = opts.map && !daily && CMaps.check(opts.map) ? opts.map : null;
+    this.makeState(diffKey, cm ? CMaps.toMap(cm, portrait) : MapGen.generate(seed, portrait), seed);
+    G.cmap = cm;
     G.perks = pk; G.net = opts.mp || null; G.portrait = !!portrait;
     // coopération : Héritage d'équipe et doctrines de tous les joueurs (une doctrine en double ne compte qu'une fois)
     if (G.net === 'coop' && opts.perksBy) {
@@ -100,6 +103,7 @@ const Game = {
       G.portrait = !!s.portrait;
       if (s.gm && GMODES[s.gm]) { G.gm = s.gm; if (G.gm === 'chaos' && !s.daily) { G.mutKeys = ['chaos']; G.mut = makeMut(G.mutKeys); } }
       if (G.gm === 'custom') Custom.apply(s.cus);
+      G.cmap = s.cmap || null;
       Object.assign(G, { waveNum: s.waveNum, money: s.money, lives: s.lives, maxLives: s.maxLives, nanites: s.nanites, res: Object.assign({ p: 0, a: 0, q: 0, ref: 0 }, s.res), recycle: s.recycle,
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
         doctrine: DOCTRINES[s.doctrine] ? s.doctrine : 'standard', missions: (s.missions || []).filter(m => MDEF[m.id]),
@@ -162,7 +166,7 @@ const Game = {
       FX.spark(ex, ey, '#ff2a6d', 80, 7, 60, 3); Render.flash(.6, '#ff2a6d'); Render.shake(25); Sfx.play('boom'); Sfx.play('leak');
       MP.defeat(); return;
     }
-    const frags = G.gm === 'sandbox' || G.gm === 'custom' ? 0 : Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2 + (G.stats.megas || 0) * 25) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1) * (G.gm === 'rush' ? 1.5 : 1)));
+    const frags = G.gm === 'sandbox' || G.gm === 'custom' || G.cmap ? 0 : Math.max(0, Math.floor(((G.waveNum - 1) + G.stats.bosses * 2 + (G.stats.megas || 0) * 25) * G.diff.frag * G.mut.frag * (G.daily ? 1.25 : 1) * (G.gm === 'rush' ? 1.5 : 1)));
     Store.data.meta.frags += frags;
     let best, prev;
     if (G.daily) {
@@ -171,7 +175,7 @@ const Game = {
       if (best) D[G.daily] = G.waveNum;
     } else {
       const rk = G.gm === 'classic' ? G.diffKey : G.diffKey + ':' + G.gm;
-      prev = Store.data.records[rk] || 0; best = G.gm !== 'sandbox' && G.gm !== 'custom' && G.waveNum > prev;
+      prev = Store.data.records[rk] || 0; best = G.gm !== 'sandbox' && G.gm !== 'custom' && !G.cmap && G.waveNum > prev;
       if (best) Store.data.records[rk] = G.waveNum;
     }
     Store.data.stats.kills += G.stats.kills;

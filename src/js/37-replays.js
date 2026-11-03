@@ -10,7 +10,7 @@ const Replay = {
   // début d'enregistrement : nouvelle partie solo
   record() {
     if (!G || G.net || G.demo || G.replay) return;
-    G.rec = { v: VERSION, o: { diff: G.diffKey, seed: G.seed, portrait: G.portrait, gm: G.gm, cus: G.cus, perks: Object.assign({}, G.perks), doctrine: G.doctrine,
+    G.rec = { v: VERSION, o: { diff: G.diffKey, seed: G.seed, portrait: G.portrait, gm: G.gm, cus: G.cus, map: G.cmap || null, perks: Object.assign({}, G.perks), doctrine: G.doctrine,
       events: G.events, autoWave: G.autoWave, daily: G.daily || null }, a: [] };
   },
   // partie reprise depuis une sauvegarde : le replay repart de cet état
@@ -44,7 +44,7 @@ const Replay = {
       if (G.cardQ > 0 && !G.offer) G.offer = Cards.roll();   // comme au chargement d'une sauvegarde
     } else {
       const o = r.o;
-      Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, gm: o.gm, cus: o.cus, perks: o.perks, doctrine: o.doctrine, events: o.events, autoWave: o.autoWave,
+      Game.newGame(o.diff, { seed: o.seed, portrait: o.portrait, gm: o.gm, cus: o.cus, map: o.map, perks: o.perks, doctrine: o.doctrine, events: o.events, autoWave: o.autoWave,
         daily: !!o.daily, dailyDate: o.daily || undefined, replay: rp });
     }
     if (r.v !== VERSION) UI.toast('Replay d\'une autre version', `Enregistré en v${r.v}, vous avez la v${VERSION} : il peut s'écarter de la partie d'origine.`, '#ffd23f', 6);
