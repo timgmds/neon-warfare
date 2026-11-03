@@ -55,6 +55,7 @@ const Res = {
   take(c, v) { if (c === 'n') G.nanites -= v; else G.res[c] = (G.res[c] || 0) - v; },
   gain(c, v, x, y) {
     if (!(v > 0)) return;
+    if (c === 'q') Ach.unlock('quint');
     const first = !G.res['s' + c];
     // coopération : un butin (boss, élite) revient en entier à chaque joueur présent ; une action ne crédite que son auteur
     if (G.resW && G.actor == null) { G.resW.forEach((w, i) => { if (!(G.gone && G.gone[i])) w[c] = (w[c] || 0) + v; }); }

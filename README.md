@@ -77,7 +77,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Graine libre** | dans Nouvelle partie, un nombre ou n'importe quel mot (`neon`, `timg`…) : même texte = même carte et mêmes vagues |
 | **Défier un ami** | chaque partie a un **code de carte** (ex. `1A2B3C-L-S`), affiché en fin de partie avec **Copier** et **Rejouer cette carte** : saisi dans Nouvelle partie, il redonne la même carte et les mêmes vagues ; historique des 30 dernières parties dans le Palmarès, rejouables d'un clic (▶) |
 | **Missions & protocoles** | 3 objectifs courts toujours actifs ; toutes les 2 vagues, 1 carte à choisir parmi 3. 48 protocoles en 4 familles (économie, attaque, défense, tactique), 9 pactes et 6 **légendaires** dès la vague 12 |
-| **Progression** | Héritage (bonus permanents), niveau de Commandant et 7 doctrines, 27 succès, Codex de 57 fiches |
+| **Progression** | Héritage (bonus permanents), niveau de Commandant et 7 doctrines, 37 succès, Codex de 57 fiches |
 | **Replays** | chaque partie solo s'enregistre (graine, réglages et actions horodatées : quelques Ko) ; les 6 dernières se revoient depuis **Palmarès → Historique** (🎬) ou l'écran de fin, de ×1 à ×8, et se partagent par un code (**Importer un replay**). Une partie reprise depuis une sauvegarde se revoit à partir de la reprise |
 | **Astuces** | un conseil la première fois qu'un élément du jeu apparaît (amélioration, Labo, fusion, arbre, soutien, boss, casino, IEM, plasma, spécialisation), désactivables dans les Options |
 | **Analyse de combat** | graphiques de la partie : dégâts, éliminations, tirs et rentabilité par tourelle, dégâts par vague |

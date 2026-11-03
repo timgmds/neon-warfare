@@ -45,6 +45,7 @@ const Skills = {
     Sfx.play('upgrade');
     Missions.on('skill');
     if (this.total() >= 15) Ach.unlock('scholar');
+    if (SKILLS[id].inf) Ach.unlock('infinite');
     if (SKILLS[id].cap) UI.toast('Nouvelle capacité', SKILLS[id].d(1), BRANCHES[SKILLS[id].br].color, 4);
     UI.refreshAbils(true);
     return true;

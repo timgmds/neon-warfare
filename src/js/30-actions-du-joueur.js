@@ -83,8 +83,8 @@ const Hist = {
 };
 
 const Ach = {
-  unlock(id) {
-    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom' || G.cmap))) return;
+  unlock(id, meta) {
+    if (!ACH[id] || Store.data.ach[id] || (!meta && G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom' || G.cmap))) return;
     Store.data.ach[id] = Date.now(); Store.data.meta.frags += 3; Store.save();
     UI.toast('Succès : ' + ACH[id].n, ACH[id].d + ' <span class="frags">+3 ✦</span>', '#ffd23f', 4.5);
     Sfx.play('ach');

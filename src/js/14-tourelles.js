@@ -63,6 +63,8 @@ const Towers = {
     FX.ring(t.cx, t.cy, t.d.color, 34, 22, 2); FX.spark(t.cx, t.cy, t.d.color, 14, 3);
     Sfx.play('build');
     if (key === 'apocalypse') Ach.unlock('apoc');
+    if (key === 'abyss') Ach.unlock('abyss');
+    if (t.d.tier === 5 && (t.owner == null || t.owner === Net.me)) Ach.unlock('relic');
     return t;
   },
   remove(t) {
@@ -129,6 +131,7 @@ const Towers = {
         for (const f of F) if (sp[f]) cur[f] = Math.max(cur[f] || 0, sp[f] * m);
       }
     }
+    for (const [t, B] of best) if (Object.keys(B).length >= 3 && (t.owner == null || t.owner === Net.me)) { Ach.unlock('conduct'); break; }
     for (const [t, B] of best) for (const k in B) {
       const b = B[k];
       t.bDmg += b.dmg || 0; t.bCool += b.cool || 0; t.bRange += b.range || 0; t.bCrit += b.crit || 0; t.bPierce += b.pierce || 0; t.bRate += b.rate || 0;

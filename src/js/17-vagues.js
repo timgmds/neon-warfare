@@ -137,6 +137,9 @@ const Waves = {
     if (w.n >= 10) Ach.unlock('wave10');
     if (w.n >= 25) Ach.unlock('wave25');
     if (w.n >= 50) Ach.unlock('wave50');
+    if (w.n >= 100) Ach.unlock('wave100');
+    if (w.n >= 30 && G.daily) Ach.unlock('daily30');
+    if (w.n >= 30 && Net.coop) Ach.unlock('coop30');
     if (w.n === Towers.omFrom() && G.gm !== 'sandbox') UI.toast('Niveaux Oméga débloqués', `Vos tourelles peuvent monter jusqu'au niveau ${OMEGA.max} (+35 % de dégâts par niveau, ${OMEGA.abyss} abyssite ⬟ par niveau), et la Recherche Oméga (en bas de l'arbre, touche K) augmente les dégâts de toutes les tourelles contre du plasma.`, '#ff4df0', 7);
     if (w.n >= 10 && G.stats.leaks === 0) Ach.unlock('noleak');
     if (w.n >= 15 && (G.diffKey === 'hardcore' || G.diffKey === 'cauchemar')) Ach.unlock('hard15');

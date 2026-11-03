@@ -1916,6 +1916,16 @@ const ACH = {
   jackpot:  { n: 'Jackpot !', d: 'Aligner trois 7 à la machine à sous.', i: '7' },
   bookie:   { n: 'Bookmaker', d: 'Gagner 5 paris dans une même partie.', i: '⚖' },
   mpwin:    { n: 'Gladiateur', d: 'Remporter une partie en versus.', i: '⚔' },
+  wave100:  { n: 'Centurion', d: 'Terminer la vague 100.', i: 'Ⅽ' },
+  quint:    { n: 'Essence pure', d: 'Obtenir de la quintessence ❂.', i: '❂' },
+  relic:    { n: 'Gardien des reliques', d: 'Poser une relique T5.', i: '♛' },
+  abyss:    { n: 'Cœur des abysses', d: 'Poser un Cœur abyssal, soutien T4.', i: '⬟' },
+  conduct:  { n: 'Chef d\'orchestre', d: 'Faire profiter une tourelle de trois types de soutien à la fois.', i: '♫' },
+  infinite: { n: 'Sans limite', d: 'Acheter un rang infini dans l\'arbre de compétences.', i: '∞' },
+  daily30:  { n: 'Champion du jour', d: 'Atteindre la vague 30 lors d\'un Défi du jour.', i: '☼' },
+  coop30:   { n: 'Escouade', d: 'Atteindre la vague 30 en coopération.', i: '⛯' },
+  architect:{ n: 'Architecte', d: 'Enregistrer une carte dans l\'éditeur de cartes.', i: '✎' },
+  podium:   { n: 'Sur la carte du monde', d: 'Publier un score au classement en ligne du Défi du jour.', i: '♜' },
   mpcoop:   { n: 'Frères d\'armes', d: 'Tenir jusqu\'au bout une partie en coopération.', i: '⛨' }
 };
 
@@ -2924,6 +2934,7 @@ const Res = {
   take(c, v) { if (c === 'n') G.nanites -= v; else G.res[c] = (G.res[c] || 0) - v; },
   gain(c, v, x, y) {
     if (!(v > 0)) return;
+    if (c === 'q') Ach.unlock('quint');
     const first = !G.res['s' + c];
     // coopération : un butin (boss, élite) revient en entier à chaque joueur présent ; une action ne crédite que son auteur
     if (G.resW && G.actor == null) { G.resW.forEach((w, i) => { if (!(G.gone && G.gone[i])) w[c] = (w[c] || 0) + v; }); }
@@ -3398,6 +3409,8 @@ const Towers = {
     FX.ring(t.cx, t.cy, t.d.color, 34, 22, 2); FX.spark(t.cx, t.cy, t.d.color, 14, 3);
     Sfx.play('build');
     if (key === 'apocalypse') Ach.unlock('apoc');
+    if (key === 'abyss') Ach.unlock('abyss');
+    if (t.d.tier === 5 && (t.owner == null || t.owner === Net.me)) Ach.unlock('relic');
     return t;
   },
   remove(t) {
@@ -3464,6 +3477,7 @@ const Towers = {
         for (const f of F) if (sp[f]) cur[f] = Math.max(cur[f] || 0, sp[f] * m);
       }
     }
+    for (const [t, B] of best) if (Object.keys(B).length >= 3 && (t.owner == null || t.owner === Net.me)) { Ach.unlock('conduct'); break; }
     for (const [t, B] of best) for (const k in B) {
       const b = B[k];
       t.bDmg += b.dmg || 0; t.bCool += b.cool || 0; t.bRange += b.range || 0; t.bCrit += b.crit || 0; t.bPierce += b.pierce || 0; t.bRate += b.rate || 0;
@@ -4019,6 +4033,9 @@ const Waves = {
     if (w.n >= 10) Ach.unlock('wave10');
     if (w.n >= 25) Ach.unlock('wave25');
     if (w.n >= 50) Ach.unlock('wave50');
+    if (w.n >= 100) Ach.unlock('wave100');
+    if (w.n >= 30 && G.daily) Ach.unlock('daily30');
+    if (w.n >= 30 && Net.coop) Ach.unlock('coop30');
     if (w.n === Towers.omFrom() && G.gm !== 'sandbox') UI.toast('Niveaux Oméga débloqués', `Vos tourelles peuvent monter jusqu'au niveau ${OMEGA.max} (+35 % de dégâts par niveau, ${OMEGA.abyss} abyssite ⬟ par niveau), et la Recherche Oméga (en bas de l'arbre, touche K) augmente les dégâts de toutes les tourelles contre du plasma.`, '#ff4df0', 7);
     if (w.n >= 10 && G.stats.leaks === 0) Ach.unlock('noleak');
     if (w.n >= 15 && (G.diffKey === 'hardcore' || G.diffKey === 'cauchemar')) Ach.unlock('hard15');
@@ -4262,6 +4279,7 @@ const Skills = {
     Sfx.play('upgrade');
     Missions.on('skill');
     if (this.total() >= 15) Ach.unlock('scholar');
+    if (SKILLS[id].inf) Ach.unlock('infinite');
     if (SKILLS[id].cap) UI.toast('Nouvelle capacité', SKILLS[id].d(1), BRANCHES[SKILLS[id].br].color, 4);
     UI.refreshAbils(true);
     return true;
@@ -6260,8 +6278,8 @@ const Hist = {
 };
 
 const Ach = {
-  unlock(id) {
-    if (!ACH[id] || Store.data.ach[id] || (G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom' || G.cmap))) return;
+  unlock(id, meta) {
+    if (!ACH[id] || Store.data.ach[id] || (!meta && G && (G.demo || G.replay || G.gm === 'sandbox' || G.gm === 'custom' || G.cmap))) return;
     Store.data.ach[id] = Date.now(); Store.data.meta.frags += 3; Store.save();
     UI.toast('Succès : ' + ACH[id].n, ACH[id].d + ' <span class="frags">+3 ✦</span>', '#ffd23f', 4.5);
     Sfx.play('ach');
@@ -8076,7 +8094,7 @@ const Editor = {
   },
   save() {
     const d = this.data(true); if (!d) return;
-    $('ed-name').value = d.n; CMaps.save(d); this.list(); Sfx.play('coin');
+    $('ed-name').value = d.n; CMaps.save(d); this.list(); Sfx.play('coin'); Ach.unlock('architect', true);
     UI.toast('Carte enregistrée', `« ${d.n.replace(/</g, '&lt;')} » est dans Mes cartes, et au choix dans le salon multijoueur.`, '#39ff88', 3);
   },
   play() { const d = this.data(true); if (d) this.launch(d); },
@@ -8453,6 +8471,7 @@ const Online = {
       b.disabled = true; $('lb-msg').textContent = 'Envoi…';
       try {
         await this.submit(name);
+        Ach.unlock('podium', true);
         const L = await this.top(G.daily), r = L.findIndex(x => x.u === this.uid()) + 1;
         Sfx.play('coin');
         $('lb-msg').innerHTML = r ? `<b style="color:var(--gold)">Publié ! Vous êtes ${r === 1 ? '1er' : r + 'e'} sur ${L.length} aujourd'hui.</b>` : '<b style="color:var(--ok)">Score publié !</b>';

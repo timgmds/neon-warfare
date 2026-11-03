@@ -424,6 +424,16 @@ const ACH = {
   jackpot:  { n: 'Jackpot !', d: 'Aligner trois 7 à la machine à sous.', i: '7' },
   bookie:   { n: 'Bookmaker', d: 'Gagner 5 paris dans une même partie.', i: '⚖' },
   mpwin:    { n: 'Gladiateur', d: 'Remporter une partie en versus.', i: '⚔' },
+  wave100:  { n: 'Centurion', d: 'Terminer la vague 100.', i: 'Ⅽ' },
+  quint:    { n: 'Essence pure', d: 'Obtenir de la quintessence ❂.', i: '❂' },
+  relic:    { n: 'Gardien des reliques', d: 'Poser une relique T5.', i: '♛' },
+  abyss:    { n: 'Cœur des abysses', d: 'Poser un Cœur abyssal, soutien T4.', i: '⬟' },
+  conduct:  { n: 'Chef d\'orchestre', d: 'Faire profiter une tourelle de trois types de soutien à la fois.', i: '♫' },
+  infinite: { n: 'Sans limite', d: 'Acheter un rang infini dans l\'arbre de compétences.', i: '∞' },
+  daily30:  { n: 'Champion du jour', d: 'Atteindre la vague 30 lors d\'un Défi du jour.', i: '☼' },
+  coop30:   { n: 'Escouade', d: 'Atteindre la vague 30 en coopération.', i: '⛯' },
+  architect:{ n: 'Architecte', d: 'Enregistrer une carte dans l\'éditeur de cartes.', i: '✎' },
+  podium:   { n: 'Sur la carte du monde', d: 'Publier un score au classement en ligne du Défi du jour.', i: '♜' },
   mpcoop:   { n: 'Frères d\'armes', d: 'Tenir jusqu\'au bout une partie en coopération.', i: '⛨' }
 };
 

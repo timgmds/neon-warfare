@@ -87,6 +87,7 @@ const Online = {
       b.disabled = true; $('lb-msg').textContent = 'Envoi…';
       try {
         await this.submit(name);
+        Ach.unlock('podium', true);
         const L = await this.top(G.daily), r = L.findIndex(x => x.u === this.uid()) + 1;
         Sfx.play('coin');
         $('lb-msg').innerHTML = r ? `<b style="color:var(--gold)">Publié ! Vous êtes ${r === 1 ? '1er' : r + 'e'} sur ${L.length} aujourd'hui.</b>` : '<b style="color:var(--ok)">Score publié !</b>';

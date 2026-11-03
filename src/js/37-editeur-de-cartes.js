@@ -204,7 +204,7 @@ const Editor = {
   },
   save() {
     const d = this.data(true); if (!d) return;
-    $('ed-name').value = d.n; CMaps.save(d); this.list(); Sfx.play('coin');
+    $('ed-name').value = d.n; CMaps.save(d); this.list(); Sfx.play('coin'); Ach.unlock('architect', true);
     UI.toast('Carte enregistrée', `« ${d.n.replace(/</g, '&lt;')} » est dans Mes cartes, et au choix dans le salon multijoueur.`, '#39ff88', 3);
   },
   play() { const d = this.data(true); if (d) this.launch(d); },
