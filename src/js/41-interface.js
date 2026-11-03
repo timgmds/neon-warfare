@@ -146,15 +146,12 @@ const UI = {
     Online.rivalsLoad();
     Render.resize();
     this.refreshHUD(); this.refreshAbils(true); this.refreshBadges();
-    if (!Store.data.tuto) {
-      Store.data.tuto = true; Store.save();
-      setTimeout(() => this.toast('Bienvenue, Commandant', 'Choisissez une tourelle dans la barre du bas (touches 1 à 0), puis cliquez sur une case libre de la carte.', '#00f3ff', 8), 700);
-      setTimeout(() => this.toast('Astuce', 'Lancez la vague avec ESPACE. Survolez les éléments pour les détails. Manuel complet : touche H.', '#00f3ff', 8), 4200);
-    }
+    // toute première partie : le tutoriel guidé démarre de lui-même (il se relance depuis le Manuel)
+    if (!Store.data.tuto && !G.net && !G.replay && !G.daily) setTimeout(() => { if (G && Game.state === 'play' && !Tuto.on()) Tuto.begin(); }, 900);
   },
   exitGame() {
     this.mpHud(false); $('mp-wait').style.display = 'none'; $('rp-bar').hidden = true;
-    $('hud').classList.add('hidden'); $('dock').classList.add('hidden'); $('missions').classList.add('hidden'); $('rival').hidden = true;
+    $('hud').classList.add('hidden'); $('dock').classList.add('hidden'); $('missions').classList.add('hidden'); $('rival').hidden = true; Tuto.stop();
     $('tpanel').classList.remove('show'); $('bossbar').style.display = 'none';
     this.sel = null; this.selDebris = null; this.placing = null; this.targeting = null; this.hover.inside = false;
     this.hideTip();
@@ -170,6 +167,7 @@ const UI = {
 
   /* ---------- HUD ---------- */
   frame() {
+    Tuto.frame();
     this.frameN++;
     if (Game.state !== 'play' || !G) { if (Score.on) Score.refresh(); if (this.last.mpp) this.refreshMpPause(); return; }
     const f = this.frameN;
@@ -1760,6 +1758,7 @@ const UI = {
   openHelp() {
     const K = id => `<kbd>${Keys.lbl(id) || '—'}</kbd>`;
     $('help').innerHTML = `
+      <div class="row" style="justify-content:center;margin-bottom:10px"><button class="btn prim" id="h-tuto">▶ TUTORIEL GUIDÉ<span class="k">les bases en 2 minutes</span></button></div>
       <h3>OBJECTIF</h3><p>Les ennemis suivent le chemin lumineux jusqu'à votre <b>noyau</b> (l'hexagone). Chaque ennemi qui passe réduit votre <b>intégrité</b>. Les vagues sont infinies et de plus en plus puissantes, avec un <b>boss toutes les 5 vagues</b> et un <b style="color:#ff2a6d">méga-boss</b> à plusieurs phases aux vagues 50 (Léviathan) et 100 (Oméga), puis toutes les 50 vagues. Un méga-boss qui atteint le noyau met fin à la partie. Tenez le plus longtemps possible.</p>
       <h3>CONSTRUIRE & AMÉLIORER</h3><ul>
         <li>Choisissez une tourelle dans la barre du bas (touches ${K('slot1')}…${K('slot10')}, ou la touche que vous avez donnée à un canon) puis cliquez sur une case libre. <kbd>Maj</kbd> + clic pour en poser plusieurs.</li>
@@ -1822,6 +1821,7 @@ const UI = {
         <p>${K('unjam')} Débrouiller (la tourelle choisie, sinon toutes)</p>
         <p>${K('speed')} Vitesse · ${K('pause')} Pause</p><p>${K('tree')} Arbre · ${K('lab')} Labo · ${K('stats')} Stats · ${K('casino')} Casino · ${K('help')} Manuel</p>
         <p><kbd>Échap</kbd> / clic droit : annuler</p><p><kbd>F3</kbd> Compteur FPS</p></div>`;
+    $('h-tuto').onclick = () => Tuto.launch();
     this.open('ov-help');
   }
 };
