@@ -19,6 +19,8 @@ const SENDS = {
 // versus : un ennemi envoyé rapporte à son expéditeur selon le temps qu'il survit chez l'adversaire
 const SURV = { full: 20, share: .6, leak: .5 };   // 60 % de son prix s'il tient 20 s, +50 % s'il atteint le noyau
 const SEND_STOCK = 3;
+// marqueurs de coopération : texte affiché sous le nom du joueur
+const PING_KIND = { b: 'Le boss !', e: 'Visez celui-là', t: 'Cette tourelle', c: 'Construis ici', w: 'Attention ici' };
 const EMOTES = ['Bien joué !', 'À l\'aide !', 'Attention, ça arrive !', 'GG', 'Ha ha ha', 'On tient bon !'];
 
 const MP = {
@@ -27,6 +29,7 @@ const MP = {
   slots: [],     // joueurs de la partie en cours
   opps: {},      // versus : état des adversaires { numéro: { lives, max, wave, kills, inc, over, place } }
   curs: {},      // coopération : curseurs des partenaires
+  pings: [],     // coopération : marqueurs posés sur la carte (visuels seulement)
   out: {},       // joueurs partis ou éliminés pendant la partie
   target: null, banned: new Set(), endArgs: null, stT: 0,
   myName() {
@@ -39,7 +42,7 @@ const MP = {
   count() { return Object.keys(this.pl).length; },
   // hôte : invités qui participent encore au lockstep
   peersIn() { return this.slots.filter(p => p !== Net.me && !this.out[p]); },
-  clear() { this.hostP = 0; this.room = ''; this.mig = 0; this.base = null; this.prevMe = null; this.names = {}; this.migT = 0; clearInterval(this.migI); this.pl = {}; this.slots = []; this.opps = {}; this.curs = {}; this.out = {}; this.chat = []; this.ready = false; this.live = false; this.target = null; this.survAcc = {}; },
+  clear() { this.hostP = 0; this.room = ''; this.mig = 0; this.base = null; this.prevMe = null; this.names = {}; this.migT = 0; clearInterval(this.migI); this.pl = {}; this.slots = []; this.opps = {}; this.curs = {}; this.pings = []; this.out = {}; this.chat = []; this.ready = false; this.live = false; this.target = null; this.survAcc = {}; },
 
   /* ----- salon ----- */
   hosted(lobby) {
@@ -95,6 +98,29 @@ const MP = {
     txt = String(txt || '').trim().slice(0, 140); if (!txt) return;
     Net.send({ t: 'chat', s: txt }); this.chat.push([Net.me, txt]); if (this.chat.length > 40) this.chat.shift();
     UI.renderChat();
+  },
+  // marqueur pour les partenaires : sa nature dépend de ce qu'il y a sous le curseur
+  ping(x, y) {
+    if (!Net.coop || !G) return;
+    const now = performance.now();
+    if (now - (this.pingT || 0) < 450) return;
+    this.pingT = now;
+    const k = this.pingKind(x, y);
+    Net.send({ t: 'mark', x: Math.round(x), y: Math.round(y), k });   // « ping » est déjà la mesure de latence
+    this.addPing(Net.me, x, y, k);
+  },
+  pingKind(x, y) {
+    const M = G.map, tx = Math.floor(x / TILE), ty = Math.floor(y / TILE);
+    for (const e of G.enemies) if (e.alive && Math.hypot(e.x - x, e.y - y) < e.r + 14) return e.boss ? 'b' : 'e';
+    if (Towers.at(tx, ty)) return 't';
+    const c = tx >= 0 && ty >= 0 && tx < M.C && ty < M.R ? M.cells[ty * M.C + tx] : -1;
+    return c === 0 ? 'c' : 'w';
+  },
+  addPing(p, x, y, k) {
+    if (!PING_KIND[k] || !isFinite(x) || !isFinite(y)) return;
+    this.pings = this.pings.filter(q => q.p !== p || performance.now() - q.t0 > 400).slice(-7);
+    this.pings.push({ p, x, y, k, t0: performance.now() });
+    Sfx.play(k === 'b' || k === 'w' ? 'error' : 'ui', .7);
   },
   emote(i) {
     if (!EMOTES[i]) return;
@@ -493,6 +519,7 @@ const MP = {
       if (UI.top() === 'ov-mp') UI.renderChat(); else UI.toast(MP.esc(MP.name(m.p)), MP.esc(s), MP_COL[m.p], 4);
       Sfx.play('ui');
     },
+    mark(m) { if (Net.coop) MP.addPing(m.p, +m.x, +m.y, m.k); },
     emote(m) { if (EMOTES[m.i]) { UI.toast(MP.esc(MP.name(m.p)), EMOTES[m.i], MP_COL[m.p], 3); Sfx.play('mission'); } },
     start(m) {
       if (m.pl) MP.pl = m.pl;

@@ -11,6 +11,7 @@ const KEYDEF = [
   { g: 'PARTIE', id: 'casino', n: 'Casino', d: ['KeyC'] },
   { g: 'PARTIE', id: 'help', n: 'Manuel', d: ['KeyH'] },
   { g: 'PARTIE', id: 'score', n: 'Classement des joueurs (multijoueur)', d: ['Tab'] },
+  { g: 'PARTIE', id: 'ping', n: 'Marqueur pour les partenaires (coop ; aussi clic molette, Alt + clic, appui long)', d: ['KeyV'] },
   { g: 'CAPACITÉS', id: 'orbital', n: 'Frappe orbitale', d: ['KeyQ'] },
   { g: 'CAPACITÉS', id: 'emp', n: 'Cryo-Bombe', d: ['KeyW'] },
   { g: 'CAPACITÉS', id: 'overdrive', n: 'Surcharge', d: ['KeyE'] },

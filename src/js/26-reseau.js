@@ -44,7 +44,7 @@ const Mqtt = {
 const NET_MAX = 4;   // joueurs par salon, hôte compris
 const NET_LOST = 20000;   // sans aucune nouvelle d'un joueur (ni direct, ni relais) pendant 20 s : il est considéré comme parti
 // messages qu'un invité adresse à tous : l'hôte les fait suivre aux autres invités
-const NET_RELAY = new Set(['chat', 'emote', 'st', 'send', 'dead', 'cur', 'surv']);
+const NET_RELAY = new Set(['chat', 'emote', 'st', 'send', 'dead', 'cur', 'surv', 'mark']);
 const Net = {
   on: false, coop: false, versus: false, me: 0, role: null, chans: [], gid: '', sess: '', gotAnswer: false, code: '', custom: false,
   status: '', err: false, ping: 0, timers: [], links: [], pumpT: 0, pingT: 0,

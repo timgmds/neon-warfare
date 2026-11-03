@@ -4587,7 +4587,7 @@ const Mqtt = {
 const NET_MAX = 4;   // joueurs par salon, hôte compris
 const NET_LOST = 20000;   // sans aucune nouvelle d'un joueur (ni direct, ni relais) pendant 20 s : il est considéré comme parti
 // messages qu'un invité adresse à tous : l'hôte les fait suivre aux autres invités
-const NET_RELAY = new Set(['chat', 'emote', 'st', 'send', 'dead', 'cur', 'surv']);
+const NET_RELAY = new Set(['chat', 'emote', 'st', 'send', 'dead', 'cur', 'surv', 'mark']);
 const Net = {
   on: false, coop: false, versus: false, me: 0, role: null, chans: [], gid: '', sess: '', gotAnswer: false, code: '', custom: false,
   status: '', err: false, ping: 0, timers: [], links: [], pumpT: 0, pingT: 0,
@@ -5323,6 +5323,8 @@ const SENDS = {
 // versus : un ennemi envoyé rapporte à son expéditeur selon le temps qu'il survit chez l'adversaire
 const SURV = { full: 20, share: .6, leak: .5 };   // 60 % de son prix s'il tient 20 s, +50 % s'il atteint le noyau
 const SEND_STOCK = 3;
+// marqueurs de coopération : texte affiché sous le nom du joueur
+const PING_KIND = { b: 'Le boss !', e: 'Visez celui-là', t: 'Cette tourelle', c: 'Construis ici', w: 'Attention ici' };
 const EMOTES = ['Bien joué !', 'À l\'aide !', 'Attention, ça arrive !', 'GG', 'Ha ha ha', 'On tient bon !'];
 
 const MP = {
@@ -5331,6 +5333,7 @@ const MP = {
   slots: [],     // joueurs de la partie en cours
   opps: {},      // versus : état des adversaires { numéro: { lives, max, wave, kills, inc, over, place } }
   curs: {},      // coopération : curseurs des partenaires
+  pings: [],     // coopération : marqueurs posés sur la carte (visuels seulement)
   out: {},       // joueurs partis ou éliminés pendant la partie
   target: null, banned: new Set(), endArgs: null, stT: 0,
   myName() {
@@ -5343,7 +5346,7 @@ const MP = {
   count() { return Object.keys(this.pl).length; },
   // hôte : invités qui participent encore au lockstep
   peersIn() { return this.slots.filter(p => p !== Net.me && !this.out[p]); },
-  clear() { this.hostP = 0; this.room = ''; this.mig = 0; this.base = null; this.prevMe = null; this.names = {}; this.migT = 0; clearInterval(this.migI); this.pl = {}; this.slots = []; this.opps = {}; this.curs = {}; this.out = {}; this.chat = []; this.ready = false; this.live = false; this.target = null; this.survAcc = {}; },
+  clear() { this.hostP = 0; this.room = ''; this.mig = 0; this.base = null; this.prevMe = null; this.names = {}; this.migT = 0; clearInterval(this.migI); this.pl = {}; this.slots = []; this.opps = {}; this.curs = {}; this.pings = []; this.out = {}; this.chat = []; this.ready = false; this.live = false; this.target = null; this.survAcc = {}; },
 
   /* ----- salon ----- */
   hosted(lobby) {
@@ -5399,6 +5402,29 @@ const MP = {
     txt = String(txt || '').trim().slice(0, 140); if (!txt) return;
     Net.send({ t: 'chat', s: txt }); this.chat.push([Net.me, txt]); if (this.chat.length > 40) this.chat.shift();
     UI.renderChat();
+  },
+  // marqueur pour les partenaires : sa nature dépend de ce qu'il y a sous le curseur
+  ping(x, y) {
+    if (!Net.coop || !G) return;
+    const now = performance.now();
+    if (now - (this.pingT || 0) < 450) return;
+    this.pingT = now;
+    const k = this.pingKind(x, y);
+    Net.send({ t: 'mark', x: Math.round(x), y: Math.round(y), k });   // « ping » est déjà la mesure de latence
+    this.addPing(Net.me, x, y, k);
+  },
+  pingKind(x, y) {
+    const M = G.map, tx = Math.floor(x / TILE), ty = Math.floor(y / TILE);
+    for (const e of G.enemies) if (e.alive && Math.hypot(e.x - x, e.y - y) < e.r + 14) return e.boss ? 'b' : 'e';
+    if (Towers.at(tx, ty)) return 't';
+    const c = tx >= 0 && ty >= 0 && tx < M.C && ty < M.R ? M.cells[ty * M.C + tx] : -1;
+    return c === 0 ? 'c' : 'w';
+  },
+  addPing(p, x, y, k) {
+    if (!PING_KIND[k] || !isFinite(x) || !isFinite(y)) return;
+    this.pings = this.pings.filter(q => q.p !== p || performance.now() - q.t0 > 400).slice(-7);
+    this.pings.push({ p, x, y, k, t0: performance.now() });
+    Sfx.play(k === 'b' || k === 'w' ? 'error' : 'ui', .7);
   },
   emote(i) {
     if (!EMOTES[i]) return;
@@ -5797,6 +5823,7 @@ const MP = {
       if (UI.top() === 'ov-mp') UI.renderChat(); else UI.toast(MP.esc(MP.name(m.p)), MP.esc(s), MP_COL[m.p], 4);
       Sfx.play('ui');
     },
+    mark(m) { if (Net.coop) MP.addPing(m.p, +m.x, +m.y, m.k); },
     emote(m) { if (EMOTES[m.i]) { UI.toast(MP.esc(MP.name(m.p)), EMOTES[m.i], MP_COL[m.p], 3); Sfx.play('mission'); } },
     start(m) {
       if (m.pl) MP.pl = m.pl;
@@ -7576,6 +7603,24 @@ const Render = {
       c.fillStyle = MP_COL[tw.owner]; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8, y); c.lineTo(x, y + 8); c.closePath(); c.fill();
     }
     if (!Net.coop) return;
+    // marqueurs : trois ondes, une pointe, le nom du joueur et ce qu'il signale
+    const now = performance.now();
+    MP.pings = MP.pings.filter(q => now - q.t0 < 3200);
+    for (const q of MP.pings) {
+      const a = (now - q.t0) / 3200, col = MP_COL[q.p] || '#fff', fade = a > .8 ? (1 - a) / .2 : 1;
+      c.globalAlpha = fade;
+      for (let i = 0; i < 3; i++) {
+        const k = ((now - q.t0) / 900 + i / 3) % 1;
+        c.strokeStyle = rgba(col, (1 - k) * .9); c.lineWidth = 3 - k * 2; c.beginPath(); c.arc(q.x, q.y, 8 + k * 34, 0, TAU); c.stroke();
+      }
+      const by = q.y - 30 - Math.abs(Math.sin(now * .008)) * 6;
+      c.fillStyle = col; c.beginPath(); c.moveTo(q.x, by + 14); c.lineTo(q.x - 8, by); c.lineTo(q.x + 8, by); c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,.6)'; c.lineWidth = 1.5; c.stroke();
+      c.font = '800 12px Bahnschrift,"Segoe UI",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'bottom';
+      const txt = `${MP.name(q.p)} · ${PING_KIND[q.k]}`;
+      c.fillStyle = 'rgba(0,0,0,.75)'; c.fillText(txt, q.x + 1, by - 3); c.fillStyle = col; c.fillText(txt, q.x, by - 4);
+      c.globalAlpha = 1;
+    }
     for (const k in MP.curs) {
     const u = MP.curs[k]; if (t - u.t > 2500) continue;
     u.sx += (u.x - u.sx) * .35; u.sy += (u.y - u.sy) * .35;
@@ -7691,6 +7736,11 @@ const Input = {
     c.addEventListener('pointerdown', e => this.down(e));
     c.addEventListener('pointerleave', () => { UI.hover.inside = false; UI.hideTip(); });
     c.addEventListener('contextmenu', e => { e.preventDefault(); UI.cancel(); });
+    c.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });   // pas de défilement automatique au clic molette
+    // appui long au doigt (coopération) : marqueur pour les partenaires
+    const stopLong = () => { clearTimeout(this.longT); this.longT = 0; };
+    c.addEventListener('pointerup', stopLong); c.addEventListener('pointercancel', stopLong);
+    c.addEventListener('pointermove', e => { if (this.longT && Math.hypot(e.clientX - this.longX, e.clientY - this.longY) > 12) stopLong(); });
     window.addEventListener('keydown', e => this.key(e));
     $('bar').addEventListener('wheel', e => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { $('bar').scrollLeft += e.deltaY; e.preventDefault(); }
@@ -7716,6 +7766,10 @@ const Input = {
     if (!G || Game.state !== 'play' || G.over || e.button === 2) return;
     this.locate(e);
     const h = UI.hover, M = G.map;
+    if (Net.coop) {
+      if (e.button === 1 || e.altKey) { e.preventDefault(); MP.ping(h.wx, h.wy); return; }
+      if (h.touch) { clearTimeout(this.longT); this.longX = e.clientX; this.longY = e.clientY; this.longT = setTimeout(() => { this.longT = 0; MP.ping(h.wx, h.wy); }, 550); }
+    }
     if (UI.targeting) {
       const k = UI.targeting; UI.setTargeting(null);
       if (G.abil[k] <= 0) Act.do('abil', k, Math.round(clamp(h.wx, 0, M.C * TILE)), Math.round(clamp(h.wy, 0, M.R * TILE)));
@@ -7781,6 +7835,7 @@ const Input = {
       case 'casino': UI.openCasino(); break;
       case 'help': UI.openHelp(); break;
       case 'score': e.preventDefault(); Score.toggle(); break;
+      case 'ping': if (Net.coop && UI.hover.inside) MP.ping(UI.hover.wx, UI.hover.wy); break;
       case 'orbital': case 'emp': case 'overdrive': Abil.trigger(act); break;
       case 'up': if (UI.sel) { if (e.shiftKey) UI.upAll(); else if (Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); } break;
       case 'sell': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;
@@ -8463,6 +8518,7 @@ const KEYDEF = [
   { g: 'PARTIE', id: 'casino', n: 'Casino', d: ['KeyC'] },
   { g: 'PARTIE', id: 'help', n: 'Manuel', d: ['KeyH'] },
   { g: 'PARTIE', id: 'score', n: 'Classement des joueurs (multijoueur)', d: ['Tab'] },
+  { g: 'PARTIE', id: 'ping', n: 'Marqueur pour les partenaires (coop ; aussi clic molette, Alt + clic, appui long)', d: ['KeyV'] },
   { g: 'CAPACITÉS', id: 'orbital', n: 'Frappe orbitale', d: ['KeyQ'] },
   { g: 'CAPACITÉS', id: 'emp', n: 'Cryo-Bombe', d: ['KeyW'] },
   { g: 'CAPACITÉS', id: 'overdrive', n: 'Surcharge', d: ['KeyE'] },

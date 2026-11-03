@@ -6,6 +6,11 @@ const Input = {
     c.addEventListener('pointerdown', e => this.down(e));
     c.addEventListener('pointerleave', () => { UI.hover.inside = false; UI.hideTip(); });
     c.addEventListener('contextmenu', e => { e.preventDefault(); UI.cancel(); });
+    c.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });   // pas de défilement automatique au clic molette
+    // appui long au doigt (coopération) : marqueur pour les partenaires
+    const stopLong = () => { clearTimeout(this.longT); this.longT = 0; };
+    c.addEventListener('pointerup', stopLong); c.addEventListener('pointercancel', stopLong);
+    c.addEventListener('pointermove', e => { if (this.longT && Math.hypot(e.clientX - this.longX, e.clientY - this.longY) > 12) stopLong(); });
     window.addEventListener('keydown', e => this.key(e));
     $('bar').addEventListener('wheel', e => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { $('bar').scrollLeft += e.deltaY; e.preventDefault(); }
@@ -31,6 +36,10 @@ const Input = {
     if (!G || Game.state !== 'play' || G.over || e.button === 2) return;
     this.locate(e);
     const h = UI.hover, M = G.map;
+    if (Net.coop) {
+      if (e.button === 1 || e.altKey) { e.preventDefault(); MP.ping(h.wx, h.wy); return; }
+      if (h.touch) { clearTimeout(this.longT); this.longX = e.clientX; this.longY = e.clientY; this.longT = setTimeout(() => { this.longT = 0; MP.ping(h.wx, h.wy); }, 550); }
+    }
     if (UI.targeting) {
       const k = UI.targeting; UI.setTargeting(null);
       if (G.abil[k] <= 0) Act.do('abil', k, Math.round(clamp(h.wx, 0, M.C * TILE)), Math.round(clamp(h.wy, 0, M.R * TILE)));
@@ -96,6 +105,7 @@ const Input = {
       case 'casino': UI.openCasino(); break;
       case 'help': UI.openHelp(); break;
       case 'score': e.preventDefault(); Score.toggle(); break;
+      case 'ping': if (Net.coop && UI.hover.inside) MP.ping(UI.hover.wx, UI.hover.wy); break;
       case 'orbital': case 'emp': case 'overdrive': Abil.trigger(act); break;
       case 'up': if (UI.sel) { if (e.shiftKey) UI.upAll(); else if (Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); } break;
       case 'sell': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;

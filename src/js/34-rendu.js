@@ -734,6 +734,24 @@ const Render = {
       c.fillStyle = MP_COL[tw.owner]; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8, y); c.lineTo(x, y + 8); c.closePath(); c.fill();
     }
     if (!Net.coop) return;
+    // marqueurs : trois ondes, une pointe, le nom du joueur et ce qu'il signale
+    const now = performance.now();
+    MP.pings = MP.pings.filter(q => now - q.t0 < 3200);
+    for (const q of MP.pings) {
+      const a = (now - q.t0) / 3200, col = MP_COL[q.p] || '#fff', fade = a > .8 ? (1 - a) / .2 : 1;
+      c.globalAlpha = fade;
+      for (let i = 0; i < 3; i++) {
+        const k = ((now - q.t0) / 900 + i / 3) % 1;
+        c.strokeStyle = rgba(col, (1 - k) * .9); c.lineWidth = 3 - k * 2; c.beginPath(); c.arc(q.x, q.y, 8 + k * 34, 0, TAU); c.stroke();
+      }
+      const by = q.y - 30 - Math.abs(Math.sin(now * .008)) * 6;
+      c.fillStyle = col; c.beginPath(); c.moveTo(q.x, by + 14); c.lineTo(q.x - 8, by); c.lineTo(q.x + 8, by); c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,.6)'; c.lineWidth = 1.5; c.stroke();
+      c.font = '800 12px Bahnschrift,"Segoe UI",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'bottom';
+      const txt = `${MP.name(q.p)} · ${PING_KIND[q.k]}`;
+      c.fillStyle = 'rgba(0,0,0,.75)'; c.fillText(txt, q.x + 1, by - 3); c.fillStyle = col; c.fillText(txt, q.x, by - 4);
+      c.globalAlpha = 1;
+    }
     for (const k in MP.curs) {
     const u = MP.curs[k]; if (t - u.t > 2500) continue;
     u.sx += (u.x - u.sx) * .35; u.sy += (u.y - u.sy) * .35;
