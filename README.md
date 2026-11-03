@@ -82,7 +82,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Astuces** | un conseil la première fois qu'un élément du jeu apparaît (amélioration, Labo, fusion, arbre, soutien, boss, casino, IEM, plasma, spécialisation), désactivables dans les Options |
 | **Analyse de combat** | graphiques de la partie : dégâts, éliminations, tirs et rentabilité par tourelle, dégâts par vague |
 | **Musique** | générée en direct : **Arena 80s** (synth-rock, solo saturé sur les boss), Ambiance ou Synthwave |
-| **Divers** | annonces de combo et de multi-éliminations, 5 thèmes visuels animés, style Néon 10 ou Classique, démo IA en fond de menu |
+| **Divers** | annonces de combo et de multi-éliminations, 5 thèmes visuels animés, style Néon 10 ou Classique, tutoriel guidé, zoom de la carte, effets réduits et couleurs pour daltoniens, démo IA en fond de menu |
 
 ## Commandes
 
@@ -196,6 +196,10 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v10.3** : tutoriel guidé ; coopération : marqueurs sur la carte et dons entre partenaires ; ciblage FOCUS ;
+  rivaux affichés pendant le Défi du jour et vérification des scores par rejeu des replays ; cartes de la communauté ;
+  zoom (molette, pincement) ; options effets réduits et couleurs pour daltoniens ; 10 nouveaux succès ; interface
+  découpée en six fichiers, assemblage qui refuse un script invalide, test de déterminisme.
 - **v10.2** : classement en ligne du Défi du jour (Firebase Firestore) : publication du score avec le replay,
   les 50 meilleurs joueurs de chaque jour, replays visibles depuis le classement.
 - **v10.1** : éditeur de cartes : chemin principal, entrées en plus, débris, annulation, cartes enregistrées et code de

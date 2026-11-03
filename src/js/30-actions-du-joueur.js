@@ -11,6 +11,21 @@ const Act = {
     sell: (x, y) => { const t = Towers.at(x, y); if (t && Act.owns(t)) Towers.sell(t); },
     spec: (x, y, i) => { const t = Towers.at(x, y); if (t) Towers.setSpec(t, i); },
     strat: (x, y, i) => { const t = Towers.at(x, y); if (t) { t.strat = i; t.aimT = 0; } },
+    // ennemi désigné : visé en priorité par les tourelles en ciblage FOCUS (de tous les joueurs en coopération)
+    focus: id => { G.focus = id | 0; for (const t of G.towers) if (t.strat === 4) t.aimT = 0; },
+    // coopération : don de crédits ou d'éléments à un partenaire
+    gift: (to, cur, n) => {
+      n = Math.floor(n);
+      if (!G.wallets || G.actor == null || to === G.actor || !(to >= 0 && to < G.wallets.length) || (G.gone && G.gone[to]) || !(n > 0)) return false;
+      if (cur === 'm') { if (G.wallets[G.actor] < n) return false; G.wallets[G.actor] -= n; G.wallets[to] += n; }
+      else if ((cur === 'p' || cur === 'a' || cur === 'q') && G.resW && G.resW[G.actor] && G.resW[to]) {
+        const F = G.resW[G.actor], T = G.resW[to]; if ((F[cur] | 0) < n) return false; F[cur] -= n; T[cur] = (T[cur] | 0) + n;
+      } else return false;
+      const what = cur === 'm' ? fmt(n) + '¢' : n + ' ' + RES[cur].i;
+      if (to === Net.me) { UI.toast('Cadeau !', `${MP.esc(MP.name(G.actor))} vous donne <b>${what}</b>.`, MP_COL[G.actor], 4); Sfx.play('coin'); }
+      else if (G.actor === Net.me) { UI.toast('Don envoyé', `${what} pour ${MP.esc(MP.name(to))}.`, MP_COL[to], 2.5); Sfx.play('coin'); }
+      return true;
+    },
     oc: (x, y, on) => {
       const t = Towers.at(x, y); if (!t || t.d.kind === 'support' || t.d.kind === 'radar') return;
       t.oc = !!on; FX.float(t.cx, t.cy - 20, t.oc ? 'SURCADENCE' : 'NORMAL', t.oc ? '#ff3355' : '#cfe3ff', 11);

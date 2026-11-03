@@ -32,7 +32,12 @@ window.Determinisme = {
       this.play();
       Act.do('wave');
       let n = 0;
-      while (!G.over && G.phase !== 'prep' && n++ < 60000) { if (G.offer) Act.do('card', 0); Game.update(); }
+      while (!G.over && G.phase !== 'prep' && n++ < 60000) {
+        if (G.offer) Act.do('card', 0);
+        // de temps en temps, un ennemi désigné pour les tourelles en ciblage FOCUS
+        if (n % 300 === 150) { const e = G.enemies.find(x => x.alive); if (e) Act.do('focus', e.id); if (G.towers[1]) Act.do('strat', G.towers[1].tx, G.towers[1].ty, 4); }
+        Game.update();
+      }
     }
     const out = { rec: JSON.parse(JSON.stringify(G.rec)), tick: G.tick, hash: Lock.hash(), wave: G.waveNum, kills: G.stats.kills, towers: G.towers.length };
     Game.quit(false);

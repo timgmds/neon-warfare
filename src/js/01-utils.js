@@ -1,5 +1,5 @@
 /* ============================== UTILS ============================== */
-const VERSION = '10.2';
+const VERSION = '10.3';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;

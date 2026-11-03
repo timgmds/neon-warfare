@@ -581,6 +581,12 @@ const Render = {
           c.save(); c.translate(x, y); c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 2.5; polyPath(c, 6, e.r + 14, performance.now() * .002); c.stroke(); c.restore();
         }
       }
+      if (e.id === G.focus && !hidden) {
+        const rr = e.r + 9, a = performance.now() * .004;
+        c.strokeStyle = 'rgba(255,60,90,.95)'; c.lineWidth = 2; c.beginPath();
+        for (let k = 0; k < 4; k++) { const b = a + k * Math.PI / 2; c.moveTo(x + Math.cos(b) * rr, y + Math.sin(b) * rr); c.lineTo(x + Math.cos(b) * (rr + 7), y + Math.sin(b) * (rr + 7)); }
+        c.stroke(); c.beginPath(); c.arc(x, y, rr, 0, TAU); c.stroke();
+      }
       if (e.markT > 0 && !hidden) {
         const r = e.r + 7, q = 4;
         c.strokeStyle = 'rgba(255,60,90,.85)'; c.lineWidth = 1.2; c.beginPath();

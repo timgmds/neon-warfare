@@ -11,7 +11,7 @@ const KEYDEF = [
   { g: 'PARTIE', id: 'casino', n: 'Casino', d: ['KeyC'] },
   { g: 'PARTIE', id: 'help', n: 'Manuel', d: ['KeyH'] },
   { g: 'PARTIE', id: 'score', n: 'Classement des joueurs (multijoueur)', d: ['Tab'] },
-  { g: 'PARTIE', id: 'ping', n: 'Marqueur pour les partenaires (coop ; aussi clic molette, Alt + clic, appui long)', d: ['KeyV'] },
+  { g: 'PARTIE', id: 'ping', n: 'Désigner la cible FOCUS et marquer la carte en coop (aussi clic molette, Alt + clic)', d: ['KeyV'] },
   { g: 'CAPACITÉS', id: 'orbital', n: 'Frappe orbitale', d: ['KeyQ'] },
   { g: 'CAPACITÉS', id: 'emp', n: 'Cryo-Bombe', d: ['KeyW'] },
   { g: 'CAPACITÉS', id: 'overdrive', n: 'Surcharge', d: ['KeyE'] },
@@ -25,6 +25,13 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '10.3', d: ['Tutoriel guidé : la première partie vous accompagne pas à pas (poser, lancer, améliorer, arbre, fusion, capacités). À revoir depuis le Manuel.',
+    'Coopération : marqueurs sur la carte (clic molette, Alt + clic, touche V ou appui long) et dons de crédits ou d\'éléments à un partenaire (bouton 🎁 DON).',
+    'Nouveau ciblage FOCUS : désignez un ennemi (clic molette, Alt + clic ou V), les tourelles en FOCUS le visent en priorité.',
+    'Défi du jour : les scores à battre s\'affichent pendant la partie. Dans le classement, les replays du top 10 sont rejoués par votre navigateur : ✓ vérifié ou ✗ écart.',
+    'Cartes de la communauté : publiez vos cartes de l\'éditeur et jouez celles des autres.',
+    'Zoom de la carte : molette, pincement à deux doigts, glisser au clic droit.',
+    'Options : effets réduits (sans flash ni secousse) et couleurs pour daltoniens. 10 nouveaux succès.'] },
   { v: '10.2', d: ['Nouveau : le classement en ligne du Défi du jour (menu principal). Même carte et mêmes vagues pour tout le monde : qui tiendra le plus longtemps ?',
     'À la fin d\'un Défi du jour, publiez votre score avec votre pseudo (rien ne part sans votre clic).',
     'Chaque score est accompagné du replay de la partie : le bouton ▶ du classement permet de la regarder.'] },

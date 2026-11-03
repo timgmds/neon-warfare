@@ -108,7 +108,7 @@ const Game = {
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
         doctrine: DOCTRINES[s.doctrine] ? s.doctrine : 'standard', missions: (s.missions || []).filter(m => MDEF[m.id]),
         cards: s.cards || {}, timed: s.timed || [], cardQ: s.cardQ || 0, offer: s.offer || null, xpRun: s.xpRun || 0, cx: s.cx || {},
-        cmdStart: s.cmdStart || Object.assign({}, Store.data.cmd), waveDmg: s.waveDmg || {} });
+        cmdStart: s.cmdStart || Object.assign({}, Store.data.cmd), waveDmg: s.waveDmg || {}, focus: s.focus || 0 });
       for (const k in s.tstats || {}) if (TOWERS[k]) { const a = s.tstats[k]; G.tstats[k] = { dealt: a[0], kills: a[1], shots: a[2], spent: a[3] }; }
       Object.assign(G.abil, s.abil || {});
       if (s.rs != null) G.rs = s.rs;

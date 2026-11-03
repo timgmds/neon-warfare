@@ -791,6 +791,11 @@ kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 5px;border
   background:rgba(4,7,14,.84);pointer-events:none;display:flex;flex-direction:column;gap:2px}
 #rival span{font-size:9px;letter-spacing:.2em;color:var(--gold);font-weight:800}
 #rival b{font-size:12px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* coopération : don à un partenaire */
+.mp-gb{width:100%;margin:2px 0 6px;padding:3px 6px;font-size:9px}
+.mp-gift{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 6px}
+.mp-gift .btn{padding:3px 6px;font-size:10px;letter-spacing:.5px}
+
 /* ---------- TUTORIEL GUIDÉ ---------- */
 #tuto{position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:45;width:min(300px,calc(100vw - 24px));padding:12px 14px;border-radius:10px;
   background:rgba(4,8,18,.95);border:1px solid var(--accent);box-shadow:0 10px 30px rgba(0,0,0,.7),0 0 24px -6px var(--accent);animation:mIn .25s ease-out}
@@ -1069,7 +1074,7 @@ body.calm .x3d::after,body.calm .title .tt,body.calm .title .v10,body.calm .titl
    ===================================================================== */
 
 /* ============================== UTILS ============================== */
-const VERSION = '10.2';
+const VERSION = '10.3';
 const TILE = 40;
 const TICK_MS = 1000 / 60;
 const TAU = Math.PI * 2;
@@ -1690,7 +1695,7 @@ const Custom = {
     $('cus-reset').onclick = () => { Store.s.cus = null; Store.save(); Sfx.play('ui'); this.render(); };
   }
 };
-const STRATS = ['PREMIER', 'FORT', 'FAIBLE', 'PROCHE'];
+const STRATS = ['PREMIER', 'FORT', 'FAIBLE', 'PROCHE', 'FOCUS'];
 
 /* w : coût en « points de menace » — from : première vague d'apparition */
 const ENEMIES = {
@@ -3546,7 +3551,8 @@ const Towers = {
       if (!e.alive || e.phased || e.inv > 0 || (d.ground && e.air) || (!seeAll && hid(e))) continue;
       const dd = d2(e.x, e.y, t.cx, t.cy);
       if (dd > r2) continue;
-      const v = s === 0 ? -e.rem : s === 1 ? e.hp + e.shield : s === 2 ? -(e.hp + e.shield) : -dd;
+      // FOCUS : l'ennemi désigné par un joueur d'abord, sinon le plus avancé
+      const v = s === 0 ? -e.rem : s === 1 ? e.hp + e.shield : s === 2 ? -(e.hp + e.shield) : s === 3 ? -dd : (e.id === G.focus ? 1e12 : 0) - e.rem;
       if (v > bv) { bv = v; best = e; }
     }
     return best;
@@ -6235,6 +6241,21 @@ const Act = {
     sell: (x, y) => { const t = Towers.at(x, y); if (t && Act.owns(t)) Towers.sell(t); },
     spec: (x, y, i) => { const t = Towers.at(x, y); if (t) Towers.setSpec(t, i); },
     strat: (x, y, i) => { const t = Towers.at(x, y); if (t) { t.strat = i; t.aimT = 0; } },
+    // ennemi désigné : visé en priorité par les tourelles en ciblage FOCUS (de tous les joueurs en coopération)
+    focus: id => { G.focus = id | 0; for (const t of G.towers) if (t.strat === 4) t.aimT = 0; },
+    // coopération : don de crédits ou d'éléments à un partenaire
+    gift: (to, cur, n) => {
+      n = Math.floor(n);
+      if (!G.wallets || G.actor == null || to === G.actor || !(to >= 0 && to < G.wallets.length) || (G.gone && G.gone[to]) || !(n > 0)) return false;
+      if (cur === 'm') { if (G.wallets[G.actor] < n) return false; G.wallets[G.actor] -= n; G.wallets[to] += n; }
+      else if ((cur === 'p' || cur === 'a' || cur === 'q') && G.resW && G.resW[G.actor] && G.resW[to]) {
+        const F = G.resW[G.actor], T = G.resW[to]; if ((F[cur] | 0) < n) return false; F[cur] -= n; T[cur] = (T[cur] | 0) + n;
+      } else return false;
+      const what = cur === 'm' ? fmt(n) + '¢' : n + ' ' + RES[cur].i;
+      if (to === Net.me) { UI.toast('Cadeau !', `${MP.esc(MP.name(G.actor))} vous donne <b>${what}</b>.`, MP_COL[G.actor], 4); Sfx.play('coin'); }
+      else if (G.actor === Net.me) { UI.toast('Don envoyé', `${what} pour ${MP.esc(MP.name(to))}.`, MP_COL[to], 2.5); Sfx.play('coin'); }
+      return true;
+    },
     oc: (x, y, on) => {
       const t = Towers.at(x, y); if (!t || t.d.kind === 'support' || t.d.kind === 'radar') return;
       t.oc = !!on; FX.float(t.cx, t.cy - 20, t.oc ? 'SURCADENCE' : 'NORMAL', t.oc ? '#ff3355' : '#cfe3ff', 11);
@@ -6326,7 +6347,7 @@ const SaveSys = {
     const M = G.map;
     return {
       v: 8, gm: G.gm, cus: G.cus, cmap: G.cmap || null, rec: G.rec ? 1 : 0, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
-      doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, cx: G.cx,
+      doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, cx: G.cx, focus: G.focus || 0,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       rs: G.rs, nanites: G.nanites, res: G.res, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
       tstats: Object.fromEntries(Object.entries(G.tstats).map(([k, s]) => [k, [Math.round(s.dealt), s.kills, s.shots, s.spent]])),
@@ -6449,7 +6470,7 @@ const Game = {
         skills: s.skills || {}, seen: s.seen || [], used: s.used || {},
         doctrine: DOCTRINES[s.doctrine] ? s.doctrine : 'standard', missions: (s.missions || []).filter(m => MDEF[m.id]),
         cards: s.cards || {}, timed: s.timed || [], cardQ: s.cardQ || 0, offer: s.offer || null, xpRun: s.xpRun || 0, cx: s.cx || {},
-        cmdStart: s.cmdStart || Object.assign({}, Store.data.cmd), waveDmg: s.waveDmg || {} });
+        cmdStart: s.cmdStart || Object.assign({}, Store.data.cmd), waveDmg: s.waveDmg || {}, focus: s.focus || 0 });
       for (const k in s.tstats || {}) if (TOWERS[k]) { const a = s.tstats[k]; G.tstats[k] = { dealt: a[0], kills: a[1], shots: a[2], spent: a[3] }; }
       Object.assign(G.abil, s.abil || {});
       if (s.rs != null) G.rs = s.rs;
@@ -7500,6 +7521,12 @@ const Render = {
           c.save(); c.translate(x, y); c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 2.5; polyPath(c, 6, e.r + 14, performance.now() * .002); c.stroke(); c.restore();
         }
       }
+      if (e.id === G.focus && !hidden) {
+        const rr = e.r + 9, a = performance.now() * .004;
+        c.strokeStyle = 'rgba(255,60,90,.95)'; c.lineWidth = 2; c.beginPath();
+        for (let k = 0; k < 4; k++) { const b = a + k * Math.PI / 2; c.moveTo(x + Math.cos(b) * rr, y + Math.sin(b) * rr); c.lineTo(x + Math.cos(b) * (rr + 7), y + Math.sin(b) * (rr + 7)); }
+        c.stroke(); c.beginPath(); c.arc(x, y, rr, 0, TAU); c.stroke();
+      }
       if (e.markT > 0 && !hidden) {
         const r = e.r + 7, q = 4;
         c.strokeStyle = 'rgba(255,60,90,.85)'; c.lineWidth = 1.2; c.beginPath();
@@ -7863,8 +7890,8 @@ const Input = {
     if (e.pointerType === 'touch' && (this.touches.size > 1 || performance.now() - (this.pinchEnd || 0) < 250 && this.touches.size)) return;
     this.locate(e);
     const h = UI.hover, M = G.map;
+    if (e.button === 1 || e.altKey) { e.preventDefault(); this.mark(h.wx, h.wy); return; }
     if (Net.coop) {
-      if (e.button === 1 || e.altKey) { e.preventDefault(); MP.ping(h.wx, h.wy); return; }
       if (h.touch) { clearTimeout(this.longT); this.longX = e.clientX; this.longY = e.clientY; this.longT = setTimeout(() => { this.longT = 0; MP.ping(h.wx, h.wy); }, 550); }
     }
     if (UI.targeting) {
@@ -7897,6 +7924,13 @@ const Input = {
     const tr = Traps.at(h.tx, h.ty);
     if (tr) { UI.selectTrap(tr); return; }
     UI.deselect();
+  },
+  // désigner : un ennemi devient la cible des tourelles en FOCUS ; en coopération, un marqueur prévient les partenaires
+  mark(x, y) {
+    let best = null, bd = 30 * 30;
+    for (const en of G.enemies) if (en.alive) { const d = (en.x - x) ** 2 + (en.y - y) ** 2; if (d < bd) { bd = d; best = en; } }
+    if (best && best.id !== G.focus) Act.do('focus', best.id);
+    if (Net.coop) MP.ping(x, y);
   },
   key(e) {
     if (Keys.wait) { Keys.capture(e); return; }
@@ -7932,11 +7966,11 @@ const Input = {
       case 'casino': UI.openCasino(); break;
       case 'help': UI.openHelp(); break;
       case 'score': e.preventDefault(); Score.toggle(); break;
-      case 'ping': if (Net.coop && UI.hover.inside) MP.ping(UI.hover.wx, UI.hover.wy); break;
+      case 'ping': if (UI.hover.inside) this.mark(UI.hover.wx, UI.hover.wy); break;
       case 'orbital': case 'emp': case 'overdrive': Abil.trigger(act); break;
       case 'up': if (UI.sel) { if (e.shiftKey) UI.upAll(); else if (Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); } break;
       case 'sell': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;
-      case 'strat': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % 4, e.shiftKey); break;
+      case 'strat': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % STRATS.length, e.shiftKey); break;
       case 'oc': if (UI.sel) UI.toggleOC(); break;
       case 'unjam': UI.unjam(); break;
       case 'recycle': if (UI.selDebris && !UI.selDebris.trap) Act.do('recycle', UI.selDebris.tx, UI.selDebris.ty); break;
@@ -8832,7 +8866,7 @@ const KEYDEF = [
   { g: 'PARTIE', id: 'casino', n: 'Casino', d: ['KeyC'] },
   { g: 'PARTIE', id: 'help', n: 'Manuel', d: ['KeyH'] },
   { g: 'PARTIE', id: 'score', n: 'Classement des joueurs (multijoueur)', d: ['Tab'] },
-  { g: 'PARTIE', id: 'ping', n: 'Marqueur pour les partenaires (coop ; aussi clic molette, Alt + clic, appui long)', d: ['KeyV'] },
+  { g: 'PARTIE', id: 'ping', n: 'Désigner la cible FOCUS et marquer la carte en coop (aussi clic molette, Alt + clic)', d: ['KeyV'] },
   { g: 'CAPACITÉS', id: 'orbital', n: 'Frappe orbitale', d: ['KeyQ'] },
   { g: 'CAPACITÉS', id: 'emp', n: 'Cryo-Bombe', d: ['KeyW'] },
   { g: 'CAPACITÉS', id: 'overdrive', n: 'Surcharge', d: ['KeyE'] },
@@ -8846,6 +8880,13 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '10.3', d: ['Tutoriel guidé : la première partie vous accompagne pas à pas (poser, lancer, améliorer, arbre, fusion, capacités). À revoir depuis le Manuel.',
+    'Coopération : marqueurs sur la carte (clic molette, Alt + clic, touche V ou appui long) et dons de crédits ou d\'éléments à un partenaire (bouton 🎁 DON).',
+    'Nouveau ciblage FOCUS : désignez un ennemi (clic molette, Alt + clic ou V), les tourelles en FOCUS le visent en priorité.',
+    'Défi du jour : les scores à battre s\'affichent pendant la partie. Dans le classement, les replays du top 10 sont rejoués par votre navigateur : ✓ vérifié ou ✗ écart.',
+    'Cartes de la communauté : publiez vos cartes de l\'éditeur et jouez celles des autres.',
+    'Zoom de la carte : molette, pincement à deux doigts, glisser au clic droit.',
+    'Options : effets réduits (sans flash ni secousse) et couleurs pour daltoniens. 10 nouveaux succès.'] },
   { v: '10.2', d: ['Nouveau : le classement en ligne du Défi du jour (menu principal). Même carte et mêmes vagues pour tout le monde : qui tiendra le plus longtemps ?',
     'À la fin d\'un Défi du jour, publiez votre score avec votre pseudo (rien ne part sans votre clic).',
     'Chaque score est accompagné du replay de la partie : le bouton ▶ du classement permet de la regarder.'] },
@@ -10456,6 +10497,13 @@ Object.assign(UI, {
       for (const p of MP.others()) {
         const gone = (G.gone && G.gone[p]) || MP.out[p];
         h += `<div class="mp-op${gone ? ' out' : ''}" style="--oc:${MP_COL[p]}"><div class="mp-on"><i></i><b>${esc(MP.name(p))}</b><span>${gone ? 'PARTI' : `${fmt(G.wallets[p] || 0)}¢ · ${G.towers.filter(t => t.owner === p).length} tour.`}</span></div></div>`;
+        if (!gone && Net.coop) {
+          // don : une rangée de montants, ouverte par le bouton 🎁 (seulement ce que vous possédez)
+          const me = G.wallets[Net.me] || 0, R = (G.resW && G.resW[Net.me]) || {};
+          h += this.giftP === p ? `<div class="mp-gift" data-to="${p}">${[250, 1000].filter(v => me >= v).map(v => `<button class="btn" data-c="m" data-n="${v}">${v}¢</button>`).join('')}` +
+            ['p', 'a', 'q'].filter(c => (R[c] | 0) >= 1).map(c => `<button class="btn" data-c="${c}" data-n="1" style="color:${RES[c].c}">1 ${RES[c].i}</button>`).join('') + '<button class="btn" data-x="1">✕</button></div>'
+            : `<button class="btn mp-gb" data-g="${p}" title="Donner des crédits ou des éléments à ${esc(MP.name(p))}">🎁 DON</button>`;
+        }
       }
       if (Net.coop) h += `<div class="mp-row"><span>Protocole</span><b style="color:${MP_COL[Cards.turn()]}">${esc(MP.name(Cards.turn()))}</b></div>`;
     }
@@ -10464,6 +10512,12 @@ Object.assign(UI, {
     $('mp-info').innerHTML = h;
     $('mp-score').onclick = () => Score.toggle();
     $('mp-info').querySelectorAll('.mp-op[data-p]').forEach(r => r.onclick = () => MP.setTarget(+r.dataset.p));
+    $('mp-info').querySelectorAll('.mp-gb').forEach(b => b.onclick = () => { this.giftP = +b.dataset.g; Sfx.play('ui'); this.refreshMP(); });
+    $('mp-info').querySelectorAll('.mp-gift button').forEach(b => b.onclick = () => {
+      const to = +b.parentNode.dataset.to;
+      if (!b.dataset.x) Act.do('gift', to, b.dataset.c, +b.dataset.n);
+      this.giftP = null; this.refreshMP();
+    });
     const sg = $('mp-sendgo');
     if (sg) sg.onclick = () => { const c = this.cards['send:swarm']; if (c) { const bar = $('bar'); bar.scrollLeft = c.el.offsetLeft - bar.offsetLeft - 20; c.el.classList.add('fresh'); setTimeout(() => c.el.classList.remove('fresh'), 1500); } };
   },
@@ -10792,6 +10846,8 @@ Object.assign(UI, {
         <li><b>Entrée en plus</b> (deux au maximum) : partez d'une case libre du bord et rejoignez le chemin principal. <b>Débris</b> : cases à recycler. <b>Gomme</b>, <b>Annuler</b> (Ctrl+Z), <b>Aléatoire</b> pour partir d'une carte générée.</li>
         <li><b>Code de partage</b> : un ami le colle dans l'éditeur (Importer un code) ou dans le champ « code de carte » de Nouvelle partie. En multijoueur, l'hôte choisit la carte dans le salon. Les cartes perso ne comptent ni pour les records ni pour les succès, l'XP et les fragments.</li></ul>
       <h3>MULTIJOUEUR</h3><ul>
+        <li><b>Marqueurs</b> (coopération) : clic molette, Alt + clic, ${K('ping')} ou appui long au doigt posent un signal visible par vos partenaires (« Construis ici », « Le boss ! »…). Sur un ennemi, il le désigne aussi comme cible <b>FOCUS</b>.</li>
+        <li><b>Dons</b> (coopération) : le bouton <b>🎁 DON</b> sous le nom d'un partenaire lui donne des crédits ou un élément rare que vous possédez.</li>
         <li><b>Menu → Multijoueur</b> : de 2 à 4 joueurs. L'hôte crée un salon, avec un code au hasard (NEON-XXXX) ou <b>un code de son choix</b>, et le donne aux autres. Dans le salon, l'hôte peut <b>exclure</b> un joueur (✕). Sans internet, la <b>connexion manuelle</b> échange deux codes par copier-coller (une invitation par joueur).</li>
         <li><b>Versus à plusieurs</b> : cliquez sur un adversaire dans le panneau de gauche pour en faire la <b>cible</b> de vos envois. Le dernier debout gagne ; le classement s'affiche en fin de partie.</li>
         <li><b style="color:#ff2a6d">Versus</b> : même carte et mêmes vagues, chacun chez soi. La barre du bas propose des <b>envois</b> d'ennemis chez l'adversaire : ils coûtent des crédits mais augmentent votre <b>revenu par vague</b>, et chaque ennemi envoyé vous rapporte une <b>prime de survie</b> (jusqu'à 60 % de son prix s'il tient 20 s, +50 % s'il atteint le noyau adverse). Et deux <b style="color:#ff8a3d">sabotages</b>, une fois par vague : la <b>pluie de météores</b> (dès la vague 4) sonne ses meilleures tourelles et en rétrograde deux d'un niveau ; le <b>météore géant</b> (dès la vague 10) pulvérise sa tourelle la plus chère, sauf s'il la vend dans les 4 s. Vitesse 1x, vagues automatiques avec 10 s de préparation. Plus dur qu'en solo : ennemis +30 % de PV et plus d'élites, intégrité -30 %, crédits de départ -15 %, et dès la vague 13 une <b>escalade</b> de +5 % de PV par vague. Le dernier debout gagne.</li>
@@ -10811,7 +10867,7 @@ Object.assign(UI, {
       <h3>RACCOURCIS <small style="font-size:10px;letter-spacing:1px;color:var(--dim)">modifiables dans Options → Raccourcis clavier</small></h3><div class="cols">
         <p>${K('wave')} Lancer / appeler la vague</p><p>${K('slot1')}…${K('slot10')} Choisir une tourelle</p>
         <p>${K('orbital')} ${K('emp')} ${K('overdrive')} Capacités</p><p>${K('up')} Améliorer · ${K('sell')} Vendre</p>
-        <p>${K('strat')} Ciblage · ${K('oc')} Surcadence</p><p><kbd>Maj</kbd> + ${K('strat')} / ${K('up')} : pour toutes vos tourelles du même type</p><p>${K('recycle')} Recycler le débris sélectionné</p>
+        <p>${K('strat')} Ciblage (PREMIER, FORT, FAIBLE, PROCHE, FOCUS) · ${K('oc')} Surcadence</p><p>${K('ping')} / Alt + clic : désigner la cible FOCUS · molette : zoom · clic droit glissé : déplacer la carte</p><p><kbd>Maj</kbd> + ${K('strat')} / ${K('up')} : pour toutes vos tourelles du même type</p><p>${K('recycle')} Recycler le débris sélectionné</p>
         <p>${K('unjam')} Débrouiller (la tourelle choisie, sinon toutes)</p>
         <p>${K('speed')} Vitesse · ${K('pause')} Pause</p><p>${K('tree')} Arbre · ${K('lab')} Labo · ${K('stats')} Stats · ${K('casino')} Casino · ${K('help')} Manuel</p>
         <p><kbd>Échap</kbd> / clic droit : annuler</p><p><kbd>F3</kbd> Compteur FPS</p></div>`;

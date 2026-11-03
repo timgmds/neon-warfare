@@ -201,6 +201,13 @@ Object.assign(UI, {
       for (const p of MP.others()) {
         const gone = (G.gone && G.gone[p]) || MP.out[p];
         h += `<div class="mp-op${gone ? ' out' : ''}" style="--oc:${MP_COL[p]}"><div class="mp-on"><i></i><b>${esc(MP.name(p))}</b><span>${gone ? 'PARTI' : `${fmt(G.wallets[p] || 0)}¢ · ${G.towers.filter(t => t.owner === p).length} tour.`}</span></div></div>`;
+        if (!gone && Net.coop) {
+          // don : une rangée de montants, ouverte par le bouton 🎁 (seulement ce que vous possédez)
+          const me = G.wallets[Net.me] || 0, R = (G.resW && G.resW[Net.me]) || {};
+          h += this.giftP === p ? `<div class="mp-gift" data-to="${p}">${[250, 1000].filter(v => me >= v).map(v => `<button class="btn" data-c="m" data-n="${v}">${v}¢</button>`).join('')}` +
+            ['p', 'a', 'q'].filter(c => (R[c] | 0) >= 1).map(c => `<button class="btn" data-c="${c}" data-n="1" style="color:${RES[c].c}">1 ${RES[c].i}</button>`).join('') + '<button class="btn" data-x="1">✕</button></div>'
+            : `<button class="btn mp-gb" data-g="${p}" title="Donner des crédits ou des éléments à ${esc(MP.name(p))}">🎁 DON</button>`;
+        }
       }
       if (Net.coop) h += `<div class="mp-row"><span>Protocole</span><b style="color:${MP_COL[Cards.turn()]}">${esc(MP.name(Cards.turn()))}</b></div>`;
     }
@@ -209,6 +216,12 @@ Object.assign(UI, {
     $('mp-info').innerHTML = h;
     $('mp-score').onclick = () => Score.toggle();
     $('mp-info').querySelectorAll('.mp-op[data-p]').forEach(r => r.onclick = () => MP.setTarget(+r.dataset.p));
+    $('mp-info').querySelectorAll('.mp-gb').forEach(b => b.onclick = () => { this.giftP = +b.dataset.g; Sfx.play('ui'); this.refreshMP(); });
+    $('mp-info').querySelectorAll('.mp-gift button').forEach(b => b.onclick = () => {
+      const to = +b.parentNode.dataset.to;
+      if (!b.dataset.x) Act.do('gift', to, b.dataset.c, +b.dataset.n);
+      this.giftP = null; this.refreshMP();
+    });
     const sg = $('mp-sendgo');
     if (sg) sg.onclick = () => { const c = this.cards['send:swarm']; if (c) { const bar = $('bar'); bar.scrollLeft = c.el.offsetLeft - bar.offsetLeft - 20; c.el.classList.add('fresh'); setTimeout(() => c.el.classList.remove('fresh'), 1500); } };
   },

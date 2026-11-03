@@ -170,7 +170,7 @@ const Custom = {
     $('cus-reset').onclick = () => { Store.s.cus = null; Store.save(); Sfx.play('ui'); this.render(); };
   }
 };
-const STRATS = ['PREMIER', 'FORT', 'FAIBLE', 'PROCHE'];
+const STRATS = ['PREMIER', 'FORT', 'FAIBLE', 'PROCHE', 'FOCUS'];
 
 /* w : coût en « points de menace » — from : première vague d'apparition */
 const ENEMIES = {

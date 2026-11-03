@@ -172,7 +172,8 @@ const Towers = {
       if (!e.alive || e.phased || e.inv > 0 || (d.ground && e.air) || (!seeAll && hid(e))) continue;
       const dd = d2(e.x, e.y, t.cx, t.cy);
       if (dd > r2) continue;
-      const v = s === 0 ? -e.rem : s === 1 ? e.hp + e.shield : s === 2 ? -(e.hp + e.shield) : -dd;
+      // FOCUS : l'ennemi désigné par un joueur d'abord, sinon le plus avancé
+      const v = s === 0 ? -e.rem : s === 1 ? e.hp + e.shield : s === 2 ? -(e.hp + e.shield) : s === 3 ? -dd : (e.id === G.focus ? 1e12 : 0) - e.rem;
       if (v > bv) { bv = v; best = e; }
     }
     return best;

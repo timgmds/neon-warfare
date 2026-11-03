@@ -9,7 +9,7 @@ const SaveSys = {
     const M = G.map;
     return {
       v: 8, gm: G.gm, cus: G.cus, cmap: G.cmap || null, rec: G.rec ? 1 : 0, portrait: G.portrait, diffKey: G.diffKey, seed: G.seed, waveNum: G.waveNum, daily: G.daily, mutKeys: G.mutKeys,
-      doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, cx: G.cx,
+      doctrine: G.doctrine, missions: G.missions, cards: G.cards, timed: G.timed, cardQ: G.cardQ, offer: G.offer, xpRun: G.xpRun, cmdStart: G.cmdStart, cx: G.cx, focus: G.focus || 0,
       traps: G.traps.map(t => [t.type, t.tx, t.ty, Math.round(t.dmg), Math.round(t.hp), Math.round(t.max), t.cost]), money: Math.floor(G.money), lives: G.lives, maxLives: G.maxLives,
       rs: G.rs, nanites: G.nanites, res: G.res, recycle: G.recycle, skills: G.skills, unlocked: [...G.unlocked], stats: G.stats, abil: G.abil, seen: G.seen, used: G.used,
       tstats: Object.fromEntries(Object.entries(G.tstats).map(([k, s]) => [k, [Math.round(s.dealt), s.kills, s.shots, s.spent]])),

@@ -58,8 +58,8 @@ const Input = {
     if (e.pointerType === 'touch' && (this.touches.size > 1 || performance.now() - (this.pinchEnd || 0) < 250 && this.touches.size)) return;
     this.locate(e);
     const h = UI.hover, M = G.map;
+    if (e.button === 1 || e.altKey) { e.preventDefault(); this.mark(h.wx, h.wy); return; }
     if (Net.coop) {
-      if (e.button === 1 || e.altKey) { e.preventDefault(); MP.ping(h.wx, h.wy); return; }
       if (h.touch) { clearTimeout(this.longT); this.longX = e.clientX; this.longY = e.clientY; this.longT = setTimeout(() => { this.longT = 0; MP.ping(h.wx, h.wy); }, 550); }
     }
     if (UI.targeting) {
@@ -92,6 +92,13 @@ const Input = {
     const tr = Traps.at(h.tx, h.ty);
     if (tr) { UI.selectTrap(tr); return; }
     UI.deselect();
+  },
+  // désigner : un ennemi devient la cible des tourelles en FOCUS ; en coopération, un marqueur prévient les partenaires
+  mark(x, y) {
+    let best = null, bd = 30 * 30;
+    for (const en of G.enemies) if (en.alive) { const d = (en.x - x) ** 2 + (en.y - y) ** 2; if (d < bd) { bd = d; best = en; } }
+    if (best && best.id !== G.focus) Act.do('focus', best.id);
+    if (Net.coop) MP.ping(x, y);
   },
   key(e) {
     if (Keys.wait) { Keys.capture(e); return; }
@@ -127,11 +134,11 @@ const Input = {
       case 'casino': UI.openCasino(); break;
       case 'help': UI.openHelp(); break;
       case 'score': e.preventDefault(); Score.toggle(); break;
-      case 'ping': if (Net.coop && UI.hover.inside) MP.ping(UI.hover.wx, UI.hover.wy); break;
+      case 'ping': if (UI.hover.inside) this.mark(UI.hover.wx, UI.hover.wy); break;
       case 'orbital': case 'emp': case 'overdrive': Abil.trigger(act); break;
       case 'up': if (UI.sel) { if (e.shiftKey) UI.upAll(); else if (Act.do('up', UI.sel.tx, UI.sel.ty)) UI.renderPanel(); } break;
       case 'sell': if (UI.sel) { e.preventDefault(); UI.sellSel(); } break;
-      case 'strat': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % 4, e.shiftKey); break;
+      case 'strat': if (UI.sel) UI.setStrat((UI.sel.strat + 1) % STRATS.length, e.shiftKey); break;
       case 'oc': if (UI.sel) UI.toggleOC(); break;
       case 'unjam': UI.unjam(); break;
       case 'recycle': if (UI.selDebris && !UI.selDebris.trap) Act.do('recycle', UI.selDebris.tx, UI.selDebris.ty); break;
