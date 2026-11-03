@@ -180,6 +180,18 @@ Le bot connaît le plasma, l'abyssite, les plans et poses T3/T4, la raffinerie e
 bien moins loin qu'un joueur entraîné. Pour la fin de partie, mieux vaut comparer les PV des vagues au temps qu'elles
 mettent à traverser la carte (dégâts par seconde nécessaires), ce qui ne dépend pas du niveau du joueur.
 
+`dev/test-determinisme.js` vérifie qu'une même graine et les mêmes actions redonnent exactement la même partie,
+ce dont dépendent la coopération (lockstep), les replays et la vérification des scores en ligne. Il joue cinq parties
+avec un joueur scripté (Standard, Hardcore, Défi du jour, Chaos, carte perso), les rejoue deux fois depuis leur
+enregistrement et compare l'empreinte de l'état. À lancer après toute modification de la simulation :
+
+```js
+const s = document.createElement('script'); s.src = 'dev/test-determinisme.js'; document.head.appendChild(s);
+await Determinisme.run()   // OK ou ÉCART par scénario, en quelques secondes
+```
+
+L'assemblage (`node tools/build.mjs`) refuse aussi un script qui ne compile pas, en indiquant le fichier et la ligne.
+
 La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(5000, 50)`.
 
 ## Historique
