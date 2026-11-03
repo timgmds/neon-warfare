@@ -876,3 +876,7 @@ body.gfx-neo #hud::after{bottom:-1px}
 body.gfx-neo #dock::before{top:-1px}
 @keyframes neoline{to{background-position:-200% 0}}
 body.gfx-neo .hstat .lbl{font-family:var(--disp);font-weight:400;font-size:11px;letter-spacing:.16em}
+
+/* ---------- EFFETS RÉDUITS (option) ---------- */
+body.calm #cv-bloom{opacity:.45}
+body.calm .x3d::after,body.calm .title .tt,body.calm .title .v10,body.calm .title,body.calm #hud::after,body.calm #dock::before,body.calm .badge.on{animation:none!important}

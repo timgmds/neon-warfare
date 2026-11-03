@@ -4,7 +4,7 @@ const Store = {
   data: null,
   defaults() {
     return {
-      settings: { sfx: .6, music: .3, musicStyle: 'arena', quality: 'auto', theme: 'theme-cyber', gfx: 'neo', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true, events: true },
+      settings: { sfx: .6, music: .3, musicStyle: 'arena', quality: 'auto', theme: 'theme-cyber', gfx: 'neo', calm: false, cb: false, crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true, events: true },
       meta: { frags: 0, perks: {} }, ach: {}, records: {}, daily: {}, stats: { recycled: 0, games: 0, kills: 0 }, save: null, tuto: false,
       cmd: { lvl: 1, xp: 0 }, doctrine: 'standard', codex: { e: {}, t: {} }, mv: 9
     };

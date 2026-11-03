@@ -995,6 +995,8 @@ const UI = {
       <div class="opt"><span>Thème visuel</span><button class="btn" id="o-th">${THEMES[s.theme] ? THEMES[s.theme].name : '?'}</button></div>
       <div class="opt"><span>Effet CRT<small>Lignes de balayage rétro</small></span><button class="btn" id="o-crt">${tg(s.crt)}</button></div>
       <div class="opt"><span>Secousses & flashs</span><button class="btn" id="o-sh">${tg(s.shake)}</button></div>
+      <div class="opt"><span>Effets réduits<small>Ni flash, ni secousse, halo adouci, animations de l'interface arrêtées : plus reposant pour les yeux</small></span><button class="btn" id="o-calm">${tg(s.calm)}</button></div>
+      <div class="opt"><span>Couleurs pour daltoniens<small>Barres de vie et de chaleur en bleu, jaune et magenta au lieu de vert, orange et rouge</small></span><button class="btn" id="o-cb">${tg(s.cb)}</button></div>
       <div class="opt"><span>Chiffres de dégâts</span><button class="btn" id="o-dn">${tg(s.dmgNums)}</button></div>
       <div class="opt"><span>Événements aléatoires<small>Astéroïdes, ravitaillements, tempêtes… (prochaines parties)</small></span><button class="btn" id="o-ev">${tg(s.events !== false)}</button></div>
       <div class="opt"><span>Compteur FPS<small>Touche F3</small></span><button class="btn" id="o-fps">${tg(s.fps)}</button></div>
@@ -1013,6 +1015,8 @@ const UI = {
     $('o-gfx').onclick = () => { s.gfx = s.gfx === 'classic' ? 'neo' : 'classic'; Store.save(); Render.setTheme(s.theme); if (G && !G.demo) this.buildBar(); this.openOptions(); };
     $('o-crt').onclick = () => { s.crt = !s.crt; Store.save(); Render.setTheme(s.theme); this.openOptions(); };
     $('o-sh').onclick = () => { s.shake = !s.shake; Store.save(); this.openOptions(); };
+    $('o-calm').onclick = () => { s.calm = !s.calm; Store.save(); Render.setTheme(s.theme); this.openOptions(); };
+    $('o-cb').onclick = () => { s.cb = !s.cb; Store.save(); this.openOptions(); };
     $('o-dn').onclick = () => { s.dmgNums = !s.dmgNums; this.dmgNums = s.dmgNums; Store.save(); this.openOptions(); };
     $('o-fps').onclick = () => { this.toggleFps(); this.openOptions(); };
     $('o-keys').onclick = () => Keys.open();

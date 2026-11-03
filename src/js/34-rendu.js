@@ -57,13 +57,19 @@ const Render = {
     this.themeKey = key; this.theme = THEMES[key];
     const neo = Store.s.gfx !== 'classic';
     if (neo !== this.neo) { this.neo = neo; Spr.cache.clear(); }
-    document.body.className = key + (Store.s.crt ? '' : ' no-crt') + (neo ? ' gfx-neo' : ' gfx-classic');
+    document.body.className = key + (Store.s.crt ? '' : ' no-crt') + (neo ? ' gfx-neo' : ' gfx-classic') + (Store.s.calm ? ' calm' : '');
     this.dirtyBg = this.dirtyMap = true;
     this.initAmbient();
     GLFX.sync();
   },
-  shake(a) { if (Store.s.shake && !(G && G.demo)) this.shakeA = Math.max(this.shakeA, a); },
+  // jauges (vie des ennemis, chaleur) : p = part restante ; palette daltonienne en option
+  bar(p, hot) {
+    if (Store.s.cb) return hot ? (p > .8 ? '#ff4fd8' : p > .5 ? '#ffd23f' : '#3aa0ff') : (p > .5 ? '#3aa0ff' : p > .25 ? '#ffd23f' : '#ff4fd8');
+    return hot ? (p > .8 ? '#ff3355' : p > .5 ? '#ffae00' : '#39ff88') : (p > .5 ? '#39ff88' : p > .25 ? '#ffae00' : '#ff2a6d');
+  },
+  shake(a) { if (Store.s.shake && !Store.s.calm && !(G && G.demo)) this.shakeA = Math.max(this.shakeA, a); },
   flash(a, col) {
+    if (Store.s.calm) return;   // effets réduits : aucun flash plein écran
     if (!Store.s.shake) a *= .35;
     if (G && G.demo) a *= .25;
     if (a > this.flashA) { this.flashA = a; this.flashC = col || '#fff'; }
@@ -431,7 +437,7 @@ const Render = {
       if (tw.heat > 1) {
         const p = tw.heat / 100;
         c.fillStyle = 'rgba(0,0,0,.75)'; c.fillRect(x - 12, y + 19, 24, 4);
-        c.fillStyle = tw.over ? '#777' : p > .8 ? '#ff3355' : p > .5 ? '#ffae00' : '#39ff88';
+        c.fillStyle = tw.over ? '#777' : this.bar(p, true);
         c.fillRect(x - 11.5, y + 19.5, 23 * p, 3);
       }
       if (tw.level > 1) {
@@ -525,7 +531,7 @@ const Render = {
           }
           c.globalCompositeOperation = 'source-over';
         }
-        sz *= 1 + .045 * Math.sin(now * .007 + e.id * 2.3);
+        if (!Store.s.calm) sz *= 1 + .045 * Math.sin(now * .007 + e.id * 2.3);
       }
       const hs = sz / 2;
       c.globalAlpha = ga;
@@ -569,7 +575,7 @@ const Render = {
       if (e.hp < e.maxHp && !hidden) {
         const w = Math.max(16, e.r * 2), p = Math.max(0, e.hp / e.maxHp);
         c.fillStyle = 'rgba(0,0,0,.75)'; c.fillRect(x - w / 2 - 1, y - e.r - 9, w + 2, 4);
-        c.fillStyle = p > .5 ? '#39ff88' : p > .25 ? '#ffae00' : '#ff2a6d'; c.fillRect(x - w / 2, y - e.r - 8.5, w * p, 3);
+        c.fillStyle = this.bar(p); c.fillRect(x - w / 2, y - e.r - 8.5, w * p, 3);
       }
       c.globalAlpha = 1;
     }

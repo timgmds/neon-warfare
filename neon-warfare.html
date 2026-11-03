@@ -885,6 +885,10 @@ body.gfx-neo #hud::after{bottom:-1px}
 body.gfx-neo #dock::before{top:-1px}
 @keyframes neoline{to{background-position:-200% 0}}
 body.gfx-neo .hstat .lbl{font-family:var(--disp);font-weight:400;font-size:11px;letter-spacing:.16em}
+
+/* ---------- EFFETS RÉDUITS (option) ---------- */
+body.calm #cv-bloom{opacity:.45}
+body.calm .x3d::after,body.calm .title .tt,body.calm .title .v10,body.calm .title,body.calm #hud::after,body.calm #dock::before,body.calm .badge.on{animation:none!important}
 </style>
 </head>
 <body class="theme-cyber">
@@ -1145,7 +1149,7 @@ const Store = {
   data: null,
   defaults() {
     return {
-      settings: { sfx: .6, music: .3, musicStyle: 'arena', quality: 'auto', theme: 'theme-cyber', gfx: 'neo', crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true, events: true },
+      settings: { sfx: .6, music: .3, musicStyle: 'arena', quality: 'auto', theme: 'theme-cyber', gfx: 'neo', calm: false, cb: false, crt: true, dmgNums: true, autoWave: false, shake: true, fps: false, demo: true, events: true },
       meta: { frags: 0, perks: {} }, ach: {}, records: {}, daily: {}, stats: { recycled: 0, games: 0, kills: 0 }, save: null, tuto: false,
       cmd: { lvl: 1, xp: 0 }, doctrine: 'standard', codex: { e: {}, t: {} }, mv: 9
     };
@@ -6951,13 +6955,19 @@ const Render = {
     this.themeKey = key; this.theme = THEMES[key];
     const neo = Store.s.gfx !== 'classic';
     if (neo !== this.neo) { this.neo = neo; Spr.cache.clear(); }
-    document.body.className = key + (Store.s.crt ? '' : ' no-crt') + (neo ? ' gfx-neo' : ' gfx-classic');
+    document.body.className = key + (Store.s.crt ? '' : ' no-crt') + (neo ? ' gfx-neo' : ' gfx-classic') + (Store.s.calm ? ' calm' : '');
     this.dirtyBg = this.dirtyMap = true;
     this.initAmbient();
     GLFX.sync();
   },
-  shake(a) { if (Store.s.shake && !(G && G.demo)) this.shakeA = Math.max(this.shakeA, a); },
+  // jauges (vie des ennemis, chaleur) : p = part restante ; palette daltonienne en option
+  bar(p, hot) {
+    if (Store.s.cb) return hot ? (p > .8 ? '#ff4fd8' : p > .5 ? '#ffd23f' : '#3aa0ff') : (p > .5 ? '#3aa0ff' : p > .25 ? '#ffd23f' : '#ff4fd8');
+    return hot ? (p > .8 ? '#ff3355' : p > .5 ? '#ffae00' : '#39ff88') : (p > .5 ? '#39ff88' : p > .25 ? '#ffae00' : '#ff2a6d');
+  },
+  shake(a) { if (Store.s.shake && !Store.s.calm && !(G && G.demo)) this.shakeA = Math.max(this.shakeA, a); },
   flash(a, col) {
+    if (Store.s.calm) return;   // effets réduits : aucun flash plein écran
     if (!Store.s.shake) a *= .35;
     if (G && G.demo) a *= .25;
     if (a > this.flashA) { this.flashA = a; this.flashC = col || '#fff'; }
@@ -7325,7 +7335,7 @@ const Render = {
       if (tw.heat > 1) {
         const p = tw.heat / 100;
         c.fillStyle = 'rgba(0,0,0,.75)'; c.fillRect(x - 12, y + 19, 24, 4);
-        c.fillStyle = tw.over ? '#777' : p > .8 ? '#ff3355' : p > .5 ? '#ffae00' : '#39ff88';
+        c.fillStyle = tw.over ? '#777' : this.bar(p, true);
         c.fillRect(x - 11.5, y + 19.5, 23 * p, 3);
       }
       if (tw.level > 1) {
@@ -7419,7 +7429,7 @@ const Render = {
           }
           c.globalCompositeOperation = 'source-over';
         }
-        sz *= 1 + .045 * Math.sin(now * .007 + e.id * 2.3);
+        if (!Store.s.calm) sz *= 1 + .045 * Math.sin(now * .007 + e.id * 2.3);
       }
       const hs = sz / 2;
       c.globalAlpha = ga;
@@ -7463,7 +7473,7 @@ const Render = {
       if (e.hp < e.maxHp && !hidden) {
         const w = Math.max(16, e.r * 2), p = Math.max(0, e.hp / e.maxHp);
         c.fillStyle = 'rgba(0,0,0,.75)'; c.fillRect(x - w / 2 - 1, y - e.r - 9, w + 2, 4);
-        c.fillStyle = p > .5 ? '#39ff88' : p > .25 ? '#ffae00' : '#ff2a6d'; c.fillRect(x - w / 2, y - e.r - 8.5, w * p, 3);
+        c.fillStyle = this.bar(p); c.fillRect(x - w / 2, y - e.r - 8.5, w * p, 3);
       }
       c.globalAlpha = 1;
     }
@@ -9717,6 +9727,8 @@ const UI = {
       <div class="opt"><span>Thème visuel</span><button class="btn" id="o-th">${THEMES[s.theme] ? THEMES[s.theme].name : '?'}</button></div>
       <div class="opt"><span>Effet CRT<small>Lignes de balayage rétro</small></span><button class="btn" id="o-crt">${tg(s.crt)}</button></div>
       <div class="opt"><span>Secousses & flashs</span><button class="btn" id="o-sh">${tg(s.shake)}</button></div>
+      <div class="opt"><span>Effets réduits<small>Ni flash, ni secousse, halo adouci, animations de l'interface arrêtées : plus reposant pour les yeux</small></span><button class="btn" id="o-calm">${tg(s.calm)}</button></div>
+      <div class="opt"><span>Couleurs pour daltoniens<small>Barres de vie et de chaleur en bleu, jaune et magenta au lieu de vert, orange et rouge</small></span><button class="btn" id="o-cb">${tg(s.cb)}</button></div>
       <div class="opt"><span>Chiffres de dégâts</span><button class="btn" id="o-dn">${tg(s.dmgNums)}</button></div>
       <div class="opt"><span>Événements aléatoires<small>Astéroïdes, ravitaillements, tempêtes… (prochaines parties)</small></span><button class="btn" id="o-ev">${tg(s.events !== false)}</button></div>
       <div class="opt"><span>Compteur FPS<small>Touche F3</small></span><button class="btn" id="o-fps">${tg(s.fps)}</button></div>
@@ -9735,6 +9747,8 @@ const UI = {
     $('o-gfx').onclick = () => { s.gfx = s.gfx === 'classic' ? 'neo' : 'classic'; Store.save(); Render.setTheme(s.theme); if (G && !G.demo) this.buildBar(); this.openOptions(); };
     $('o-crt').onclick = () => { s.crt = !s.crt; Store.save(); Render.setTheme(s.theme); this.openOptions(); };
     $('o-sh').onclick = () => { s.shake = !s.shake; Store.save(); this.openOptions(); };
+    $('o-calm').onclick = () => { s.calm = !s.calm; Store.save(); Render.setTheme(s.theme); this.openOptions(); };
+    $('o-cb').onclick = () => { s.cb = !s.cb; Store.save(); this.openOptions(); };
     $('o-dn').onclick = () => { s.dmgNums = !s.dmgNums; this.dmgNums = s.dmgNums; Store.save(); this.openOptions(); };
     $('o-fps').onclick = () => { this.toggleFps(); this.openOptions(); };
     $('o-keys').onclick = () => Keys.open();
