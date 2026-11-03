@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { Script } from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => readFileSync(join(root, p), 'utf8').replace(/\r\n/g, '\n');
@@ -18,6 +19,13 @@ const js = mods.map(f => {
   if (!t.endsWith('\n')) throw new Error(`src/js/${f} doit finir par un saut de ligne`);
   return t;
 }).join('');
+// le script assemblé doit au moins se compiler : une apostrophe mal échappée casserait tout le jeu
+try { new Script(js, { filename: 'neon-warfare.js' }); } catch (e) {
+  const line = e.stack && /neon-warfare\.js:(\d+)/.exec(e.stack), n = line ? +line[1] : 0;
+  let at = '';
+  if (n) { let k = n; for (const f of mods) { const len = read('src/js/' + f).split('\n').length - 1; if (k <= len) { at = ` (src/js/${f}, ligne ${k})`; break; } k -= len; } }
+  console.error(`Erreur de syntaxe JavaScript${at} : ${e.message}`); process.exit(1);
+}
 // remplacement par fonction : le contenu peut contenir des « $ » sans être interprété
 const out = tpl.replace('/*@CSS*/\n', () => css).replace('/*@JS*/\n', () => js);
 
