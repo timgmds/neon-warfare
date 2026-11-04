@@ -8,6 +8,7 @@
 const CMaps = {
   MAX: 24, MIN: 20,
   list() { return Store.data.maps || (Store.data.maps = []); },
+  all() { const L = this.list(); return L.concat(FunMaps.list().filter(f => !L.some(m => m.n === f.n))); },
   // code de partage : les débris y sont notés par leur position (r), plus court que la grille entière
   code(m) {
     const r = []; for (let i = 0; i < m.c.length; i++) if (m.c[i] === '2') r.push(i);
@@ -57,6 +58,60 @@ const CMaps = {
       for (let i = 0; i + 1 < f.length; i += 2) x[i ? 'lineTo' : 'moveTo']((f[i] + .5) * T, (f[i + 1] + .5) * T);
       x.stroke();
     });
+  }
+};
+
+/* Cartes fun : livrées avec le jeu, construites ici à partir de points de passage (segments droits, ou en escalier
+   quand deux points sont en diagonale). Elles passent par le même contrôle que les cartes des joueurs. */
+const FunMaps = {
+  line(pts) {
+    const T = [pts[0].slice()];
+    for (let i = 1; i < pts.length; i++) {
+      const [tx, ty] = pts[i]; let [x, y] = T[T.length - 1], h = true;
+      while (x !== tx || y !== ty) {
+        const dx = Math.sign(tx - x), dy = Math.sign(ty - y);
+        if (dx && dy) { if (h) x += dx; else y += dy; h = !h; } else if (dx) x += dx; else y += dy;
+        T.push([x, y]);
+      }
+    }
+    return T;
+  },
+  // n : nom, d : description, main : points du chemin principal, br : points des entrées en plus (le dernier est la
+  // case du chemin principal où elles le rejoignent), rock(x, y) : où poser des débris
+  mk(n, d, main, br = [], rock = null) {
+    const C = MapGen.C, R = MapGen.R, M = this.line(main), key = t => t[1] * C + t[0];
+    const idx = new Map(M.map((t, i) => [key(t), i])), p = [M.flat()], used = new Set(M.map(key));
+    for (const b of br) {
+      const T = this.line(b), k = T.findIndex(t => idx.has(key(t)));
+      T.slice(0, k).forEach(t => used.add(key(t)));
+      p.push(T.slice(0, k).concat(M.slice(idx.get(key(T[k])))).flat());
+    }
+    let c = '';
+    for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) c += rock && !used.has(y * C + x) && rock(x, y) ? '2' : '0';
+    return { n, d, C, R, c, p };
+  },
+  _L: null,
+  list() {
+    if (this._L) return this._L;
+    const stairs = [[0, 0]]; for (let x = 0, y = 0; y < 14;) { x += 2; stairs.push([x, y]); y++; stairs.push([x, y]); }
+    const L = [
+      this.mk('Serpent géant', 'Le chemin le plus long possible : de la place pour des tourelles partout, et le plaisir de tout raser.',
+        [[0, 1], [27, 1], [27, 3], [1, 3], [1, 5], [27, 5], [27, 7], [1, 7], [1, 9], [27, 9], [27, 11], [1, 11], [1, 13], [28, 13]]),
+      this.mk('Ligne droite', '29 cases, aucun détour : les ennemis foncent droit sur le noyau. Pour les nerfs d’acier.',
+        [[0, 7], [28, 7]]),
+      this.mk('Trident', 'Trois entrées qui se rejoignent au même point : tout se joue sur un seul carrefour.',
+        [[0, 7], [28, 7]], [[[0, 1], [10, 1], [10, 7]], [[0, 13], [10, 13], [10, 7]]]),
+      this.mk('Face-à-face', 'Deux vagues arrivent de chaque côté, se croisent au centre et plongent ensemble vers le noyau.',
+        [[0, 4], [14, 4], [14, 14]], [[[28, 4], [14, 4]]]),
+      this.mk('Escalier', 'D’un coin à l’autre, marche après marche : chaque tourelle couvre plusieurs paliers.', stairs),
+      this.mk('Créneaux', 'Le chemin monte et descend comme les remparts d’un château : idéal pour les tirs de zone.',
+        [[0, 3], [3, 3], [3, 11], [7, 11], [7, 3], [11, 3], [11, 11], [15, 11], [15, 3], [19, 3], [19, 11], [23, 11], [23, 3], [27, 3], [27, 11], [28, 11]]),
+      this.mk('Cœur néon', 'Les ennemis font le tour d’un grand cœur avant d’atteindre le noyau. Déclarez votre flamme.',
+        [[14, 14], [14, 12], [8, 6], [8, 3], [10, 1], [12, 1], [14, 3], [16, 1], [18, 1], [20, 3], [20, 6], [16, 10], [16, 14]]),
+      this.mk('La casse', 'La carte est couverte de débris : recyclez-les pour faire de la place avant d’être débordé.',
+        [[0, 2], [24, 2], [24, 12], [0, 12]], [], (x, y) => (x + y) % 2 === 0 || (x % 5 === 2 && y % 4 === 0))
+    ];
+    return (this._L = L.filter(m => CMaps.check(m)));
   }
 };
 
@@ -183,11 +238,14 @@ const Editor = {
   },
   list() {
     const L = CMaps.list(), box = $('ed-list'), tabs = $('ed-tabs');
-    tabs.hidden = !Online.on();
-    tabs.innerHTML = `<button data-k="mine" class="${this.tab !== 'com' ? 'on' : ''}">MES CARTES · ${L.length} / ${CMaps.MAX}</button><button data-k="com" class="${this.tab === 'com' ? 'on' : ''}">COMMUNAUTÉ</button>`;
+    if (this.tab === 'com' && !Online.on()) this.tab = 'mine';
+    const tab = this.tab || 'mine';
+    tabs.hidden = false; $('ed-lh').hidden = true;
+    tabs.innerHTML = `<button data-k="mine" class="${tab === 'mine' ? 'on' : ''}">MES CARTES · ${L.length} / ${CMaps.MAX}</button><button data-k="fun" class="${tab === 'fun' ? 'on' : ''}">★ FUN</button>` +
+      (Online.on() ? `<button data-k="com" class="${tab === 'com' ? 'on' : ''}">COMMUNAUTÉ</button>` : '');
     tabs.querySelectorAll('button').forEach(b => b.onclick = () => { this.tab = b.dataset.k; Sfx.play('ui'); this.list(); });
-    if (this.tab === 'com' && Online.on()) { this.community(); return; }
-    $('ed-lh').textContent = `MES CARTES · ${L.length} / ${CMaps.MAX}`; $('ed-lh').hidden = Online.on();
+    if (tab === 'com') { this.community(); return; }
+    if (tab === 'fun') { this.gallery(FunMaps.list().map(m => ({ m, a: m.d }))); return; }
     if (!L.length) { box.innerHTML = '<div class="note" style="padding:6px 0">Aucune carte enregistrée pour l\'instant.</div>'; return; }
     const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
     box.innerHTML = L.map((m, i) => `<div class="ed-it"><canvas></canvas><b title="${esc(m.n)}">${esc(m.n)}</b>
@@ -212,13 +270,18 @@ const Editor = {
     try { L = await Online.mapsTop(); } catch (e) { if (this.tab === 'com') box.innerHTML = '<div class="note" style="padding:6px 0">Galerie inaccessible : pas de connexion, ou pas encore activée sur le serveur.</div>'; return; }
     if (this.tab !== 'com' || !UI.stack.includes('ov-edit')) return;
     if (!L.length) { box.innerHTML = '<div class="note" style="padding:6px 0">Aucune carte publiée pour l' + String.fromCharCode(39) + 'instant : partagez la vôtre avec le bouton ⇪ de Mes cartes.</div>'; return; }
-    box.innerHTML = L.map((x, i) => `<div class="ed-it"><canvas></canvas><b title="${esc(x.m.n)} — par ${esc(x.a)}">${esc(x.m.n)}<small>par ${esc(x.a)}</small></b>
+    this.gallery(L.map(x => ({ m: x.m, a: 'par ' + x.a })));
+  },
+  // liste de cartes à jouer ou à copier dans Mes cartes ; a : la ligne sous le nom (auteur ou description)
+  gallery(L) {
+    const box = $('ed-list'), esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
+    box.innerHTML = L.map((x, i) => `<div class="ed-it"><canvas></canvas><b title="${esc(x.m.n)} — ${esc(x.a)}">${esc(x.m.n)}<small>${esc(x.a)}</small></b>
       <button class="btn prim" data-i="${i}" data-a="p">JOUER</button><button class="btn" data-i="${i}" data-a="c" title="Copier dans Mes cartes, pour la modifier">＋</button></div>`).join('');
     box.querySelectorAll('canvas').forEach((cv, i) => CMaps.thumb(cv, L[i].m));
     box.querySelectorAll('button').forEach(b => b.onclick = () => {
       const x = L[+b.dataset.i]; if (!x) return;
       if (b.dataset.a === 'p') this.launch(x.m);
-      else { const m = Object.assign({}, x.m, { n: x.m.n.slice(0, 24) }); CMaps.save(m); Sfx.play('coin'); UI.toast('Carte copiée', `« ${esc(m.n)} » est dans Mes cartes.`, '#39ff88', 3); }
+      else { const m = { n: x.m.n.slice(0, 24), C: x.m.C, R: x.m.R, c: x.m.c, p: x.m.p }; CMaps.save(m); Sfx.play('coin'); UI.toast('Carte copiée', `« ${esc(m.n)} » est dans Mes cartes.`, '#39ff88', 3); }
     });
   },
   // la carte en cours, si elle est jouable (sinon le message d'erreur s'affiche)

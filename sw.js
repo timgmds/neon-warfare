@@ -1,7 +1,7 @@
 /* Neon Warfare : service worker de la version installable (hébergée en HTTPS, par ex. GitHub Pages).
    Le jeu passe d'abord par le réseau pour recevoir les mises à jour ; hors ligne, la dernière version en cache prend le relais.
    Le cache HTTP du navigateur est toujours contourné : sinon une ancienne version pourrait se glisser dans le cache hors ligne. */
-const CACHE = 'neon-warfare-v5';
+const CACHE = 'neon-warfare-v6';
 const FILES = ['neon-warfare.html', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable.png'];
 
 self.addEventListener('install', e => {

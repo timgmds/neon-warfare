@@ -37,7 +37,7 @@ Object.assign(UI, {
     if (Online.on()) list.push([`CLASSEMENT EN LIGNE<small>défi du jour · les meilleurs joueurs</small>`, 'gold', () => Online.open()]);
     list.push([`MULTIJOUEUR<small>versus ou coopération, de 2 à 4</small>`, 'nano', () => this.openMP()]);
     const nm = CMaps.list().length;
-    list.push([`ÉDITEUR DE CARTES<small>${nm ? nm + ' carte' + (nm > 1 ? 's' : '') + ' perso' : 'dessinez vos propres chemins'}</small>`, '', () => Editor.open()]);
+    list.push([`ÉDITEUR DE CARTES<small>${nm ? nm + ' carte' + (nm > 1 ? 's' : '') + ' perso · ' : 'vos chemins · '}${FunMaps.list().length} cartes fun</small>`, '', () => Editor.open()]);
     list.push([`HÉRITAGE<small>${Store.data.meta.frags} fragments</small>`, 'gold', () => this.openMeta()]);
     list.push([`PALMARÈS<small>${Object.keys(Store.data.ach).filter(k => ACH[k]).length} / ${Object.keys(ACH).length} succès · historique</small>`, '', () => this.openAch()]);
     const cx = Codex.progress();

@@ -196,6 +196,8 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v10.5** : 8 cartes fun livrées avec le jeu (onglet ★ FUN de l'éditeur) : Serpent géant, Ligne droite, Trident,
+  Face-à-face, Escalier, Créneaux, Cœur néon et La casse ; jouables en solo et en multijoueur, copiables dans Mes cartes.
 - **v10.4** : refonte du son « Néon 10 » : effets en couches, réverbération courte à porte, stéréo selon la position,
   son étouffé sous les fenêtres, musique qui s'efface sur les gros événements, sons prioritaires, sons fréquents
   calculés d'avance ; ancien son en option (Style sonore → Classique).

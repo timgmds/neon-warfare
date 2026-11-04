@@ -25,6 +25,8 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '10.5', d: ['8 cartes fun livrées avec le jeu, dans l\'onglet ★ FUN de l\'éditeur de cartes : Serpent géant, Ligne droite, Trident, Face-à-face, Escalier, Créneaux, Cœur néon et La casse.',
+    'Jouables en solo comme en multijoueur (l\'hôte peut les choisir dans le salon), et copiables dans Mes cartes pour les retoucher.'] },
   { v: '10.4', d: ['Refonte du son « Néon 10 » : chaque effet a plusieurs couches (claquement, corps, grave), une réverbération courte façon années 80 et de petites variations pour ne jamais lasser.',
     'Son en stéréo : tirs, explosions et éliminations viennent de gauche ou de droite selon leur position sur la carte.',
     'Le son s\'étouffe quand une fenêtre recouvre la partie, la musique s\'efface un instant sur les gros événements (boss, frappe nucléaire, fuite), et les sons importants ne sont jamais couverts par les tirs.',

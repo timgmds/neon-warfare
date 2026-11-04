@@ -33,7 +33,7 @@ Object.assign(UI, {
         <div class="lbl-s" style="margin:12px 0 6px">MENACE</div>
         <div class="seg" id="mp-diff">${Object.keys(DIFFS).map(k => `<button data-d="${k}" class="${MP.diff === k ? 'on' : ''}" style="--tc:${DIFFS[k].color}">${DIFFS[k].name.toUpperCase()}</button>`).join('')}</div>
         <div class="lbl-s" style="margin:12px 0 6px">CARTE ${host ? '<span style="opacity:.6">(vos cartes perso, faites dans l\'éditeur)</span>' : ''}</div>
-        <div class="seg mp-maps" id="mp-map">${host ? [null, ...CMaps.list()].map((m, i) => `<button data-i="${i - 1}" class="${(MP.cmap ? MP.cmap.n : null) === (m ? m.n : null) ? 'on' : ''}">${m ? esc(m.n).toUpperCase() : 'ALÉATOIRE'}</button>`).join('')
+        <div class="seg mp-maps" id="mp-map">${host ? [null, ...CMaps.all()].map((m, i) => `<button data-i="${i - 1}" class="${(MP.cmap ? MP.cmap.n : null) === (m ? m.n : null) ? 'on' : ''}">${m ? esc(m.n).toUpperCase() : 'ALÉATOIRE'}</button>`).join('')
           : `<button class="on">${MP.mapName ? 'CARTE PERSO · ' + esc(MP.mapName).toUpperCase() : 'ALÉATOIRE'}</button>`}</div>
         <div class="lbl-s" style="margin:12px 0 6px">VOTRE DOCTRINE <span style="opacity:.6">(en coopération, les doctrines de tous les joueurs s'additionnent ; une doctrine en double ne compte qu'une fois)</span></div>
         <div class="docs" id="mp-docs">${Object.keys(DOCTRINES).filter(k => DOCTRINES[k].lvl <= Store.data.cmd.lvl).map(k => `<button class="doc${MP.myDoc() === k ? ' on' : ''}" data-k="${k}" title="${esc(DOCTRINES[k].d)}"><i>${TXT(DOCTRINES[k].i)}</i>${DOCTRINES[k].n}</button>`).join('')}</div>
@@ -45,7 +45,7 @@ Object.assign(UI, {
         </div>`;
       B.querySelectorAll('.mp-mode').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setMode(b.dataset.m); });
       B.querySelectorAll('#mp-diff button').forEach(b => b.onclick = () => { if (!host) return; Sfx.play('ui'); MP.setDiff(b.dataset.d); });
-      if (host) B.querySelectorAll('#mp-map button').forEach(b => b.onclick = () => { Sfx.play('ui'); MP.setMap(CMaps.list()[+b.dataset.i]); });
+      if (host) B.querySelectorAll('#mp-map button').forEach(b => b.onclick = () => { Sfx.play('ui'); MP.setMap(CMaps.all()[+b.dataset.i]); });
       B.querySelectorAll('#mp-docs button').forEach(b => b.onclick = () => { Store.data.doctrine = b.dataset.k; Store.save(); Sfx.play('ui'); MP.sendMe(); this.renderMP(); });
       $('mp-quit').onclick = () => MP.leave();
       if (host) $('mp-go').onclick = () => MP.launch(); else $('mp-ready').onclick = () => { Sfx.play('ui'); MP.toggleReady(); };
