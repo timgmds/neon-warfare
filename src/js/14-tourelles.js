@@ -247,7 +247,8 @@ const Towers = {
     const crit = sr() < G.mod.crit + (t.sm.crit || 0) + (t.bCrit || 0);
     const dmg = this.effDmg(t) * (crit ? G.mod.critDmg * (t.sm.critMul || 1) : 1);
     t.shots++; t.ts.shots++;
-    if (crit) Sfx.play('crit', .5);
+    if (crit) { Sfx.at(t.cx); Sfx.play('crit', .5); }
+    Sfx.at(t.cx);
     t.flash = 5; t.recoil = d.kind === 'mortar' ? 5 : 3;
     const mx = t.cx + Math.cos(t.ang) * 17, my = t.cy + Math.sin(t.ang) * 17;
     switch (d.kind) {

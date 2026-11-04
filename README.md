@@ -82,7 +82,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Astuces** | un conseil la première fois qu'un élément du jeu apparaît (amélioration, Labo, fusion, arbre, soutien, boss, casino, IEM, plasma, spécialisation), désactivables dans les Options |
 | **Analyse de combat** | graphiques de la partie : dégâts, éliminations, tirs et rentabilité par tourelle, dégâts par vague |
 | **Musique** | générée en direct : **Arena 80s** (synth-rock, solo saturé sur les boss), Ambiance ou Synthwave |
-| **Divers** | annonces de combo et de multi-éliminations, 5 thèmes visuels animés, style Néon 10 ou Classique, tutoriel guidé, zoom de la carte, effets réduits et couleurs pour daltoniens, démo IA en fond de menu |
+| **Divers** | annonces de combo et de multi-éliminations, 5 thèmes visuels animés, style Néon 10 ou Classique, tutoriel guidé, son « Néon 10 » en stéréo (ou classique), zoom de la carte, effets réduits et couleurs pour daltoniens, démo IA en fond de menu |
 
 ## Commandes
 
@@ -196,6 +196,9 @@ La console expose aussi `NW` (état du jeu) pour le débogage, par ex. `NW.give(
 
 ## Historique
 
+- **v10.4** : refonte du son « Néon 10 » : effets en couches, réverbération courte à porte, stéréo selon la position,
+  son étouffé sous les fenêtres, musique qui s'efface sur les gros événements, sons prioritaires, sons fréquents
+  calculés d'avance ; ancien son en option (Style sonore → Classique).
 - **v10.3** : tutoriel guidé ; coopération : marqueurs sur la carte et dons entre partenaires ; ciblage FOCUS ;
   rivaux affichés pendant le Défi du jour et vérification des scores par rejeu des replays ; cartes de la communauté ;
   zoom (molette, pincement) ; options effets réduits et couleurs pour daltoniens ; 10 nouveaux succès ; interface

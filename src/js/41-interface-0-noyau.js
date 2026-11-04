@@ -170,6 +170,7 @@ const UI = {
   /* ---------- HUD ---------- */
   frame() {
     Tuto.frame();
+    Sfx.muffle(Game.state === 'play' && !!G && this.stack.length > 0);
     this.frameN++;
     if (Game.state !== 'play' || !G) { if (Score.on) Score.refresh(); if (this.last.mpp) this.refreshMpPause(); return; }
     const f = this.frameN;

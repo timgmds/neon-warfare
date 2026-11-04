@@ -210,7 +210,7 @@ const Enemies = {
     FX.spark(e.x, e.y, e.d.color, e.boss ? 60 : 14, e.boss ? 6 : 3.2, 34, 2.6);
     FX.ring(e.x, e.y, e.d.color, e.r * 2.6, 20, 2);
     // la tonalité monte avec le combo : la tension se construit à l'oreille
-    Sfx.play('pop', .7, .75 + Math.min(G.combo, 80) / 80 * .9 + Math.random() * .15);
+    Sfx.at(e.x); Sfx.play('pop', .7, .75 + Math.min(G.combo, 80) / 80 * .9 + Math.random() * .15);
     if (G.stats.kills === 1) Ach.unlock('first');
   },
   leak(e) {

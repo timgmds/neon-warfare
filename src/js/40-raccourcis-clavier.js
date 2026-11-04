@@ -25,6 +25,10 @@ const KEYDEF = [
 ];
 /* nouveautés affichées une fois, au premier lancement d'une nouvelle version (les plus récentes d'abord) */
 const CHANGELOG = [
+  { v: '10.4', d: ['Refonte du son « Néon 10 » : chaque effet a plusieurs couches (claquement, corps, grave), une réverbération courte façon années 80 et de petites variations pour ne jamais lasser.',
+    'Son en stéréo : tirs, explosions et éliminations viennent de gauche ou de droite selon leur position sur la carte.',
+    'Le son s\'étouffe quand une fenêtre recouvre la partie, la musique s\'efface un instant sur les gros événements (boss, frappe nucléaire, fuite), et les sons importants ne sont jamais couverts par les tirs.',
+    'Plus léger en fin de partie : les sons les plus fréquents sont calculés d\'avance. L\'ancien son reste disponible : Options → Style sonore → Classique.'] },
   { v: '10.3', d: ['Tutoriel guidé : la première partie vous accompagne pas à pas (poser, lancer, améliorer, arbre, fusion, capacités). À revoir depuis le Manuel.',
     'Coopération : marqueurs sur la carte (clic molette, Alt + clic, touche V ou appui long) et dons de crédits ou d\'éléments à un partenaire (bouton 🎁 DON).',
     'Nouveau ciblage FOCUS : désignez un ennemi (clic molette, Alt + clic ou V), les tourelles en FOCUS le visent en priorité.',

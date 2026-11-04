@@ -199,6 +199,7 @@ Object.assign(UI, {
       <div class="opt"><span>Effets sonores</span><input type="range" min="0" max="100" id="o-sfx" value="${Math.round(s.sfx * 100)}"></div>
       <div class="opt"><span>Musique<small>Générée en direct, s'intensifie en combat</small></span><input type="range" min="0" max="100" id="o-mus" value="${Math.round(s.music * 100)}"></div>
       <div class="opt"><span>Style musical<small>Arena 80s : synth-rock énergique · Ambiance : nappes douces · Synthwave : rythmée</small></span><button class="btn" id="o-mst">${MUSIC_STYLES[s.musicStyle] || 'Arena 80s'}</button></div>
+      <div class="opt"><span>Style sonore<small>Néon 10 : sons en couches, réverbération, stéréo selon la position · Classique : les sons de la version 9</small></span><button class="btn" id="o-snd">${s.snd === 'classic' ? 'CLASSIQUE' : 'NÉON 10'}</button></div>
       <div class="opt"><span>Qualité graphique<small>AUTO réduit les effets si le jeu ralentit</small></span><button class="btn" id="o-q">${q[s.quality]}${s.quality === 'auto' && Perf.degraded ? ' (BASSE)' : ''}</button></div>
       <div class="opt"><span>Style graphique<small>Néon 10 : décors animés, halo lumineux, lettrage 3D · Classique : le rendu de la version 9</small></span><button class="btn" id="o-gfx">${s.gfx === 'classic' ? 'CLASSIQUE' : 'NÉON 10'}</button></div>
       <div class="opt"><span>Thème visuel</span><button class="btn" id="o-th">${THEMES[s.theme] ? THEMES[s.theme].name : '?'}</button></div>
@@ -219,6 +220,7 @@ Object.assign(UI, {
     $('o-mus').oninput = e => { s.music = e.target.value / 100; Sfx.applyVolumes(); };
     $('o-mus').onchange = () => Store.save();
     $('o-mst').onclick = () => { const ks = Object.keys(MUSIC_STYLES); s.musicStyle = ks[(ks.indexOf(s.musicStyle) + 1) % ks.length]; Music.step = 0; Store.save(); this.openOptions(); };
+    $('o-snd').onclick = () => { s.snd = s.snd === 'classic' ? 'neo' : 'classic'; Store.save(); Sfx.play('upgrade'); this.openOptions(); };
     $('o-q').onclick = () => { s.quality = s.quality === 'auto' ? 'high' : s.quality === 'high' ? 'low' : 'auto'; Perf.degraded = false; Store.save(); Render.applyQuality(); this.openOptions(); };
     $('o-th').onclick = () => { const ks = Object.keys(THEMES); s.theme = ks[(ks.indexOf(s.theme) + 1) % ks.length]; Store.save(); Render.setTheme(s.theme); this.openOptions(); };
     $('o-gfx').onclick = () => { s.gfx = s.gfx === 'classic' ? 'neo' : 'classic'; Store.save(); Render.setTheme(s.theme); if (G && !G.demo) this.buildBar(); this.openOptions(); };

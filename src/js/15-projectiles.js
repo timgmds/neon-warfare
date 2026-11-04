@@ -74,7 +74,7 @@ const Shots = {
     if (p.splash) {
       Combat.splash(p.x, p.y, p.splash, p.dmg, s, p.crit, p.ground, 0, !!(s && (s.d.slow || s.d.burn)));
       FX.ring(p.x, p.y, p.col, p.splash, 18, 2.2); FX.spark(p.x, p.y, p.col, 10, 3);
-      Sfx.play('boom', .45);
+      Sfx.at(p.x); Sfx.play('boom', .45);
       p.last = null;
     } else if (p.e) {
       const e = p.e;
@@ -103,7 +103,7 @@ const Shots = {
       FX.ring(p.x, p.y, p.col, p.splash * 1.1, 22, 3);
       FX.spark(p.x, p.y, p.col, 14, 3.5, 30, 2.6); FX.spark(p.x, p.y, '#ffffff', 4, 2, 16);
       if (Render.hq) for (let i = 0; i < 4; i++) FX.smoke(p.x + rnd(-8, 8), p.y + rnd(-8, 8), 50, rnd(4, 7));
-      Render.shake(2.5); Sfx.play('boom', .55);
+      Render.shake(2.5); Sfx.at(p.x); Sfx.play('boom', .55);
       return false;
     }
     if (Render.hq && (G.tick & 1)) FX.part(p.x, p.y - p.h, 0, 0, 14, p.col, 2, 1);
