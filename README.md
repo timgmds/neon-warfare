@@ -24,7 +24,7 @@ Pour changer d'appareil ou de navigateur : **Options → Transférer la progress
 ## Multijoueur
 
 **Menu → Multijoueur**, **de 2 à 4 joueurs**. L'hôte crée un salon avec un code au hasard (`NEON-XXXX`) ou
-**un code de son choix** (3 à 12 lettres ou chiffres, ex. `NEON-TIMG42`), puis les autres le tapent.
+**un code de son choix** (3 à 12 lettres ou chiffres, ex. `NEON-ZAP42`), puis les autres le tapent.
 Dans le salon, l'hôte voit les joueurs, leur ping, qui est prêt, et peut **exclure** quelqu'un (✕) :
 l'exclu ne peut pas revenir sous le même nom tant que le salon existe.
 La partie se joue ensuite **en direct** (WebRTC, chaque invité relié à l'hôte, qui relaie). La mise en
@@ -74,7 +74,7 @@ en ligne (GitHub Pages : `index.html` redirige vers le jeu).
 | **Modes** | Classique, **Boss Rush** (un boss par vague), **Chaos** (événements en rafale), **Bac à sable** (ressources illimitées), **Partie perso** (17 réglages : PV, vitesse et nombre d'ennemis, fréquence des boss, crédits, primes, intégrité, nanites, gains et coûts en éléments, ressources de départ, vague des niveaux Oméga, plans offerts, événements, IEM temporaire ou à payer ; sans records ni progression) |
 | **Défi du jour** | même carte et mêmes 2 mutateurs pour tout le monde ce jour-là, record journalier |
 | **Éditeur de cartes** | menu principal : tracez le chemin d'un bord à l'autre, jusqu'à 2 entrées en plus, des débris ; cartes enregistrées, code de partage `NWM1:`, choix de la carte par l'hôte en multijoueur (sans records ni progression) |
-| **Graine libre** | dans Nouvelle partie, un nombre ou n'importe quel mot (`neon`, `timg`…) : même texte = même carte et mêmes vagues |
+| **Graine libre** | dans Nouvelle partie, un nombre ou n'importe quel mot (`neon`, `laser`…) : même texte = même carte et mêmes vagues |
 | **Défier un ami** | chaque partie a un **code de carte** (ex. `1A2B3C-L-S`), affiché en fin de partie avec **Copier** et **Rejouer cette carte** : saisi dans Nouvelle partie, il redonne la même carte et les mêmes vagues ; historique des 30 dernières parties dans le Palmarès, rejouables d'un clic (▶) |
 | **Missions & protocoles** | 3 objectifs courts toujours actifs ; toutes les 2 vagues, 1 carte à choisir parmi 3. 48 protocoles en 4 familles (économie, attaque, défense, tactique), 9 pactes et 6 **légendaires** dès la vague 12 |
 | **Progression** | Héritage (bonus permanents), niveau de Commandant et 7 doctrines, 37 succès, Codex de 57 fiches |

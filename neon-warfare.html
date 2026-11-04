@@ -6542,7 +6542,7 @@ const Hist = {
   parse(c) {
     const raw = String(c || '').trim(), m = /^([0-9A-Z]+)-([PL])(?:-([RSHC]))?(?:-([CRS]))?$/i.exec(raw.toUpperCase());
     if (!raw) return null;
-    // graine libre : un nombre tel quel, ou n'importe quel mot / phrase (« neon », « timg 2026 »…)
+    // graine libre : un nombre tel quel, ou n'importe quel mot / phrase (« neon », « laser 2026 »…)
     if (!m) return { seed: /^\d{1,9}$/.test(raw) ? +raw : hashStr(raw.toLowerCase()) | 0, portrait: null, diff: null, gm: null, free: raw };
     const diffs = { R: 'recrue', S: 'standard', H: 'hardcore', C: 'cauchemar' }, gms = { C: 'chaos', R: 'rush', S: 'sandbox' };
     return { seed: parseInt(m[1], 36) | 0, portrait: m[2] === 'P', diff: diffs[m[3]] || null, gm: gms[m[4]] || 'classic' };
